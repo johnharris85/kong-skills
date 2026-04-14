@@ -3,17 +3,17 @@
   "version": "1.0.0",
   "description": "Portable Kong skills plus remote MCP configuration for Gemini CLI.",
   "mcpServers": {
-    "kong": {
+    "kong-konnect": {
       "url": "https://us.mcp.konghq.com",
       "headers": {
-        "Authorization": "Bearer ${KONG_API_KEY}"
+        "Authorization": "Bearer ${KONNECT_TOKEN}"
       }
     }
   },
   "settings": {
-    "KONG_API_KEY": {
-      "displayName": "Kong MCP API Key",
-      "description": "API key used to authenticate requests to the Kong MCP server.",
+    "KONNECT_TOKEN": {
+      "displayName": "Konnect Bearer Token",
+      "description": "Bearer token used to authenticate requests to the Kong MCP server.",
       "sensitive": true,
       "required": false
     }

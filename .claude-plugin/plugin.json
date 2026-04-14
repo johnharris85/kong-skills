@@ -6,16 +6,14 @@
     "name": "johnharris85"
   },
   "skills": [
-    "../skills/web-search",
-    "../skills/research-assistant",
     "../skills/datakit"
   ],
   "mcpServers": {
-    "kong": {
+    "kong-konnect": {
       "type": "url",
       "url": "https://us.mcp.konghq.com",
       "headers": {
-        "Authorization": "Bearer ${KONG_API_KEY}"
+        "Authorization": "Bearer ${KONNECT_TOKEN}"
       }
     }
   }

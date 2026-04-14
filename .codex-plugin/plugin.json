@@ -9,17 +9,13 @@
   "keywords": [
     "kong",
     "datakit",
-    "research",
-    "search",
     "mcp"
   ],
   "skills": [
-    "../skills/web-search",
-    "../skills/research-assistant",
     "../skills/datakit"
   ],
   "mcpServers": [
-    "kong"
+    "kong-konnect"
   ],
   "interface": {
     "displayName": "Kong Skills",
@@ -27,9 +23,7 @@
     "category": "development",
     "capabilities": [
       "kong",
-      "datakit",
-      "search",
-      "research"
+      "datakit"
     ]
   }
 }

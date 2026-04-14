@@ -1,0 +1,13 @@
+{
+  "servers": {
+    "kong-konnect": {
+      "type": "http",
+      "url": "https://us.mcp.konghq.com",
+      "requestInit": {
+        "headers": {
+          "Authorization": "Bearer ${KONNECT_TOKEN}"
+        }
+      }
+    }
+  }
+}

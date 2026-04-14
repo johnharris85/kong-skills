@@ -1,0 +1,23 @@
+[tools]
+python = "3.12"
+
+[tasks.sync]
+description = "Sync generated repo metadata and skill listings"
+run = "python scripts/check_repo.py --fix"
+
+[tasks.check]
+description = "Validate manifests, skills, and generated content"
+run = "python scripts/check_repo.py"
+
+[tasks.lint]
+description = "Alias for check"
+depends = ["check"]
+
+[tasks.ci]
+description = "Run the same validation used in CI"
+depends = ["check"]
+
+[tasks."hooks:install"]
+description = "Install repo-local git hooks"
+run = "git config core.hooksPath .githooks"
+
