@@ -13,6 +13,7 @@ The shared skills are the source of truth. Platform-specific wrapper files only 
 
 - `skills/datakit`: Kong DataKit design, YAML authoring, debugging, and reference material
 - `.claude-plugin/plugin.json`: Claude Code plugin manifest
+- `.claude-plugin/marketplace.json`: Claude Code marketplace listing
 - `.codex-plugin/plugin.json`: Codex plugin manifest
 - `.mcp.json`: Codex MCP config
 - `.agents/plugins/marketplace.json`: Codex marketplace entry
@@ -41,7 +42,7 @@ Set `KONNECT_TOKEN` in the harness or plugin install flow you use. Where a forma
 
 ### Claude Code
 
-This repo includes [`.claude-plugin/plugin.json`](/home/john/projects/kong-skills/.claude-plugin/plugin.json) and [`marketplace.json`](/home/john/projects/kong-skills/marketplace.json).
+This repo includes [`.claude-plugin/plugin.json`](/home/john/projects/kong-skills/.claude-plugin/plugin.json) and [`.claude-plugin/marketplace.json`](/home/john/projects/kong-skills/.claude-plugin/marketplace.json).
 
 Add the repo as a plugin marketplace, then install the plugin:
 
@@ -283,7 +284,7 @@ That gives you the same validation path locally and in CI.
 │       ├── SKILL.md
 │       └── references/
 ├── .claude-plugin/plugin.json
-├── marketplace.json
+├── .claude-plugin/marketplace.json
 ├── .codex-plugin/plugin.json
 ├── .mcp.json
 ├── .agents/plugins/marketplace.json

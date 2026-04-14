@@ -14,7 +14,7 @@ This file maps the installable or tool-consumed parts of this repo to the downst
   - Claude Code plugin manifest.
   - Used by: Claude Code plugin install flow.
 
-- `marketplace.json`
+- `.claude-plugin/marketplace.json`
   - Claude Code marketplace listing for this repo/plugin.
   - Used by: Claude Code plugin marketplace flow.
 

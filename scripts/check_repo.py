@@ -200,7 +200,7 @@ def validate_static_metadata() -> list[str]:
     errors: list[str] = []
 
     codex_marketplace = load_json(REPO_ROOT / ".agents" / "plugins" / "marketplace.json")
-    claude_marketplace = load_json(REPO_ROOT / "marketplace.json")
+    claude_marketplace = load_json(REPO_ROOT / ".claude-plugin" / "marketplace.json")
     codex_plugin = load_json(REPO_ROOT / ".codex-plugin" / "plugin.json")
     claude_plugin = load_json(REPO_ROOT / ".claude-plugin" / "plugin.json")
 
@@ -213,11 +213,11 @@ def validate_static_metadata() -> list[str]:
     if codex_plugin.get("homepage") != REPO_URL or codex_plugin.get("repository") != REPO_URL:
         errors.append(".codex-plugin/plugin.json: homepage/repository drift")
     if claude_marketplace.get("name") != PLUGIN_NAME:
-        errors.append("marketplace.json: unexpected marketplace name")
+        errors.append(".claude-plugin/marketplace.json: unexpected marketplace name")
     if codex_marketplace.get("name") != PLUGIN_NAME:
         errors.append(".agents/plugins/marketplace.json: unexpected marketplace name")
     if claude_marketplace.get("plugins", [{}])[0].get("name") != PLUGIN_NAME:
-        errors.append("marketplace.json: plugin listing name drift")
+        errors.append(".claude-plugin/marketplace.json: plugin listing name drift")
     if codex_marketplace.get("plugins", [{}])[0].get("name") != PLUGIN_NAME:
         errors.append(".agents/plugins/marketplace.json: plugin listing name drift")
     return errors
