@@ -1,0 +1,6 @@
+{
+  "exa": {
+    "type": "streamable_http",
+    "url": "https://mcp.exa.ai/mcp"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "exa-research-agent-template",
+  "version": "1.0.0",
+  "description": "Shared Exa-powered research skills and remote MCP configuration for Gemini CLI.",
+  "mcpServers": {
+    "exa": {
+      "url": "https://mcp.exa.ai/mcp"
+    }
+  },
+  "settings": {
+    "EXA_API_KEY": {
+      "displayName": "Exa API Key",
+      "description": "API key used to authenticate requests to the Exa MCP server.",
+      "sensitive": true,
+      "required": false
+    }
+  },
+  "contextFileName": "GEMINI.md"
+}

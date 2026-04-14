@@ -1,0 +1,10 @@
+interface:
+  display_name: "Web Search"
+  short_description: "Search and read web sources with Exa MCP."
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "exa"
+      description: "Exa remote MCP server for web search and page retrieval."
+      transport: "streamable_http"
+      url: "https://mcp.exa.ai/mcp"

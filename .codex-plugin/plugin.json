@@ -1,0 +1,31 @@
+{
+  "name": "exa-research-agent-template",
+  "version": "1.0.0",
+  "description": "Shared Exa-powered research skills and remote MCP configuration for Codex.",
+  "author": "yourorg",
+  "homepage": "https://github.com/yourorg/exa-research-agent-template",
+  "repository": "https://github.com/yourorg/exa-research-agent-template",
+  "license": "MIT",
+  "keywords": [
+    "research",
+    "search",
+    "mcp",
+    "exa"
+  ],
+  "skills": [
+    "../skills/web-search",
+    "../skills/research-assistant"
+  ],
+  "mcpServers": [
+    "exa"
+  ],
+  "interface": {
+    "displayName": "Exa Research Template",
+    "shortDescription": "Portable research skills and Exa MCP wiring.",
+    "category": "development",
+    "capabilities": [
+      "search",
+      "research"
+    ]
+  }
+}

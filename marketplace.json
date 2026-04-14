@@ -1,0 +1,26 @@
+{
+  "name": "exa-research-agent-template",
+  "owner": {
+    "name": "yourorg"
+  },
+  "description": "Claude Code marketplace catalog for Exa-based research skills and remote MCP config.",
+  "version": "1.0.0",
+  "plugins": [
+    {
+      "name": "exa-research-agent-template",
+      "source": "./",
+      "description": "Portable research skills plus Exa MCP setup.",
+      "version": "1.0.0",
+      "author": {
+        "name": "yourorg"
+      },
+      "keywords": [
+        "research",
+        "search",
+        "mcp",
+        "exa"
+      ],
+      "category": "development"
+    }
+  ]
+}
