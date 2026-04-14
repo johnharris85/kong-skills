@@ -1,6 +1,9 @@
 {
-  "exa": {
+  "kong": {
     "type": "streamable_http",
-    "url": "https://mcp.exa.ai/mcp"
+    "url": "https://us.mcp.konghq.com",
+    "headers": {
+      "Authorization": "Bearer ${KONG_API_KEY}"
+    }
   }
 }

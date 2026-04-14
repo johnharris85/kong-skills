@@ -1,6 +1,6 @@
 ---
 name: research-assistant
-description: Run a structured research workflow with Exa MCP, cross-check claims, and synthesize cited findings.
+description: Run a structured research workflow with the Kong-hosted MCP endpoint, cross-check claims, and synthesize cited findings.
 ---
 
 # Instructions
@@ -21,8 +21,8 @@ Use it when the user asks for:
 
 1. Clarify the research question, constraints, and desired output.
 2. Break the question into subtopics or claims to verify.
-3. Use Exa `search` to identify strong sources for each subtopic.
-4. Use Exa `get_contents` to read the best sources, not just headlines or snippets.
+3. Use MCP `search` to identify strong sources for each subtopic.
+4. Use MCP `get_contents` to read the best sources, not just headlines or snippets.
 5. Compare sources and note agreement, disagreement, and missing evidence.
 6. Synthesize the findings into a structured response with citations.
 

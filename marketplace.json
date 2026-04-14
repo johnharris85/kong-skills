@@ -1,24 +1,25 @@
 {
-  "name": "exa-research-agent-template",
+  "name": "kong-skills",
   "owner": {
-    "name": "yourorg"
+    "name": "johnharris85"
   },
-  "description": "Claude Code marketplace catalog for Exa-based research skills and remote MCP config.",
+  "description": "Claude Code marketplace catalog for Kong skills and remote MCP config.",
   "version": "1.0.0",
   "plugins": [
     {
-      "name": "exa-research-agent-template",
+      "name": "kong-skills",
       "source": "./",
-      "description": "Portable research skills plus Exa MCP setup.",
+      "description": "Portable Kong skills plus Kong MCP setup.",
       "version": "1.0.0",
       "author": {
-        "name": "yourorg"
+        "name": "johnharris85"
       },
       "keywords": [
+        "kong",
+        "datakit",
         "research",
         "search",
-        "mcp",
-        "exa"
+        "mcp"
       ],
       "category": "development"
     }

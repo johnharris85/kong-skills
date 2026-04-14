@@ -1,10 +1,10 @@
 interface:
   display_name: "Web Search"
-  short_description: "Search and read web sources with Exa MCP."
+  short_description: "Search and read web sources with the Kong MCP endpoint."
 dependencies:
   tools:
     - type: "mcp"
-      value: "exa"
-      description: "Exa remote MCP server for web search and page retrieval."
+      value: "kong"
+      description: "Kong remote MCP server for web search and page retrieval."
       transport: "streamable_http"
-      url: "https://mcp.exa.ai/mcp"
+      url: "https://us.mcp.konghq.com"

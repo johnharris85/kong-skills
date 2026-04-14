@@ -1,15 +1,15 @@
 ---
 name: web-search
-description: Search the web with Exa MCP, read the best matching pages, and answer with source URLs.
+description: Search the web with the Kong-hosted MCP endpoint, read the best matching pages, and answer with source URLs.
 ---
 
 # Instructions
 
 Use this skill when the user needs current web research, source gathering, or URL-backed factual answers.
 
-## When To Use Exa
+## When To Use The Kong MCP Search Tools
 
-Use Exa when:
+Use the Kong-hosted search tools when:
 
 - the task depends on current or external web content
 - the user asks for sources, links, or citations
@@ -20,7 +20,7 @@ Avoid relying on a single result when the topic is ambiguous, contested, or high
 ## Workflow
 
 1. Translate the user's question into 1 to 3 focused search queries.
-2. Use the Exa `search` tool to find relevant pages.
+2. Use the MCP `search` tool to find relevant pages.
 3. Prefer strong primary sources, official documentation, company announcements, or reputable publications.
 4. Use `get_contents` on the most relevant results before answering.
 5. Cross-check important claims across more than one source when accuracy matters.
@@ -37,7 +37,7 @@ Build queries that combine:
 Examples:
 
 - `openai responses api docs tools`
-- `exa mcp streamable http authentication`
+- `kong mcp bearer token authentication`
 - `company name earnings q1 2026`
 
 If the first search is too broad, tighten it with exact names, dates, site constraints, or official-source language.

@@ -1,29 +1,33 @@
 {
-  "name": "exa-research-agent-template",
+  "name": "kong-skills",
   "version": "1.0.0",
-  "description": "Shared Exa-powered research skills and remote MCP configuration for Codex.",
-  "author": "yourorg",
-  "homepage": "https://github.com/yourorg/exa-research-agent-template",
-  "repository": "https://github.com/yourorg/exa-research-agent-template",
+  "description": "Portable Kong skills plus remote MCP configuration for Codex.",
+  "author": "johnharris85",
+  "homepage": "https://github.com/johnharris85/kong-skills",
+  "repository": "https://github.com/johnharris85/kong-skills",
   "license": "MIT",
   "keywords": [
+    "kong",
+    "datakit",
     "research",
     "search",
-    "mcp",
-    "exa"
+    "mcp"
   ],
   "skills": [
     "../skills/web-search",
-    "../skills/research-assistant"
+    "../skills/research-assistant",
+    "../skills/datakit"
   ],
   "mcpServers": [
-    "exa"
+    "kong"
   ],
   "interface": {
-    "displayName": "Exa Research Template",
-    "shortDescription": "Portable research skills and Exa MCP wiring.",
+    "displayName": "Kong Skills",
+    "shortDescription": "Portable Kong skills and remote MCP wiring.",
     "category": "development",
     "capabilities": [
+      "kong",
+      "datakit",
       "search",
       "research"
     ]

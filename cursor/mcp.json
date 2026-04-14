@@ -1,7 +1,10 @@
 {
   "mcpServers": {
-    "exa": {
-      "url": "https://mcp.exa.ai/mcp"
+    "kong": {
+      "url": "https://us.mcp.konghq.com",
+      "headers": {
+        "Authorization": "Bearer ${KONG_API_KEY}"
+      }
     }
   }
 }

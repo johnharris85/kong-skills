@@ -1,11 +1,11 @@
 {
-  "name": "exa-research-agent-template",
+  "name": "kong-skills",
   "interface": {
-    "displayName": "Exa Research Template Marketplace"
+    "displayName": "Kong Skills Marketplace"
   },
   "plugins": [
     {
-      "name": "exa-research-agent-template",
+      "name": "kong-skills",
       "source": {
         "source": "local",
         "path": "./"

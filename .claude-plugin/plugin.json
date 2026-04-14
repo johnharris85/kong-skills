@@ -1,18 +1,22 @@
 {
-  "name": "exa-research-agent-template",
+  "name": "kong-skills",
   "version": "1.0.0",
-  "description": "Shared Exa-powered research skills and remote MCP configuration for Claude Code.",
+  "description": "Portable Kong skills plus remote MCP configuration for Claude Code.",
   "author": {
-    "name": "yourorg"
+    "name": "johnharris85"
   },
   "skills": [
     "../skills/web-search",
-    "../skills/research-assistant"
+    "../skills/research-assistant",
+    "../skills/datakit"
   ],
   "mcpServers": {
-    "exa": {
+    "kong": {
       "type": "url",
-      "url": "https://mcp.exa.ai/mcp"
+      "url": "https://us.mcp.konghq.com",
+      "headers": {
+        "Authorization": "Bearer ${KONG_API_KEY}"
+      }
     }
   }
 }

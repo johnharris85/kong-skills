@@ -1,135 +1,107 @@
-# Exa Research Agent Template
+# Kong Skills
 
-Template repository for distributing portable `SKILL.md` workflows plus remote MCP configuration across Claude Code, Codex, Gemini CLI, Cursor, and any agent that supports `npx skills`.
+Template repository for distributing portable `SKILL.md` workflows plus remote MCP configuration across Claude Code, Codex, Gemini CLI, Cursor, and other agents that support `npx skills`.
 
-It uses Exa's remote MCP endpoint, `https://mcp.exa.ai/mcp`, as the example web research backend.
+This repo now targets Kong's remote MCP endpoint, `https://us.mcp.konghq.com`, and includes bearer-token configuration examples using `KONG_API_KEY`.
 
 ## Quick Start
 
 ### Claude Code
 
-Add this repo as a plugin marketplace, then install the plugin:
-
 ```bash
-/plugin marketplace add yourorg/exa-research-agent-template
-/plugin install exa-research-agent-template@exa-research-agent-template
+/plugin marketplace add johnharris85/kong-skills
+/plugin install kong-skills@kong-skills
 ```
 
 ### Codex
 
-Install from a repo marketplace, or copy the plugin into your local plugins directory. The shared skills can also be installed directly:
-
 ```bash
-npx skills add yourorg/exa-research-agent-template
+npx skills add johnharris85/kong-skills
 ```
 
 ### Gemini CLI
 
-Install the extension from GitHub:
-
 ```bash
-gemini extensions install https://github.com/yourorg/exa-research-agent-template
+gemini extensions install https://github.com/johnharris85/kong-skills
 ```
 
 ### Cursor
 
-Copy [cursor/mcp.json](/home/john/projects/kong-skills/cursor/mcp.json) into `.cursor/mcp.json`, then install the skills:
-
 ```bash
-npx skills add yourorg/exa-research-agent-template
+mkdir -p .cursor
+cp cursor/mcp.json .cursor/mcp.json
+npx skills add johnharris85/kong-skills
 ```
 
 ### Any Other Agent
 
-Install the shared skills:
-
 ```bash
-npx skills add yourorg/exa-research-agent-template
+npx skills add johnharris85/kong-skills
 ```
 
-Then add the Exa MCP server using that agent's native MCP configuration format and the same endpoint URL used in this template.
+Then add the same Kong MCP server from this repo into that agent's native MCP config.
 
 ## Installation
 
 ### Claude Code
 
-This repo includes:
-
-- [`.claude-plugin/plugin.json`](/home/john/projects/kong-skills/.claude-plugin/plugin.json)
-- [`marketplace.json`](/home/john/projects/kong-skills/marketplace.json)
-
-Typical flow:
+Use [`.claude-plugin/plugin.json`](/home/john/projects/kong-skills/.claude-plugin/plugin.json) and [`marketplace.json`](/home/john/projects/kong-skills/marketplace.json):
 
 ```bash
-/plugin marketplace add yourorg/exa-research-agent-template
-/plugin install exa-research-agent-template@exa-research-agent-template
+/plugin marketplace add johnharris85/kong-skills
+/plugin install kong-skills@kong-skills
 ```
-
-The plugin installs both shared skills and the Exa MCP server entry.
 
 ### Codex
 
-This repo includes:
+This repo includes [`.codex-plugin/plugin.json`](/home/john/projects/kong-skills/.codex-plugin/plugin.json), [`.mcp.json`](/home/john/projects/kong-skills/.mcp.json), and [`.agents/plugins/marketplace.json`](/home/john/projects/kong-skills/.agents/plugins/marketplace.json).
 
-- [`.codex-plugin/plugin.json`](/home/john/projects/kong-skills/.codex-plugin/plugin.json)
-- [`.mcp.json`](/home/john/projects/kong-skills/.mcp.json)
-- [`.agents/plugins/marketplace.json`](/home/john/projects/kong-skills/.agents/plugins/marketplace.json)
-
-For skill-only installs:
+For skills only:
 
 ```bash
-npx skills add yourorg/exa-research-agent-template
+npx skills add johnharris85/kong-skills
 ```
-
-For plugin-based installs, publish or copy this repo into a Codex plugin marketplace and keep `.mcp.json` at the plugin root.
 
 ### Gemini CLI
 
-This repo includes:
-
-- [`gemini-extension.json`](/home/john/projects/kong-skills/gemini-extension.json)
-- [`GEMINI.md`](/home/john/projects/kong-skills/GEMINI.md)
-
-Install:
+Use [`gemini-extension.json`](/home/john/projects/kong-skills/gemini-extension.json) and [`GEMINI.md`](/home/john/projects/kong-skills/GEMINI.md):
 
 ```bash
-gemini extensions install https://github.com/yourorg/exa-research-agent-template
+gemini extensions install https://github.com/johnharris85/kong-skills
 ```
 
 ### Cursor
 
-Cursor does not currently have a self-serve plugin manifest for this use case. Use:
-
-- [cursor/mcp.json](/home/john/projects/kong-skills/cursor/mcp.json) as the drop-in MCP snippet
-- `npx skills add yourorg/exa-research-agent-template` for shared skills
-
-Example:
+Use [cursor/mcp.json](/home/john/projects/kong-skills/cursor/mcp.json) as `.cursor/mcp.json`, then install the shared skills:
 
 ```bash
-mkdir -p .cursor
-cp cursor/mcp.json .cursor/mcp.json
-npx skills add yourorg/exa-research-agent-template
+npx skills add johnharris85/kong-skills
 ```
 
 ## Available Skills
 
-- `web-search`: Exa-backed search workflow for finding sources, reading pages, and citing URLs.
-- `research-assistant`: Multi-step research workflow for deeper analysis, source comparison, and synthesis.
+- `web-search`: Current web research workflow using the Kong-hosted MCP endpoint.
+- `research-assistant`: Multi-step research and synthesis workflow with source checking.
+- `datakit`: Kong DataKit design, YAML authoring, debugging, and reference guidance.
 
 ## Configuration
 
-This template intentionally does not include API keys.
+This repo does not include any live credentials.
 
-Exa MCP authentication depends on the client platform. In practice, configure an Exa API key through the platform's normal secret or MCP auth flow and send it to `https://mcp.exa.ai/mcp`.
+Use `KONG_API_KEY` and send it as a bearer token:
 
-Common patterns:
+```text
+Authorization: Bearer ${KONG_API_KEY}
+```
 
-- Claude Code: configure auth when installing or editing the MCP server entry.
-- Codex: configure the MCP server in `.mcp.json` or marketplace install flow and provide credentials through the platform's MCP auth mechanism.
-- Gemini CLI: add a secret during extension install using the `EXA_API_KEY` setting in [`gemini-extension.json`](/home/john/projects/kong-skills/gemini-extension.json).
-- Cursor and other agents: add the MCP server manually and provide the Exa token or header in that client's supported auth format.
+Repo configs that support explicit headers already include that pattern:
 
-If your target platform prefers environment variables, use `EXA_API_KEY`.
+- [`.mcp.json`](/home/john/projects/kong-skills/.mcp.json)
+- [cursor/mcp.json](/home/john/projects/kong-skills/cursor/mcp.json)
+- [`.claude-plugin/plugin.json`](/home/john/projects/kong-skills/.claude-plugin/plugin.json)
+- [`gemini-extension.json`](/home/john/projects/kong-skills/gemini-extension.json)
+
+If a client does not honor header templating in its extension format, use the platform's normal secret or MCP auth flow and keep the same bearer-token shape.
 
 ## Repo Layout
 
@@ -139,8 +111,11 @@ If your target platform prefers environment variables, use `EXA_API_KEY`.
 │   ├── web-search/
 │   │   ├── SKILL.md
 │   │   └── agents/openai.yaml
-│   └── research-assistant/
-│       └── SKILL.md
+│   ├── research-assistant/
+│   │   └── SKILL.md
+│   └── datakit/
+│       ├── SKILL.md
+│       └── references/
 ├── .claude-plugin/plugin.json
 ├── marketplace.json
 ├── .codex-plugin/plugin.json
@@ -153,6 +128,4 @@ If your target platform prefers environment variables, use `EXA_API_KEY`.
 
 ## Contributing
 
-Fork the repo, replace the example branding with your own project name, update the shared skills under `skills/`, and swap the Exa MCP endpoint for your production MCP service if needed.
-
-Keep the root `skills/` directory as the source of truth so every platform wrapper points at the same portable skill definitions.
+Extend the shared skills under `skills/`, keep the platform wrappers pointing at those shared directories, and update the remote MCP endpoint or auth wiring only in the shared platform config files.

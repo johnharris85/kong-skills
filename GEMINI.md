@@ -1,7 +1,7 @@
-# Exa Research Extension
+# Kong Skills Extension
 
-This extension adds a remote Exa MCP server plus shared skills for web search and structured research.
+This extension adds Kong's remote MCP server plus shared skills for web search, structured research, and DataKit guidance.
 
-Use the skills in `skills/web-search` and `skills/research-assistant` for the detailed workflows.
+Use the skills in `skills/web-search`, `skills/research-assistant`, and `skills/datakit` for the detailed workflows.
 
-Prefer Exa for current web research, source discovery, and citation-backed answers.
+Authenticate with `KONG_API_KEY` and send it as `Authorization: Bearer ${KONG_API_KEY}`.

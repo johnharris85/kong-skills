@@ -1,16 +1,19 @@
 {
-  "name": "exa-research-agent-template",
+  "name": "kong-skills",
   "version": "1.0.0",
-  "description": "Shared Exa-powered research skills and remote MCP configuration for Gemini CLI.",
+  "description": "Portable Kong skills plus remote MCP configuration for Gemini CLI.",
   "mcpServers": {
-    "exa": {
-      "url": "https://mcp.exa.ai/mcp"
+    "kong": {
+      "url": "https://us.mcp.konghq.com",
+      "headers": {
+        "Authorization": "Bearer ${KONG_API_KEY}"
+      }
     }
   },
   "settings": {
-    "EXA_API_KEY": {
-      "displayName": "Exa API Key",
-      "description": "API key used to authenticate requests to the Exa MCP server.",
+    "KONG_API_KEY": {
+      "displayName": "Kong MCP API Key",
+      "description": "API key used to authenticate requests to the Kong MCP server.",
       "sensitive": true,
       "required": false
     }
