@@ -122,6 +122,7 @@ Gemini-specific note:
 - Gemini smoke runs in an isolated temporary `HOME` with a precreated `.gemini/extensions` directory so install and cleanup do not touch your real local Gemini state
 - `install --consent` is used instead of `link` because it more closely matches the real user install path and is a better fit for automation
 - `--skip-settings` is used because the smoke test is validating installability, not the interactive settings configuration flow
+- In local testing with Gemini CLI v0.1x, `gemini extensions list` can return exit code `0` but print no entries even after a successful local install into `~/.gemini/extensions/kong-skills`; the smoke suite therefore treats the installed extension directory as the primary success signal and `list` as informational only
 
 ## Release Preparation
 
