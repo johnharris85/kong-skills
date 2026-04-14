@@ -3,14 +3,10 @@
   "owner": {
     "name": "johnharris85"
   },
-  "description": "Claude Code marketplace catalog for Kong skills and remote MCP config.",
-  "version": "1.0.0",
   "plugins": [
     {
       "name": "kong-skills",
       "source": "./",
-      "description": "Portable Kong skills plus Kong MCP setup.",
-      "version": "1.0.0",
       "author": {
         "name": "johnharris85"
       },

@@ -1,15 +1,6 @@
-# Kong Skills
+# Installation
 
-Portable Kong skills plus `kong-konnect` MCP configuration for AI coding harnesses.
-
-## Getting Started
-
-- Installation docs: [docs/install/README.md](/home/john/projects/kong-skills/docs/install/README.md)
-- Available skills: [docs/skills.md](/home/john/projects/kong-skills/docs/skills.md)
-- Developer guide: [docs/developer.md](/home/john/projects/kong-skills/docs/developer.md)
-- Repo structure: [docs/structure.md](/home/john/projects/kong-skills/docs/structure.md)
-
-## Install Targets
+Choose the install path that matches the tool you use.
 
 [![Claude Code](https://img.shields.io/badge/Claude_Code-plugin-111111?style=for-the-badge&logo=anthropic&logoColor=white)](/home/john/projects/kong-skills/docs/install/claude-code.md)
 [![Codex](https://img.shields.io/badge/Codex-plugin-0A0A0A?style=for-the-badge&logo=openai&logoColor=white)](/home/john/projects/kong-skills/docs/install/codex.md)
@@ -19,14 +10,10 @@ Portable Kong skills plus `kong-konnect` MCP configuration for AI coding harness
 [![Goose](https://img.shields.io/badge/Goose-extension-2E6F40?style=for-the-badge&label=%F0%9F%AA%BF%20Goose)](/home/john/projects/kong-skills/docs/install/goose.md)
 [![Other Tools](https://img.shields.io/badge/Other_Tools-skills-555555?style=for-the-badge&logo=vercel&logoColor=white)](/home/john/projects/kong-skills/docs/install/other-tools.md)
 
-## Authentication
+All routes use the same MCP server:
 
-All install surfaces use the same bearer token model:
+- name: `kong-konnect`
+- URL: `https://us.mcp.konghq.com`
+- auth: `Authorization: Bearer ${KONNECT_TOKEN}`
 
-```text
-Authorization: Bearer ${KONNECT_TOKEN}
-```
-
-`KONNECT_TOKEN` is only needed when you install or use the `kong-konnect` MCP server. A skill-only install via `npx skills` does not require it.
-
-Claude Code uses [claude.mcp.json](/home/john/projects/kong-skills/claude.mcp.json) as its MCP reference shape. Codex-compatible tools use [`.mcp.json`](/home/john/projects/kong-skills/.mcp.json).
+`KONNECT_TOKEN` is only required for MCP-backed installs. If you only install the shared skills with `npx skills`, you do not need the token.

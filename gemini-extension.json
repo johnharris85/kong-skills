@@ -10,13 +10,13 @@
       }
     }
   },
-  "settings": {
-    "KONNECT_TOKEN": {
-      "displayName": "Konnect Bearer Token",
+  "settings": [
+    {
+      "name": "Konnect Bearer Token",
       "description": "Bearer token used to authenticate requests to the Kong MCP server.",
-      "sensitive": true,
-      "required": false
+      "envVar": "KONNECT_TOKEN",
+      "sensitive": true
     }
-  },
+  ],
   "contextFileName": "GEMINI.md"
 }

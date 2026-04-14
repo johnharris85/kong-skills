@@ -17,7 +17,18 @@ depends = ["check"]
 description = "Run the same validation used in CI"
 depends = ["check"]
 
+[tasks.smoke]
+description = "Run local smoke tests for supported tools when installed"
+run = "python scripts/smoke.py"
+
+[tasks."release:prepare"]
+description = "Update manifest versions for a release"
+run = "python scripts/release_prepare.py"
+
+[tasks.release]
+description = "Prepare, tag, push, and publish a GitHub release"
+run = "python scripts/release.py"
+
 [tasks."hooks:install"]
 description = "Install repo-local git hooks"
 run = "git config core.hooksPath .githooks"
-

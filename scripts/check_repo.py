@@ -15,10 +15,10 @@ MCP_NAME = "kong-konnect"
 MCP_URL = "https://us.mcp.konghq.com"
 TOKEN_ENV = "KONNECT_TOKEN"
 PLUGIN_NAME = "kong-skills"
-PLUGIN_VERSION = "1.0.0"
 REPO_URL = "https://github.com/johnharris85/kong-skills"
 AVAILABLE_SKILLS_START = "<!-- generated:available-skills:start -->"
 AVAILABLE_SKILLS_END = "<!-- generated:available-skills:end -->"
+SKILLS_DOC = REPO_ROOT / "docs" / "skills.md"
 
 
 @dataclass
@@ -29,7 +29,7 @@ class Skill:
 
     @property
     def rel_path(self) -> str:
-        return f"../skills/{self.dir_name}"
+        return f"./skills/{self.dir_name}"
 
 
 def read_text(path: Path) -> str:
@@ -104,8 +104,8 @@ def expected_available_skills(skills: list[Skill]) -> str:
     return "\n".join(f"- `{skill.name}`: {skill.description}" for skill in skills)
 
 
-def sync_readme(skills: list[Skill]) -> str:
-    path = REPO_ROOT / "README.md"
+def sync_skills_doc(skills: list[Skill]) -> str:
+    path = SKILLS_DOC
     text = read_text(path)
     return replace_generated_section(text, AVAILABLE_SKILLS_START, AVAILABLE_SKILLS_END, expected_available_skills(skills))
 
@@ -114,13 +114,7 @@ def sync_claude_plugin(skills: list[Skill]) -> object:
     path = REPO_ROOT / ".claude-plugin" / "plugin.json"
     data = load_json(path)
     data["skills"] = [skill.rel_path for skill in skills]
-    data["mcpServers"] = {
-        MCP_NAME: {
-            "type": "url",
-            "url": MCP_URL,
-            "headers": {"Authorization": f"Bearer ${{{TOKEN_ENV}}}"},
-        }
-    }
+    data["mcpServers"] = "./claude.mcp.json"
     return data
 
 
@@ -171,14 +165,14 @@ def sync_gemini_extension() -> object:
             "headers": {"Authorization": f"Bearer ${{{TOKEN_ENV}}}"},
         }
     }
-    data["settings"] = {
-        TOKEN_ENV: {
-            "displayName": "Konnect Bearer Token",
+    data["settings"] = [
+        {
+            "name": "Konnect Bearer Token",
             "description": "Bearer token used to authenticate requests to the Kong MCP server.",
+            "envVar": TOKEN_ENV,
             "sensitive": True,
-            "required": False,
         }
-    }
+    ]
     return data
 
 
@@ -196,6 +190,18 @@ def sync_copilot_mcp() -> object:
     }
 
 
+def sync_claude_mcp() -> object:
+    return {
+        "mcpServers": {
+            MCP_NAME: {
+                "type": "http",
+                "url": MCP_URL,
+                "headers": {"Authorization": f"Bearer ${{{TOKEN_ENV}}}"},
+            }
+        }
+    }
+
+
 def validate_static_metadata() -> list[str]:
     errors: list[str] = []
 
@@ -203,13 +209,20 @@ def validate_static_metadata() -> list[str]:
     claude_marketplace = load_json(REPO_ROOT / ".claude-plugin" / "marketplace.json")
     codex_plugin = load_json(REPO_ROOT / ".codex-plugin" / "plugin.json")
     claude_plugin = load_json(REPO_ROOT / ".claude-plugin" / "plugin.json")
+    gemini_extension = load_json(REPO_ROOT / "gemini-extension.json")
 
     if codex_plugin.get("name") != PLUGIN_NAME:
         errors.append(".codex-plugin/plugin.json: unexpected plugin name")
     if claude_plugin.get("name") != PLUGIN_NAME:
         errors.append(".claude-plugin/plugin.json: unexpected plugin name")
-    if codex_plugin.get("version") != PLUGIN_VERSION or claude_plugin.get("version") != PLUGIN_VERSION:
-        errors.append("plugin manifests must keep the same version")
+    expected_versions = {
+        ".codex-plugin/plugin.json": codex_plugin.get("version"),
+        ".claude-plugin/plugin.json": claude_plugin.get("version"),
+        "gemini-extension.json": gemini_extension.get("version"),
+    }
+    versions = {value for value in expected_versions.values()}
+    if len(versions) != 1:
+        errors.append(f"release versions must match across manifests: {expected_versions}")
     if codex_plugin.get("homepage") != REPO_URL or codex_plugin.get("repository") != REPO_URL:
         errors.append(".codex-plugin/plugin.json: homepage/repository drift")
     if claude_marketplace.get("name") != PLUGIN_NAME:
@@ -252,10 +265,13 @@ def validate_no_generic_skills(skills: list[Skill]) -> list[str]:
 def validate_text_files() -> list[str]:
     errors: list[str] = []
     checks: dict[Path, list[str]] = {
-        REPO_ROOT / "copilot" / "README.md": [MCP_NAME, MCP_URL, TOKEN_ENV, "npx skills add johnharris85/kong-skills"],
-        REPO_ROOT / "goose" / "README.md": [MCP_NAME, MCP_URL, TOKEN_ENV, "goose configure"],
+        REPO_ROOT / "docs" / "install" / "github-copilot.md": [MCP_NAME, MCP_URL, TOKEN_ENV, "npx skills add johnharris85/kong-skills"],
+        REPO_ROOT / "docs" / "install" / "goose.md": [MCP_NAME, MCP_URL, TOKEN_ENV, "goose configure"],
         REPO_ROOT / "goose" / "config.yaml": [MCP_NAME, MCP_URL, TOKEN_ENV, "streamable_http"],
-        REPO_ROOT / "cursor" / "README.md": [MCP_NAME, MCP_URL, TOKEN_ENV, "npx skills add johnharris85/kong-skills"],
+        REPO_ROOT / "docs" / "install" / "cursor.md": [MCP_NAME, MCP_URL, TOKEN_ENV, "npx skills add johnharris85/kong-skills"],
+        REPO_ROOT / "docs" / "install" / "claude-code.md": ["Claude Code", "kong-skills", MCP_NAME],
+        REPO_ROOT / "docs" / "install" / "codex.md": ["Codex", "npx skills add johnharris85/kong-skills", MCP_NAME],
+        REPO_ROOT / "docs" / "install" / "gemini-cli.md": ["Gemini CLI", TOKEN_ENV, MCP_NAME],
     }
     for path, snippets in checks.items():
         text = read_text(path)
@@ -288,8 +304,9 @@ def main() -> int:
 
     errors: list[str] = []
 
-    compare_or_write(REPO_ROOT / "README.md", sync_readme(skills), args.fix, errors)
+    compare_or_write(SKILLS_DOC, sync_skills_doc(skills), args.fix, errors)
     compare_or_write(REPO_ROOT / ".claude-plugin" / "plugin.json", dump_json(sync_claude_plugin(skills)), args.fix, errors)
+    compare_or_write(REPO_ROOT / "claude.mcp.json", dump_json(sync_claude_mcp()), args.fix, errors)
     compare_or_write(REPO_ROOT / ".codex-plugin" / "plugin.json", dump_json(sync_codex_plugin(skills)), args.fix, errors)
     compare_or_write(REPO_ROOT / ".mcp.json", dump_json(sync_root_mcp()), args.fix, errors)
     compare_or_write(REPO_ROOT / "cursor" / "mcp.json", dump_json(sync_cursor_mcp()), args.fix, errors)

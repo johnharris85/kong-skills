@@ -12,7 +12,7 @@
     "mcp"
   ],
   "skills": [
-    "../skills/datakit"
+    "./skills/datakit"
   ],
   "mcpServers": [
     "kong-konnect"
