@@ -18,4 +18,4 @@ npx skills add johnharris85/kong-skills
 
 ## Config Files
 
-- MCP config: [cursor/mcp.json](/home/john/projects/kong-skills/cursor/mcp.json)
+- MCP config: [cursor/mcp.json](../../cursor/mcp.json)

@@ -46,4 +46,4 @@ npx skills add johnharris85/kong-skills
 
 If you only use the skill-only path, you do not need `KONNECT_TOKEN`.
 
-If you also want the `kong-konnect` MCP server, add the MCP config from [`.mcp.json`](/home/john/projects/kong-skills/.mcp.json). That is when `KONNECT_TOKEN` is required.
+If you also want the `kong-konnect` MCP server, add the MCP config from [`.mcp.json`](../../.mcp.json). That is when `KONNECT_TOKEN` is required.

@@ -16,8 +16,8 @@ That skill-only install does not require `KONNECT_TOKEN`.
 
 Use one of these as the source of truth for the `kong-konnect` MCP server:
 
-- [`.mcp.json`](/home/john/projects/kong-skills/.mcp.json)
-- [cursor/mcp.json](/home/john/projects/kong-skills/cursor/mcp.json)
-- [`gemini-extension.json`](/home/john/projects/kong-skills/gemini-extension.json)
+- [`.mcp.json`](../../.mcp.json)
+- [cursor/mcp.json](../../cursor/mcp.json)
+- [`gemini-extension.json`](../../gemini-extension.json)
 
 `KONNECT_TOKEN` is only required if you add and use the MCP server.

@@ -44,9 +44,9 @@ mise trust
 
 ## What Sync Updates
 
-- the skill arrays in [`.claude-plugin/plugin.json`](/home/john/projects/kong-skills/.claude-plugin/plugin.json)
-- the skill arrays in [`.codex-plugin/plugin.json`](/home/john/projects/kong-skills/.codex-plugin/plugin.json)
-- the generated skill inventory in [docs/skills.md](/home/john/projects/kong-skills/docs/skills.md)
+- the skill arrays in [`.claude-plugin/plugin.json`](../.claude-plugin/plugin.json)
+- the skill arrays in [`.codex-plugin/plugin.json`](../.codex-plugin/plugin.json)
+- the generated skill inventory in [docs/skills.md](skills.md)
 - the aligned MCP config surfaces
 - the curated Codex plugin keywords and capabilities
 
@@ -63,7 +63,7 @@ mise trust
 - keep shared behavior in `SKILL.md`
 - keep harness-specific packaging out of skills
 
-For authoring guidance on what makes a good skill, see [AGENTS.md](/home/john/projects/kong-skills/AGENTS.md).
+For authoring guidance on what makes a good skill, see [AGENTS.md](../AGENTS.md).
 
 ## Supported Tools
 
@@ -134,9 +134,9 @@ mise run release:prepare -- 1.0.1
 
 That updates the release version across:
 
-- [`.claude-plugin/plugin.json`](/home/john/projects/kong-skills/.claude-plugin/plugin.json)
-- [`.codex-plugin/plugin.json`](/home/john/projects/kong-skills/.codex-plugin/plugin.json)
-- [`gemini-extension.json`](/home/john/projects/kong-skills/gemini-extension.json)
+- [`.claude-plugin/plugin.json`](../.claude-plugin/plugin.json)
+- [`.codex-plugin/plugin.json`](../.codex-plugin/plugin.json)
+- [`gemini-extension.json`](../gemini-extension.json)
 
 After that, run:
 

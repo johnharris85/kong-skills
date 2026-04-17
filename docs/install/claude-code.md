@@ -2,7 +2,7 @@
 
 ![Claude Code](https://img.shields.io/badge/Claude_Code-plugin-111111?style=for-the-badge&logo=anthropic&logoColor=white)
 
-Claude Code uses the plugin manifest in [`.claude-plugin/plugin.json`](/home/john/projects/kong-skills/.claude-plugin/plugin.json) and the marketplace catalog in [`.claude-plugin/marketplace.json`](/home/john/projects/kong-skills/.claude-plugin/marketplace.json).
+Claude Code uses the plugin manifest in [`.claude-plugin/plugin.json`](../../.claude-plugin/plugin.json) and the marketplace catalog in [`.claude-plugin/marketplace.json`](../../.claude-plugin/marketplace.json).
 
 ## Install
 
@@ -26,5 +26,5 @@ npx skills add johnharris85/kong-skills
 
 That does not require `KONNECT_TOKEN`.
 
-If you also want the MCP server without using the plugin wrapper, add the `kong-konnect` server manually using [`.mcp.json`](/home/john/projects/kong-skills/.mcp.json) as the reference shape. That is when `KONNECT_TOKEN` is required.
-If you are configuring Claude directly, use [claude.mcp.json](/home/john/projects/kong-skills/claude.mcp.json) as the Claude-specific MCP reference shape.
+If you also want the MCP server without using the plugin wrapper, add the `kong-konnect` server manually using [`.mcp.json`](../../.mcp.json) as the reference shape. That is when `KONNECT_TOKEN` is required.
+If you are configuring Claude directly, use [claude.mcp.json](../../claude.mcp.json) as the Claude-specific MCP reference shape.

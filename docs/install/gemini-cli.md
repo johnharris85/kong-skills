@@ -2,7 +2,7 @@
 
 ![Gemini CLI](https://img.shields.io/badge/Gemini_CLI-extension-4285F4?style=for-the-badge&logo=googlegemini&logoColor=white)
 
-Gemini CLI uses [`gemini-extension.json`](/home/john/projects/kong-skills/gemini-extension.json) and [`GEMINI.md`](/home/john/projects/kong-skills/GEMINI.md).
+Gemini CLI uses [`gemini-extension.json`](../../gemini-extension.json) and [`GEMINI.md`](../../GEMINI.md).
 
 The extension configures the `kong-konnect` MCP server at `https://us.mcp.konghq.com`.
 
@@ -30,4 +30,4 @@ npx skills add johnharris85/kong-skills
 
 That does not require `KONNECT_TOKEN`.
 
-If you want the MCP server without the full extension wrapper, configure `kong-konnect` manually using [`.mcp.json`](/home/john/projects/kong-skills/.mcp.json) or the server block in [`gemini-extension.json`](/home/john/projects/kong-skills/gemini-extension.json). That is when `KONNECT_TOKEN` is required.
+If you want the MCP server without the full extension wrapper, configure `kong-konnect` manually using [`.mcp.json`](../../.mcp.json) or the server block in [`gemini-extension.json`](../../gemini-extension.json). That is when `KONNECT_TOKEN` is required.

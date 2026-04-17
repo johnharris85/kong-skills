@@ -39,4 +39,4 @@ npx skills add johnharris85/kong-skills
 
 ## Reference Config
 
-- [goose/config.yaml](/home/john/projects/kong-skills/goose/config.yaml)
+- [goose/config.yaml](../../goose/config.yaml)

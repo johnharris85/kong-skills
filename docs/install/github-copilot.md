@@ -8,11 +8,11 @@ The MCP server configured here is `kong-konnect` at `https://us.mcp.konghq.com`.
 
 ## Project-Level MCP
 
-This repo includes [`.github/mcp.json`](/home/john/projects/kong-skills/.github/mcp.json) for Copilot-compatible project setups.
+This repo includes [`.github/mcp.json`](../../.github/mcp.json) for Copilot-compatible project setups.
 
 ## Manual MCP Snippet
 
-Use [copilot/mcp.json](/home/john/projects/kong-skills/copilot/mcp.json) as the reference snippet for manual Copilot configuration.
+Use [copilot/mcp.json](../../copilot/mcp.json) as the reference snippet for manual Copilot configuration.
 
 ## Skills
 
