@@ -2,9 +2,9 @@
   "name": "kong-skills",
   "version": "1.0.0",
   "description": "Portable Kong skills plus remote MCP configuration for Codex.",
-  "author": "johnharris85",
-  "homepage": "https://github.com/johnharris85/kong-skills",
-  "repository": "https://github.com/johnharris85/kong-skills",
+  "author": "kong",
+  "homepage": "https://github.com/kong/skills",
+  "repository": "https://github.com/kong/skills",
   "license": "MIT",
   "keywords": [
     "kong",
@@ -12,7 +12,9 @@
     "mcp"
   ],
   "skills": [
-    "./skills/datakit"
+    "./skills/datakit",
+    "./skills/kongctl-declarative",
+    "./skills/kongctl-query"
   ],
   "mcpServers": [
     "kong-konnect"

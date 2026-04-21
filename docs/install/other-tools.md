@@ -6,11 +6,31 @@ For tools without a first-class plugin or extension wrapper in this repo, use th
 
 ## Skills
 
+`npx skills` and `gh skill` are both supported install paths for the shared skills in this repo.
+
+### `npx skills`
+
 ```bash
-npx skills add johnharris85/kong-skills
+npx skills add kong/skills
 ```
 
-That skill-only install does not require `KONNECT_TOKEN`.
+### `gh skill`
+
+`gh skill` is available in GitHub CLI v2.90.0+ and is currently in public preview.
+
+```bash
+gh skill install kong/skills
+```
+
+If you want to install the single skill in this repo directly, use:
+
+```bash
+gh skill install kong/skills datakit
+```
+
+If `gh skill` does not pick the right host automatically, pass `--agent`.
+
+These skill-only installs do not require `KONNECT_TOKEN`.
 
 ## MCP Config Reference
 

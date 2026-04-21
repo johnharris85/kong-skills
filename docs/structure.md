@@ -32,7 +32,3 @@ This file maps the downstream-consumed install/config surfaces in this repo.
 ## Cursor
 
 - `cursor/mcp.json`
-
-## Goose
-
-- `goose/config.yaml`

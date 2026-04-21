@@ -7,7 +7,7 @@ Claude Code uses the plugin manifest in [`.claude-plugin/plugin.json`](../../.cl
 ## Install
 
 ```bash
-/plugin marketplace add johnharris85/kong-skills
+/plugin marketplace add kong/skills
 /plugin install kong-skills@kong-skills
 ```
 
@@ -21,7 +21,7 @@ Claude Code uses the plugin manifest in [`.claude-plugin/plugin.json`](../../.cl
 Skill-only install:
 
 ```bash
-npx skills add johnharris85/kong-skills
+npx skills add kong/skills
 ```
 
 That does not require `KONNECT_TOKEN`.

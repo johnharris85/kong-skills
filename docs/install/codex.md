@@ -11,7 +11,7 @@ Codex can use this repo in two ways:
 
 ```bash
 mkdir -p ~/plugins ~/.agents/plugins
-git clone git@github.com:johnharris85/kong-skills.git ~/plugins/kong-skills
+git clone git@github.com:kong/skills.git ~/plugins/kong-skills
 cat > ~/.agents/plugins/marketplace.json <<'EOF'
 {
   "name": "personal-marketplace",
@@ -41,7 +41,7 @@ Then install `kong-skills` from your personal marketplace in Codex.
 ## Skill-Only Path
 
 ```bash
-npx skills add johnharris85/kong-skills
+npx skills add kong/skills
 ```
 
 If you only use the skill-only path, you do not need `KONNECT_TOKEN`.

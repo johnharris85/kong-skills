@@ -9,7 +9,7 @@ The extension configures the `kong-konnect` MCP server at `https://us.mcp.konghq
 ## Install
 
 ```bash
-gemini extensions install https://github.com/johnharris85/kong-skills
+gemini extensions install https://github.com/kong/skills
 ```
 
 ## Authentication
@@ -25,7 +25,7 @@ Authorization: Bearer ${KONNECT_TOKEN}
 Skill-only install:
 
 ```bash
-npx skills add johnharris85/kong-skills
+npx skills add kong/skills
 ```
 
 That does not require `KONNECT_TOKEN`.

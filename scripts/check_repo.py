@@ -8,6 +8,8 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+import yaml
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SKILLS_DIR = REPO_ROOT / "skills"
@@ -15,7 +17,7 @@ MCP_NAME = "kong-konnect"
 MCP_URL = "https://us.mcp.konghq.com"
 TOKEN_ENV = "KONNECT_TOKEN"
 PLUGIN_NAME = "kong-skills"
-REPO_URL = "https://github.com/johnharris85/kong-skills"
+REPO_URL = "https://github.com/kong/skills"
 AVAILABLE_SKILLS_START = "<!-- generated:available-skills:start -->"
 AVAILABLE_SKILLS_END = "<!-- generated:available-skills:end -->"
 SKILLS_DOC = REPO_ROOT / "docs" / "skills.md"
@@ -26,6 +28,9 @@ class Skill:
     dir_name: str
     name: str
     description: str
+    product: str
+    category: str
+    tags: list[str]
 
     @property
     def rel_path(self) -> str:
@@ -48,7 +53,7 @@ def dump_json(data: object) -> str:
     return json.dumps(data, indent=2, ensure_ascii=True) + "\n"
 
 
-def parse_frontmatter(path: Path) -> dict[str, str]:
+def parse_frontmatter(path: Path) -> dict[str, object]:
     text = read_text(path)
     if not text.startswith("---\n"):
         raise ValueError(f"{path}: missing YAML frontmatter start")
@@ -59,15 +64,14 @@ def parse_frontmatter(path: Path) -> dict[str, str]:
     except ValueError as exc:
         raise ValueError(f"{path}: malformed YAML frontmatter") from exc
 
-    result: dict[str, str] = {}
-    for line in raw_frontmatter.splitlines():
-        if not line.strip():
-            continue
-        if ":" not in line:
-            raise ValueError(f"{path}: invalid frontmatter line: {line!r}")
-        key, value = line.split(":", 1)
-        result[key.strip()] = value.strip().strip('"').strip("'")
-    return result
+    try:
+        parsed = yaml.safe_load(raw_frontmatter)
+    except yaml.YAMLError as exc:
+        raise ValueError(f"{path}: invalid YAML frontmatter") from exc
+
+    if not isinstance(parsed, dict):
+        raise ValueError(f"{path}: frontmatter must be a YAML mapping")
+    return parsed
 
 
 def discover_skills() -> list[Skill]:
@@ -84,11 +88,37 @@ def discover_skills() -> list[Skill]:
         frontmatter = parse_frontmatter(skill_md)
         name = frontmatter.get("name")
         description = frontmatter.get("description")
-        if not name or not description:
+        if not isinstance(name, str) or not isinstance(description, str) or not name.strip() or not description.strip():
             raise ValueError(f"{skill_md}: frontmatter requires name and description")
         if name != entry.name:
             raise ValueError(f"{skill_md}: frontmatter name {name!r} must match directory {entry.name!r}")
-        skills.append(Skill(dir_name=entry.name, name=name, description=description))
+
+        metadata = frontmatter.get("metadata")
+        if not isinstance(metadata, dict):
+            raise ValueError(f"{skill_md}: frontmatter requires metadata mapping")
+
+        product = metadata.get("product")
+        category = metadata.get("category")
+        tags = metadata.get("tags")
+        if not isinstance(product, str) or not product.strip():
+            raise ValueError(f"{skill_md}: metadata.product must be a non-empty string")
+        if not isinstance(category, str) or not category.strip():
+            raise ValueError(f"{skill_md}: metadata.category must be a non-empty string")
+        if not isinstance(tags, list) or not tags:
+            raise ValueError(f"{skill_md}: metadata.tags must be a non-empty list")
+        if not all(isinstance(tag, str) and tag.strip() for tag in tags):
+            raise ValueError(f"{skill_md}: metadata.tags entries must be non-empty strings")
+
+        skills.append(
+            Skill(
+                dir_name=entry.name,
+                name=name.strip(),
+                description=description.strip(),
+                product=product.strip(),
+                category=category.strip(),
+                tags=[tag.strip() for tag in tags],
+            )
+        )
     return skills
 
 
@@ -265,13 +295,12 @@ def validate_no_generic_skills(skills: list[Skill]) -> list[str]:
 def validate_text_files() -> list[str]:
     errors: list[str] = []
     checks: dict[Path, list[str]] = {
-        REPO_ROOT / "docs" / "install" / "github-copilot.md": [MCP_NAME, MCP_URL, TOKEN_ENV, "npx skills add johnharris85/kong-skills"],
-        REPO_ROOT / "docs" / "install" / "goose.md": [MCP_NAME, MCP_URL, TOKEN_ENV, "goose configure"],
-        REPO_ROOT / "goose" / "config.yaml": [MCP_NAME, MCP_URL, TOKEN_ENV, "streamable_http"],
-        REPO_ROOT / "docs" / "install" / "cursor.md": [MCP_NAME, MCP_URL, TOKEN_ENV, "npx skills add johnharris85/kong-skills"],
+        REPO_ROOT / "docs" / "install" / "github-copilot.md": [MCP_NAME, MCP_URL, TOKEN_ENV, "npx skills add kong/skills"],
+        REPO_ROOT / "docs" / "install" / "cursor.md": [MCP_NAME, MCP_URL, TOKEN_ENV, "npx skills add kong/skills"],
         REPO_ROOT / "docs" / "install" / "claude-code.md": ["Claude Code", "kong-skills", MCP_NAME],
-        REPO_ROOT / "docs" / "install" / "codex.md": ["Codex", "npx skills add johnharris85/kong-skills", MCP_NAME],
+        REPO_ROOT / "docs" / "install" / "codex.md": ["Codex", "npx skills add kong/skills", MCP_NAME],
         REPO_ROOT / "docs" / "install" / "gemini-cli.md": ["Gemini CLI", TOKEN_ENV, MCP_NAME],
+        REPO_ROOT / "docs" / "install" / "other-tools.md": ["gh skill install kong/skills", "npx skills add kong/skills", MCP_NAME],
     }
     for path, snippets in checks.items():
         text = read_text(path)

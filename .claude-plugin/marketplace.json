@@ -1,14 +1,14 @@
 {
   "name": "kong-skills",
   "owner": {
-    "name": "johnharris85"
+    "name": "kong"
   },
   "plugins": [
     {
       "name": "kong-skills",
       "source": "./",
       "author": {
-        "name": "johnharris85"
+        "name": "kong"
       },
       "keywords": [
         "kong",

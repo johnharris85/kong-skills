@@ -65,8 +65,22 @@ Each skill should start with frontmatter:
 ---
 name: skill-name
 description: One-line description used for discovery and matching.
+metadata:
+  product: product-name
+  category: workflow-category
+  tags:
+    - kong
+    - example-tag
 ---
 ```
+
+Use those five fields consistently in this repo:
+
+- `name`
+- `description`
+- `metadata.product`
+- `metadata.category`
+- `metadata.tags`
 
 After that, write for agent behavior, not human browsing.
 

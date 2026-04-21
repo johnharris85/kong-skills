@@ -7,7 +7,6 @@ Choose the install path that matches the tool you use.
 [![Gemini CLI](https://img.shields.io/badge/Gemini_CLI-extension-4285F4?style=for-the-badge&logo=googlegemini&logoColor=white)](./gemini-cli.md)
 [![Cursor](https://img.shields.io/badge/Cursor-mcp-222222?style=for-the-badge&logo=cursor&logoColor=white)](./cursor.md)
 [![GitHub Copilot](https://img.shields.io/badge/GitHub_Copilot-mcp-24292F?style=for-the-badge&logo=githubcopilot&logoColor=white)](./github-copilot.md)
-[![Goose](https://img.shields.io/badge/Goose-extension-2E6F40?style=for-the-badge&label=%F0%9F%AA%BF%20Goose)](./goose.md)
 [![Other Tools](https://img.shields.io/badge/Other_Tools-skills-555555?style=for-the-badge&logo=vercel&logoColor=white)](./other-tools.md)
 
 All routes use the same MCP server:
@@ -16,4 +15,4 @@ All routes use the same MCP server:
 - URL: `https://us.mcp.konghq.com`
 - auth: `Authorization: Bearer ${KONNECT_TOKEN}`
 
-`KONNECT_TOKEN` is only required for MCP-backed installs. If you only install the shared skills with `npx skills`, you do not need the token.
+`KONNECT_TOKEN` is only required for MCP-backed installs. If you only install the shared skills with `npx skills` or `gh skill`, you do not need the token.

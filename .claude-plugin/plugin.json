@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "description": "Portable Kong skills plus remote MCP configuration for Claude Code.",
   "author": {
-    "name": "johnharris85"
+    "name": "kong"
   },
   "skills": [
-    "./skills/datakit"
+    "./skills/datakit",
+    "./skills/kongctl-declarative",
+    "./skills/kongctl-query"
   ],
   "mcpServers": "./claude.mcp.json"
 }

@@ -17,7 +17,7 @@ Use [copilot/mcp.json](../../copilot/mcp.json) as the reference snippet for manu
 ## Skills
 
 ```bash
-npx skills add johnharris85/kong-skills
+npx skills add kong/skills
 ```
 
 `KONNECT_TOKEN` is only needed if you also enable the `kong-konnect` MCP server for Copilot.

@@ -11,7 +11,7 @@ The MCP server configured here is `kong-konnect` at `https://us.mcp.konghq.com`.
 ```bash
 mkdir -p .cursor
 cp cursor/mcp.json .cursor/mcp.json
-npx skills add johnharris85/kong-skills
+npx skills add kong/skills
 ```
 
 `KONNECT_TOKEN` is only used by the MCP server config. If you only install the shared skills, it is not needed.

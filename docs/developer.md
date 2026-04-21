@@ -4,7 +4,8 @@ This repo keeps authoring simple:
 
 1. add or update a skill under `skills/`
 2. sync generated metadata
-3. run validation
+3. run repo validation
+4. do manual spot checks only for the install surfaces you changed
 
 ## Add A Skill
 
@@ -18,6 +19,12 @@ Start with:
 ---
 name: your-skill-name
 description: One-line description used for discovery and matching.
+metadata:
+  product: product-name
+  category: workflow-category
+  tags:
+    - kong
+    - example-tag
 ---
 ```
 
@@ -31,7 +38,6 @@ If a skill needs an explicit Codex MCP dependency, add:
 mise run sync
 mise run check
 mise run ci
-mise run smoke
 mise run release:prepare -- 1.0.1
 mise run release -- 1.0.1
 ```
@@ -72,57 +78,18 @@ For authoring guidance on what makes a good skill, see [AGENTS.md](../AGENTS.md)
 - Gemini CLI: https://geminicli.com/docs/
 - Cursor: https://docs.cursor.com/
 - GitHub Copilot: https://docs.github.com/en/copilot
-- Goose: https://block.github.io/goose/docs/
+- GitHub CLI `gh skill`: https://cli.github.com/
 - `npx skills`: https://github.com/vercel-labs/skills
 
-## Smoke Tests
+## Manual Verification
 
-Use:
+This repo intentionally keeps automated testing narrow.
 
-```bash
-mise run smoke
-```
+- Keep CI on `mise run check`.
+- Use manual verification when you change install docs, plugin manifests, or MCP config surfaces.
+- Prefer scratch projects and disposable user profiles over repo-managed install automation.
 
-The smoke runner is intentionally verbose. It logs:
-
-- tool detection
-- each smoke case as it starts
-- each external command it runs
-- the working directory and timeout for that command
-- the exit code or timeout result
-
-The smoke suite is gated on tool availability and currently covers:
-
-- repo validation
-- MCP config surface alignment
-- `npx skills add` from a local path into a temporary project
-- Claude local marketplace add and plugin install through direct CLI commands when `claude` is installed
-- Codex personal marketplace projection into a temporary home when `codex` is installed
-- Codex personal marketplace projection into your real home, with the marketplace file restored after the test
-- Gemini extension validate, install, list, and uninstall from a local path when `gemini` is installed
-
-Claude-specific note:
-
-- the chat slash commands do not need to be automated for smoke testing
-- Claude Code also supports direct CLI commands like `claude plugin marketplace add ...` and `claude plugin install ...`
-- Claude docs also support `claude --plugin-dir <path>` for local plugin development
-
-That means Claude can be tested from the CLI without scripting the chat UI.
-
-Codex-specific note:
-
-- Codex does not currently expose as clean a plugin install CLI as Claude
-- the smoke suite therefore tests the personal marketplace file path that Codex would consume in your real home directory
-- it restores the marketplace file after the test finishes
-
-Gemini-specific note:
-
-- Gemini CLI does support local extension workflows directly
-- the smoke suite uses `gemini extensions validate`, `gemini extensions install <path> --consent --skip-settings`, `gemini extensions list`, and `gemini extensions uninstall`
-- Gemini smoke runs in an isolated temporary `HOME` with a precreated `.gemini/extensions` directory so install and cleanup do not touch your real local Gemini state
-- `install --consent` is used instead of `link` because it more closely matches the real user install path and is a better fit for automation
-- `--skip-settings` is used because the smoke test is validating installability, not the interactive settings configuration flow
-- In local testing with Gemini CLI v0.1x, `gemini extensions list` can return exit code `0` but print no entries even after a successful local install into `~/.gemini/extensions/kong-skills`; the smoke suite therefore treats the installed extension directory as the primary success signal and `list` as informational only
+See [docs/testing.md](testing.md) for the lightweight verification checklist per supported tool.
 
 ## Release Preparation
 
