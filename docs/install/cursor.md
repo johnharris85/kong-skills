@@ -10,7 +10,7 @@ The MCP server configured here is `kong-konnect` at `https://us.mcp.konghq.com`.
 
 ```bash
 mkdir -p .cursor
-cp cursor/mcp.json .cursor/mcp.json
+cp cursor-mcp.json .cursor/mcp.json
 npx skills add kong/skills
 ```
 
@@ -18,4 +18,4 @@ npx skills add kong/skills
 
 ## Config Files
 
-- MCP config: [cursor/mcp.json](../../cursor/mcp.json)
+- MCP config: [cursor-mcp.json](../../cursor-mcp.json)

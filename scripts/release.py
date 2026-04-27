@@ -9,6 +9,17 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
+GENERATED_TARGETS = [
+    ".claude-plugin/marketplace.json",
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    ".mcp.json",
+    "claude.mcp.json",
+    "copilot-mcp.json",
+    "cursor-mcp.json",
+    "docs/skills.md",
+    "gemini-extension.json",
+]
 
 
 def run(*args: str) -> None:
@@ -43,13 +54,7 @@ def main() -> int:
 
     run("python", "scripts/release_prepare.py", version)
     run("python", "scripts/check_repo.py")
-    run(
-        "git",
-        "add",
-        ".claude-plugin/plugin.json",
-        ".codex-plugin/plugin.json",
-        "gemini-extension.json",
-    )
+    run("git", "add", *GENERATED_TARGETS)
     run("git", "commit", "-m", f"Release {tag}")
     run("git", "tag", "-a", tag, "-m", tag)
     run("git", "push", "origin", "main")

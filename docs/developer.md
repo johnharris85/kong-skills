@@ -32,6 +32,14 @@ If a skill needs an explicit Codex MCP dependency, add:
 
 - `skills/<skill-name>/agents/openai.yaml`
 
+Optional companion directories are supported:
+
+- `skills/<skill-name>/references/`
+- `skills/<skill-name>/assets/`
+- `skills/<skill-name>/scripts/`
+
+Keep `SKILL.md` as the only file at the skill root. Companion content should stay lightweight, non-hidden, non-executable, and easy to review.
+
 ## Sync And Validate
 
 ```bash
@@ -51,16 +59,18 @@ mise trust
 ## What Sync Updates
 
 - the skill arrays in [`.claude-plugin/plugin.json`](../.claude-plugin/plugin.json)
+- the Claude marketplace keywords in [`.claude-plugin/marketplace.json`](../.claude-plugin/marketplace.json)
 - the skill arrays in [`.codex-plugin/plugin.json`](../.codex-plugin/plugin.json)
+- the generated Codex plugin keywords and capabilities
 - the generated skill inventory in [docs/skills.md](skills.md)
 - the aligned MCP config surfaces
-- the curated Codex plugin keywords and capabilities
 
 ## What Stays Manual
 
 - explanatory docs
 - marketplace positioning text
 - harness-specific install prose
+- decisions about whether a skill needs `references/`, `assets/`, or `scripts/`
 
 ## Conventions
 

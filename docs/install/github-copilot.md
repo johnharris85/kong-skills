@@ -2,17 +2,22 @@
 
 ![GitHub Copilot](https://img.shields.io/badge/GitHub_Copilot-mcp-24292F?style=for-the-badge&logo=githubcopilot&logoColor=white)
 
-GitHub Copilot can use the project-level MCP config or a copied manual snippet.
+GitHub Copilot can use the manual MCP snippet plus the shared skills install.
 
 The MCP server configured here is `kong-konnect` at `https://us.mcp.konghq.com`.
 
-## Project-Level MCP
-
-This repo includes [`.github/mcp.json`](../../.github/mcp.json) for Copilot-compatible project setups.
-
 ## Manual MCP Snippet
 
-Use [copilot/mcp.json](../../copilot/mcp.json) as the reference snippet for manual Copilot configuration.
+For workspace-level MCP configuration in VS Code and GitHub Copilot Chat:
+
+```bash
+mkdir -p .vscode
+cp copilot-mcp.json .vscode/mcp.json
+```
+
+Use [copilot-mcp.json](../../copilot-mcp.json) as the checked-in reference snippet. Adjust it if your local Copilot setup needs additional servers or settings.
+
+This repo does not automate GitHub.com coding-agent MCP settings. Treat `copilot-mcp.json` as the IDE/workspace config shape.
 
 ## Skills
 

@@ -44,6 +44,16 @@ Then install `kong-skills` from your personal marketplace in Codex.
 npx skills add kong/skills
 ```
 
+Install only one skill from this repo:
+
+```bash
+npx skills add kong/skills --skill datakit
+```
+
 If you only use the skill-only path, you do not need `KONNECT_TOKEN`.
+
+If you installed via `gh skill`, you can also update one installed skill with `gh skill update datakit`.
+
+Codex does not currently have a documented SessionStart-style startup hook equivalent in the official docs I checked, so this repo does not document automatic `npx skills update` hooks for Codex.
 
 If you also want the `kong-konnect` MCP server, add the MCP config from [`.mcp.json`](../../.mcp.json). That is when `KONNECT_TOKEN` is required.

@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import stat
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -21,6 +22,29 @@ REPO_URL = "https://github.com/kong/skills"
 AVAILABLE_SKILLS_START = "<!-- generated:available-skills:start -->"
 AVAILABLE_SKILLS_END = "<!-- generated:available-skills:end -->"
 SKILLS_DOC = REPO_ROOT / "docs" / "skills.md"
+ALLOWED_SKILL_ROOT_FILES = {"SKILL.md"}
+ALLOWED_SKILL_DIRS = {"references", "assets", "scripts", "agents"}
+ALLOWED_AGENT_FILES = {Path("agents/openai.yaml")}
+MAX_COMPANION_FILE_BYTES = 1_000_000
+TEXT_FILE_EXTENSIONS = {
+    ".json",
+    ".js",
+    ".md",
+    ".py",
+    ".sh",
+    ".text",
+    ".toml",
+    ".ts",
+    ".txt",
+    ".yaml",
+    ".yml",
+}
+SECRET_PATTERNS = [
+    re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----"),
+    re.compile(r"\bghp_[A-Za-z0-9]{20,}\b"),
+    re.compile(r"\bgithub_pat_[A-Za-z0-9_]{20,}\b"),
+    re.compile(r"\bsk-[A-Za-z0-9]{20,}\b"),
+]
 
 
 @dataclass
@@ -51,6 +75,37 @@ def load_json(path: Path) -> object:
 
 def dump_json(data: object) -> str:
     return json.dumps(data, indent=2, ensure_ascii=True) + "\n"
+
+
+def ordered_unique(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    result: list[str] = []
+    for value in values:
+        if value in seen:
+            continue
+        seen.add(value)
+        result.append(value)
+    return result
+
+
+def normalize_term(value: str) -> str:
+    return re.sub(r"[^a-z0-9-]+", "-", value.strip().lower()).strip("-")
+
+
+def derived_keywords(skills: list[Skill]) -> list[str]:
+    values = ["kong", "skills", "mcp"]
+    for skill in skills:
+        values.extend([skill.name, skill.product, skill.category])
+        values.extend(skill.tags)
+    return ordered_unique([term for term in (normalize_term(value) for value in values) if term])
+
+
+def derived_capabilities(skills: list[Skill]) -> list[str]:
+    values = ["kong"]
+    for skill in skills:
+        values.extend([skill.product, skill.category])
+        values.extend(skill.tags)
+    return ordered_unique([term for term in (normalize_term(value) for value in values) if term])
 
 
 def parse_frontmatter(path: Path) -> dict[str, object]:
@@ -148,20 +203,26 @@ def sync_claude_plugin(skills: list[Skill]) -> object:
     return data
 
 
+def sync_claude_marketplace(skills: list[Skill]) -> object:
+    path = REPO_ROOT / ".claude-plugin" / "marketplace.json"
+    data = load_json(path)
+    plugins = data.get("plugins")
+    if not isinstance(plugins, list) or not plugins:
+        raise ValueError(".claude-plugin/marketplace.json: plugins list is missing")
+    plugin = plugins[0]
+    if not isinstance(plugin, dict):
+        raise ValueError(".claude-plugin/marketplace.json: first plugin entry is invalid")
+    plugin["keywords"] = derived_keywords(skills)
+    return data
+
+
 def sync_codex_plugin(skills: list[Skill]) -> object:
     path = REPO_ROOT / ".codex-plugin" / "plugin.json"
     data = load_json(path)
-    data["keywords"] = [
-        "kong",
-        "datakit",
-        "mcp",
-    ]
+    data["keywords"] = derived_keywords(skills)
     data["skills"] = [skill.rel_path for skill in skills]
     data["mcpServers"] = [MCP_NAME]
-    data["interface"]["capabilities"] = [
-        "kong",
-        "datakit",
-    ]
+    data["interface"]["capabilities"] = derived_capabilities(skills)
     return data
 
 
@@ -283,6 +344,65 @@ def validate_openai_yaml(skills: list[Skill]) -> list[str]:
     return errors
 
 
+def validate_skill_contents(skills: list[Skill]) -> list[str]:
+    errors: list[str] = []
+    for skill in skills:
+        skill_dir = SKILLS_DIR / skill.dir_name
+
+        for entry in sorted(skill_dir.iterdir()):
+            if entry.name.startswith("."):
+                errors.append(f"{entry.relative_to(REPO_ROOT)}: hidden files and directories are not allowed in skill packages")
+                continue
+            if entry.is_symlink():
+                errors.append(f"{entry.relative_to(REPO_ROOT)}: symlinks are not allowed in skill packages")
+                continue
+            if entry.is_file() and entry.name not in ALLOWED_SKILL_ROOT_FILES:
+                errors.append(
+                    f"{entry.relative_to(REPO_ROOT)}: unexpected root file; keep only SKILL.md at skill root"
+                )
+                continue
+            if entry.is_dir() and entry.name not in ALLOWED_SKILL_DIRS:
+                errors.append(
+                    f"{entry.relative_to(REPO_ROOT)}: unexpected directory; allowed companion directories are agents/, assets/, references/, scripts/"
+                )
+                continue
+
+        for path in sorted(skill_dir.rglob("*")):
+            if path == skill_dir:
+                continue
+            rel_path = path.relative_to(skill_dir)
+            top_level = rel_path.parts[0]
+
+            if path.name.startswith("."):
+                errors.append(f"{path.relative_to(REPO_ROOT)}: hidden files and directories are not allowed in skill packages")
+                continue
+            if path.is_symlink():
+                errors.append(f"{path.relative_to(REPO_ROOT)}: symlinks are not allowed in skill packages")
+                continue
+            if path.is_dir():
+                continue
+
+            if top_level == "agents" and rel_path not in ALLOWED_AGENT_FILES:
+                errors.append(f"{path.relative_to(REPO_ROOT)}: only agents/openai.yaml is allowed under agents/")
+
+            if path.stat().st_size > MAX_COMPANION_FILE_BYTES:
+                errors.append(
+                    f"{path.relative_to(REPO_ROOT)}: file is too large for a skill package ({path.stat().st_size} bytes > {MAX_COMPANION_FILE_BYTES})"
+                )
+
+            if path != skill_dir / "SKILL.md" and path.stat().st_mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH):
+                errors.append(f"{path.relative_to(REPO_ROOT)}: executable files are not allowed in skill packages")
+
+            if path.suffix.lower() in TEXT_FILE_EXTENSIONS or path.name == "SKILL.md":
+                text = read_text(path)
+                for pattern in SECRET_PATTERNS:
+                    if pattern.search(text):
+                        errors.append(f"{path.relative_to(REPO_ROOT)}: possible secret material matched {pattern.pattern!r}")
+                        break
+
+    return errors
+
+
 def validate_no_generic_skills(skills: list[Skill]) -> list[str]:
     errors: list[str] = []
     forbidden = {"web-search", "research-assistant"}
@@ -295,12 +415,17 @@ def validate_no_generic_skills(skills: list[Skill]) -> list[str]:
 def validate_text_files() -> list[str]:
     errors: list[str] = []
     checks: dict[Path, list[str]] = {
-        REPO_ROOT / "docs" / "install" / "github-copilot.md": [MCP_NAME, MCP_URL, TOKEN_ENV, "npx skills add kong/skills"],
+        REPO_ROOT / "README.md": ["docs/install/README.md", "npx skills add kong/skills --skill datakit", "supply-chain or security risk"],
+        REPO_ROOT / "docs" / "install" / "README.md": [MCP_NAME, MCP_URL, TOKEN_ENV, "gh skill"],
+        REPO_ROOT / "docs" / "install" / "github-copilot.md": [MCP_NAME, MCP_URL, TOKEN_ENV, ".vscode/mcp.json", "npx skills add kong/skills"],
         REPO_ROOT / "docs" / "install" / "cursor.md": [MCP_NAME, MCP_URL, TOKEN_ENV, "npx skills add kong/skills"],
         REPO_ROOT / "docs" / "install" / "claude-code.md": ["Claude Code", "kong-skills", MCP_NAME],
         REPO_ROOT / "docs" / "install" / "codex.md": ["Codex", "npx skills add kong/skills", MCP_NAME],
         REPO_ROOT / "docs" / "install" / "gemini-cli.md": ["Gemini CLI", TOKEN_ENV, MCP_NAME],
         REPO_ROOT / "docs" / "install" / "other-tools.md": ["gh skill install kong/skills", "npx skills add kong/skills", MCP_NAME],
+        REPO_ROOT / "docs" / "structure.md": ["reference snippets", "copilot-mcp.json", "cursor-mcp.json"],
+        REPO_ROOT / "docs" / "developer.md": ["assets/", "references/", "scripts/", "mise run sync"],
+        REPO_ROOT / "AGENTS.md": ["assets/", "references/", "scripts/", "agents/openai.yaml"],
     }
     for path, snippets in checks.items():
         text = read_text(path)
@@ -334,17 +459,18 @@ def main() -> int:
     errors: list[str] = []
 
     compare_or_write(SKILLS_DOC, sync_skills_doc(skills), args.fix, errors)
+    compare_or_write(REPO_ROOT / ".claude-plugin" / "marketplace.json", dump_json(sync_claude_marketplace(skills)), args.fix, errors)
     compare_or_write(REPO_ROOT / ".claude-plugin" / "plugin.json", dump_json(sync_claude_plugin(skills)), args.fix, errors)
     compare_or_write(REPO_ROOT / "claude.mcp.json", dump_json(sync_claude_mcp()), args.fix, errors)
     compare_or_write(REPO_ROOT / ".codex-plugin" / "plugin.json", dump_json(sync_codex_plugin(skills)), args.fix, errors)
     compare_or_write(REPO_ROOT / ".mcp.json", dump_json(sync_root_mcp()), args.fix, errors)
-    compare_or_write(REPO_ROOT / "cursor" / "mcp.json", dump_json(sync_cursor_mcp()), args.fix, errors)
+    compare_or_write(REPO_ROOT / "cursor-mcp.json", dump_json(sync_cursor_mcp()), args.fix, errors)
     compare_or_write(REPO_ROOT / "gemini-extension.json", dump_json(sync_gemini_extension()), args.fix, errors)
-    compare_or_write(REPO_ROOT / ".github" / "mcp.json", dump_json(sync_copilot_mcp()), args.fix, errors)
-    compare_or_write(REPO_ROOT / "copilot" / "mcp.json", dump_json(sync_copilot_mcp()), args.fix, errors)
+    compare_or_write(REPO_ROOT / "copilot-mcp.json", dump_json(sync_copilot_mcp()), args.fix, errors)
 
     errors.extend(validate_static_metadata())
     errors.extend(validate_openai_yaml(skills))
+    errors.extend(validate_skill_contents(skills))
     errors.extend(validate_no_generic_skills(skills))
     errors.extend(validate_text_files())
 

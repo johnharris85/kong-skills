@@ -5,6 +5,10 @@ python = "3.12"
 description = "Sync generated repo metadata and skill listings"
 run = "python scripts/check_repo.py --fix"
 
+[tasks.generate]
+description = "Alias for sync"
+depends = ["sync"]
+
 [tasks.check]
 description = "Validate manifests, skills, and generated content"
 run = "python scripts/check_repo.py"

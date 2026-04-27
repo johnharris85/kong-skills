@@ -82,6 +82,21 @@ Use those five fields consistently in this repo:
 - `metadata.category`
 - `metadata.tags`
 
+Optional companion directories are allowed when they support the skill:
+
+- `references/` for supporting reference material
+- `assets/` for lightweight images or other bundled assets
+- `scripts/` for helper scripts an agent may inspect or run explicitly
+- `agents/` only for `agents/openai.yaml` when a Codex MCP dependency is truly required
+
+Keep the package shape simple:
+
+- keep `SKILL.md` as the only file at the skill root
+- do not add hidden files or directories
+- do not add symlinks
+- do not add executable files
+- keep companion files lightweight and reviewable
+
 After that, write for agent behavior, not human browsing.
 
 Useful sections usually look like:

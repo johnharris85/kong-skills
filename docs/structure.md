@@ -1,6 +1,6 @@
 # Structure
 
-This file maps the downstream-consumed install/config surfaces in this repo.
+This file maps the install/config surfaces generated or maintained in this repo, including manual reference snippets.
 
 ## Shared Skills
 
@@ -26,9 +26,10 @@ This file maps the downstream-consumed install/config surfaces in this repo.
 
 ## GitHub Copilot
 
-- `.github/mcp.json`
-- `copilot/mcp.json`
+- `copilot-mcp.json`
+  - Manual reference snippet for workspace MCP config such as `.vscode/mcp.json`
 
 ## Cursor
 
-- `cursor/mcp.json`
+- `cursor-mcp.json`
+  - Manual reference snippet for `.cursor/mcp.json`

@@ -8,8 +8,19 @@
   "license": "MIT",
   "keywords": [
     "kong",
+    "skills",
+    "mcp",
     "datakit",
-    "mcp"
+    "orchestration",
+    "gateway",
+    "kongctl-declarative",
+    "kongctl",
+    "declarative",
+    "konnect",
+    "apiops",
+    "kongctl-query",
+    "query",
+    "read-only"
   ],
   "skills": [
     "./skills/datakit",
@@ -25,7 +36,15 @@
     "category": "development",
     "capabilities": [
       "kong",
-      "datakit"
+      "datakit",
+      "orchestration",
+      "gateway",
+      "kongctl",
+      "declarative",
+      "konnect",
+      "apiops",
+      "query",
+      "read-only"
     ]
   }
 }

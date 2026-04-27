@@ -67,7 +67,7 @@ This repo favors lightweight checks over tool-driven install automation.
 ### GitHub Copilot
 
 - Install path: [docs/install/github-copilot.md](./install/github-copilot.md)
-- Verify after install: the MCP config is present and the shared skill install completes
+- Verify after install: `.vscode/mcp.json` is present and the shared skill install completes
 - MCP check: confirm the session can see `kong-konnect`
 - Quick prompt: `What task category should trigger the datakit skill?`
 - Cleanup: remove the copied MCP config and installed skill from the scratch project

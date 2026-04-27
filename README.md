@@ -29,4 +29,12 @@ Authorization: Bearer ${KONNECT_TOKEN}
 
 `KONNECT_TOKEN` is only needed when you install or use the `kong-konnect` MCP server. A skill-only install via `npx skills` or `gh skill` does not require it.
 
+## Skill Install Notes
+
+- Install the whole repo with `npx skills add kong/skills`.
+- Install one skill with `npx skills add kong/skills --skill datakit`.
+- Update one installed skill with `npx skills update -g -y datakit` or `gh skill update datakit`.
+- Claude Code and Gemini CLI both support startup hooks that can auto-update installed skills. See the per-tool install docs for examples.
+- Be careful with startup auto-update hooks: they can pull newer skill instructions automatically at session start and may introduce supply-chain or security risk.
+
 Claude Code uses [claude.mcp.json](claude.mcp.json) as its MCP reference shape. Codex-compatible tools use [`.mcp.json`](.mcp.json).
