@@ -8,6 +8,20 @@ This repo favors lightweight checks over tool-driven install automation.
 2. If you changed install docs, plugin manifests, or MCP config surfaces, manually verify only the affected tools.
 3. Use a scratch project or disposable user profile when a tool writes local state.
 
+## Trigger Harness
+
+For routing-only regression checks, use the Codex proxy harness described in [docs/trigger-harness.md](./trigger-harness.md).
+
+Useful commands:
+
+- `mise run trigger:spike`
+- `mise run trigger:list`
+- `mise run trigger:test`
+- `mise run trigger:test -- --skill datakit`
+- `mise run trigger:test -- --dry-run`
+
+The trigger harness uses synthetic mini-skills and only checks whether a prompt appears to route to a skill. It does not test the real skill body.
+
 ## Shared Skill Installers
 
 ### `npx skills`
@@ -80,3 +94,4 @@ You do not need to manually verify every tool for every change.
 - Tool-specific manifest or install doc: verify only that tool.
 - Shared MCP config changes: verify one plugin-style path and one skill-plus-MCP path.
 - Release prep: run `mise run check` and spot-check the tools affected by the release.
+- Trigger tuning: run `mise run trigger:test` for the affected skill before doing broader manual checks.

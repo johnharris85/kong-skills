@@ -1,0 +1,8 @@
+skill: kongctl-declarative
+positive_prompts:
+  - Generate kongctl declarative config from this OpenAPI spec and show me the diff/apply workflow.
+  - How do I adopt an existing Konnect portal into declarative management with kongctl?
+negative_prompts:
+  - Use read-only kongctl commands to verify auth and list control planes.
+  - Build a Kong DataKit flow that transforms XML into JSON before proxying upstream.
+notes: Trigger prompts focus on mutating or plan-based declarative workflows.

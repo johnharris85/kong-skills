@@ -1,0 +1,8 @@
+skill: kongctl-query
+positive_prompts:
+  - Use read-only kongctl commands to list Konnect portals and return JSON.
+  - How can I verify kongctl auth and fetch organization details without making any changes?
+negative_prompts:
+  - Apply this kongctl declarative config to Konnect and sync any missing resources.
+  - Debug a DataKit flow that short-circuits with an exit node.
+notes: Trigger prompts focus on inspection and auth checks with explicit read-only intent.

@@ -1,0 +1,8 @@
+skill: datakit
+positive_prompts:
+  - Help me build a Kong DataKit flow that calls two APIs and merges their JSON responses.
+  - Debug this DataKit YAML with jq transforms, branch logic, and cache nodes.
+negative_prompts:
+  - Use read-only kongctl commands to list Konnect portals as JSON.
+  - Create declarative kongctl config from an OpenAPI spec and apply it to Konnect.
+notes: Trigger prompts focus on DataKit flow design and debugging rather than general API work.

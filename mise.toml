@@ -13,6 +13,18 @@ depends = ["sync"]
 description = "Validate manifests, skills, and generated content"
 run = "python scripts/check_repo.py"
 
+[tasks."trigger:spike"]
+description = "Report local trigger-harness proxy capabilities"
+run = "python scripts/trigger_harness.py spike"
+
+[tasks."trigger:list"]
+description = "List trigger fixtures"
+run = "python scripts/trigger_harness.py list-fixtures"
+
+[tasks."trigger:test"]
+description = "Run trigger fixtures against the Codex proxy harness"
+run = "python scripts/trigger_harness.py run"
+
 [tasks.lint]
 description = "Alias for check"
 depends = ["check"]

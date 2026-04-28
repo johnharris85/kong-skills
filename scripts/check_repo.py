@@ -14,6 +14,7 @@ import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SKILLS_DIR = REPO_ROOT / "skills"
+TRIGGER_FIXTURES_DIR = REPO_ROOT / "tests" / "trigger-fixtures"
 MCP_NAME = "kong-konnect"
 MCP_URL = "https://us.mcp.konghq.com"
 TOKEN_ENV = "KONNECT_TOKEN"
@@ -412,10 +413,57 @@ def validate_no_generic_skills(skills: list[Skill]) -> list[str]:
     return errors
 
 
+def validate_trigger_fixtures(skills: list[Skill]) -> list[str]:
+    errors: list[str] = []
+    if not TRIGGER_FIXTURES_DIR.exists():
+        return ["tests/trigger-fixtures: directory is missing"]
+
+    expected_names = {skill.name for skill in skills}
+    seen_names: set[str] = set()
+
+    for path in sorted(TRIGGER_FIXTURES_DIR.glob("*.yaml")):
+        try:
+            data = yaml.safe_load(read_text(path))
+        except yaml.YAMLError as exc:
+            errors.append(f"{path.relative_to(REPO_ROOT)}: invalid YAML ({exc})")
+            continue
+        if not isinstance(data, dict):
+            errors.append(f"{path.relative_to(REPO_ROOT)}: fixture must be a YAML mapping")
+            continue
+
+        skill_name = data.get("skill")
+        positive = data.get("positive_prompts")
+        negative = data.get("negative_prompts")
+        notes = data.get("notes")
+
+        if not isinstance(skill_name, str) or not skill_name.strip():
+            errors.append(f"{path.relative_to(REPO_ROOT)}: skill must be a non-empty string")
+            continue
+        skill_name = skill_name.strip()
+        seen_names.add(skill_name)
+
+        if path.stem != skill_name:
+            errors.append(f"{path.relative_to(REPO_ROOT)}: filename must match skill {skill_name!r}")
+        if skill_name not in expected_names:
+            errors.append(f"{path.relative_to(REPO_ROOT)}: unknown skill {skill_name!r}")
+
+        if not isinstance(positive, list) or not positive or not all(isinstance(item, str) and item.strip() for item in positive):
+            errors.append(f"{path.relative_to(REPO_ROOT)}: positive_prompts must be a non-empty list of strings")
+        if not isinstance(negative, list) or not negative or not all(isinstance(item, str) and item.strip() for item in negative):
+            errors.append(f"{path.relative_to(REPO_ROOT)}: negative_prompts must be a non-empty list of strings")
+        if notes is not None and not isinstance(notes, str):
+            errors.append(f"{path.relative_to(REPO_ROOT)}: notes must be a string when present")
+
+    missing = expected_names.difference(seen_names)
+    for skill_name in sorted(missing):
+        errors.append(f"tests/trigger-fixtures/{skill_name}.yaml: missing trigger fixture for skill {skill_name!r}")
+    return errors
+
+
 def validate_text_files() -> list[str]:
     errors: list[str] = []
     checks: dict[Path, list[str]] = {
-        REPO_ROOT / "README.md": ["docs/install/README.md", "npx skills add kong/skills --skill datakit", "supply-chain or security risk"],
+        REPO_ROOT / "README.md": ["docs/install/README.md", "npx skills add kong/skills --skill datakit", "supply-chain or security risk", "docs/trigger-harness.md"],
         REPO_ROOT / "docs" / "install" / "README.md": [MCP_NAME, MCP_URL, TOKEN_ENV, "gh skill"],
         REPO_ROOT / "docs" / "install" / "github-copilot.md": [MCP_NAME, MCP_URL, TOKEN_ENV, ".vscode/mcp.json", "npx skills add kong/skills"],
         REPO_ROOT / "docs" / "install" / "cursor.md": [MCP_NAME, MCP_URL, TOKEN_ENV, "npx skills add kong/skills"],
@@ -424,7 +472,9 @@ def validate_text_files() -> list[str]:
         REPO_ROOT / "docs" / "install" / "gemini-cli.md": ["Gemini CLI", TOKEN_ENV, MCP_NAME],
         REPO_ROOT / "docs" / "install" / "other-tools.md": ["gh skill install kong/skills", "npx skills add kong/skills", MCP_NAME],
         REPO_ROOT / "docs" / "structure.md": ["reference snippets", "copilot-mcp.json", "cursor-mcp.json"],
-        REPO_ROOT / "docs" / "developer.md": ["assets/", "references/", "scripts/", "mise run sync"],
+        REPO_ROOT / "docs" / "developer.md": ["assets/", "references/", "scripts/", "mise run sync", "trigger:test"],
+        REPO_ROOT / "docs" / "testing.md": ["trigger:spike", "trigger:test", "docs/trigger-harness.md"],
+        REPO_ROOT / "docs" / "trigger-harness.md": ["CODEX_HOME/skills", "NO_SKILL", "trigger:spike"],
         REPO_ROOT / "AGENTS.md": ["assets/", "references/", "scripts/", "agents/openai.yaml"],
     }
     for path, snippets in checks.items():
@@ -471,6 +521,7 @@ def main() -> int:
     errors.extend(validate_static_metadata())
     errors.extend(validate_openai_yaml(skills))
     errors.extend(validate_skill_contents(skills))
+    errors.extend(validate_trigger_fixtures(skills))
     errors.extend(validate_no_generic_skills(skills))
     errors.extend(validate_text_files())
 

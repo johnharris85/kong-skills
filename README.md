@@ -8,6 +8,7 @@ Portable Kong skills plus `kong-konnect` MCP configuration for AI coding harness
 - Available skills: [docs/skills.md](docs/skills.md)
 - Developer guide: [docs/developer.md](docs/developer.md)
 - Testing guide: [docs/testing.md](docs/testing.md)
+- Trigger harness: [docs/trigger-harness.md](docs/trigger-harness.md)
 - Repo structure: [docs/structure.md](docs/structure.md)
 
 ## Install Targets

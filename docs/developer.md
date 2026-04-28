@@ -5,7 +5,8 @@ This repo keeps authoring simple:
 1. add or update a skill under `skills/`
 2. sync generated metadata
 3. run repo validation
-4. do manual spot checks only for the install surfaces you changed
+4. run optional trigger checks when you change routing-sensitive descriptions
+5. do manual spot checks only for the install surfaces you changed
 
 ## Add A Skill
 
@@ -45,6 +46,7 @@ Keep `SKILL.md` as the only file at the skill root. Companion content should sta
 ```bash
 mise run sync
 mise run check
+mise run trigger:test -- --skill your-skill-name --dry-run
 mise run ci
 mise run release:prepare -- 1.0.1
 mise run release -- 1.0.1
@@ -71,6 +73,7 @@ mise trust
 - marketplace positioning text
 - harness-specific install prose
 - decisions about whether a skill needs `references/`, `assets/`, or `scripts/`
+- decisions about which prompts belong in the trigger fixtures
 
 ## Conventions
 
@@ -100,6 +103,8 @@ This repo intentionally keeps automated testing narrow.
 - Prefer scratch projects and disposable user profiles over repo-managed install automation.
 
 See [docs/testing.md](testing.md) for the lightweight verification checklist per supported tool.
+
+For routing-only checks, see [docs/trigger-harness.md](trigger-harness.md).
 
 ## Release Preparation
 

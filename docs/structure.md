@@ -6,6 +6,8 @@ This file maps the install/config surfaces generated or maintained in this repo,
 
 - `skills/`
   - Canonical shared skills used by `npx skills` and plugin installs that bundle shared skills.
+- `tests/trigger-fixtures/`
+  - Prompt fixtures used by the synthetic mini-skill trigger harness.
 
 ## Claude Code
 
