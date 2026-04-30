@@ -2,12 +2,16 @@
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 import textwrap
+import threading
+import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Literal
@@ -20,8 +24,12 @@ SKILLS_DIR = REPO_ROOT / "skills"
 FIXTURES_DIR = REPO_ROOT / "tests" / "trigger-fixtures"
 RUNTIME_ROOT = REPO_ROOT / ".tmp" / "trigger-harness"
 NO_SKILL_SENTINEL = "NO_SKILL"
-DEFAULT_HARNESS = "codex"
 AUTH_FILES = ("auth.json", "installation_id", "version.json")
+PROGRESS_LOCK = threading.Lock()
+ANSI_RESET = "\033[0m"
+ANSI_RED = "\033[31m"
+ANSI_GREEN = "\033[32m"
+ANSI_YELLOW = "\033[33m"
 
 
 @dataclass
@@ -66,6 +74,7 @@ class ProbeResult:
     stderr_tail: str | None
     stdout_tail: str | None
     temp_root: str | None
+    duration_seconds: float | None
 
 
 def read_text(path: Path) -> str:
@@ -149,6 +158,27 @@ def marker_for_skill(skill_name: str) -> str:
     return f"TRIGGER::{normalized}"
 
 
+def codex_plugin_name() -> str:
+    plugin_path = REPO_ROOT / ".codex-plugin" / "plugin.json"
+    try:
+        data = json.loads(read_text(plugin_path))
+    except (OSError, json.JSONDecodeError, KeyError):
+        return "kong-skills"
+    name = data.get("name")
+    if isinstance(name, str) and name.strip():
+        return name.strip()
+    return "kong-skills"
+
+
+def expected_trigger_outputs(skill_name: str, marker: str) -> set[str]:
+    plugin_name = codex_plugin_name()
+    return {
+        marker,
+        skill_name,
+        f"{plugin_name}:{skill_name}",
+    }
+
+
 def build_probe_cases(fixtures: list[TriggerFixture]) -> list[ProbeCase]:
     cases: list[ProbeCase] = []
     for fixture in fixtures:
@@ -219,6 +249,10 @@ def ensure_dir(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
 
 
+def cleanup_temp_root(path: Path) -> None:
+    shutil.rmtree(path, ignore_errors=True)
+
+
 def copy_codex_auth(dest_codex_home: Path) -> list[str]:
     source_codex_home = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex")).expanduser()
     copied: list[str] = []
@@ -269,8 +303,82 @@ def command_tail(text: str, max_lines: int = 12) -> str | None:
     return "\n".join(lines[-max_lines:])
 
 
-def run_codex_case(case: ProbeCase, timeout_seconds: int, dry_run: bool) -> ProbeResult:
+def classify_output(case: ProbeCase, output: str, returncode: int | None) -> str:
+    normalized = output.strip()
+    if returncode not in (0, None) and not normalized:
+        return "error"
+    if normalized in expected_trigger_outputs(case.fixture, case.marker):
+        return "triggered"
+    if normalized == NO_SKILL_SENTINEL:
+        return "not_triggered"
+    return "indeterminate"
+
+
+def format_duration(seconds: float | None) -> str:
+    if seconds is None:
+        return "n/a"
+    return f"{seconds:.1f}s"
+
+
+def progress_bar(completed: int, total: int, width: int = 24) -> str:
+    if total <= 0:
+        return "[" + ("-" * width) + "]"
+    filled = int(width * completed / total)
+    filled = max(0, min(width, filled))
+    return "[" + ("#" * filled) + ("-" * (width - filled)) + "]"
+
+
+def emit_progress(enabled: bool, message: str) -> None:
+    if not enabled:
+        return
+    with PROGRESS_LOCK:
+        print(message, file=sys.stderr, flush=True)
+
+
+def colorize(text: str, color: str, enabled: bool) -> str:
+    if not enabled:
+        return text
+    return f"{color}{text}{ANSI_RESET}"
+
+
+def format_progress_status(status: str, use_color: bool) -> str:
+    color = None
+    if status in {"PASS"}:
+        color = ANSI_GREEN
+    elif status in {"FAIL", "TIMEOUT", "ERROR"}:
+        color = ANSI_RED
+    elif status in {"DRY-RUN", "START", "RUNNING"}:
+        color = ANSI_YELLOW
+    return colorize(status, color, use_color) if color else status
+
+
+def progress_tty() -> bool:
+    return sys.stderr.isatty()
+
+
+def format_progress_event(event: str, **fields: object) -> str:
+    parts = [f"event={event}"]
+    for key, value in fields.items():
+        if value is None:
+            continue
+        text = str(value)
+        escaped = text.replace("\\", "\\\\").replace('"', '\\"')
+        parts.append(f'{key}="{escaped}"')
+    return " ".join(parts)
+
+
+def run_codex_case(
+    case: ProbeCase,
+    timeout_seconds: int,
+    dry_run: bool,
+    keep_temp: bool,
+    progress_enabled: bool,
+    progress_interval_seconds: int,
+    case_index: int,
+    total_cases: int,
+) -> ProbeResult:
     skill = load_skill_metadata(case.fixture)
+    start_time = time.monotonic()
     temp_root, codex_home, workspace = build_codex_runtime(case, skill, copy_auth=not dry_run)
     output_path = temp_root / "last-message.txt"
 
@@ -290,8 +398,22 @@ def run_codex_case(case: ProbeCase, timeout_seconds: int, dry_run: bool) -> Prob
     env = os.environ.copy()
     env["CODEX_HOME"] = str(codex_home)
 
+    label = f"{case.fixture} {case.kind}"
+    emit_progress(
+        progress_enabled,
+        format_progress_event(
+            "case_start",
+            status=format_progress_status("START", progress_tty()),
+            case=f"{case_index}/{total_cases}",
+            skill=case.fixture,
+            kind=case.kind,
+            expected=case.expected,
+            timeout_seconds=timeout_seconds,
+        ),
+    )
+
     if dry_run:
-        return ProbeResult(
+        result = ProbeResult(
             fixture=case.fixture,
             kind=case.kind,
             prompt=case.prompt,
@@ -305,48 +427,107 @@ def run_codex_case(case: ProbeCase, timeout_seconds: int, dry_run: bool) -> Prob
             returncode=None,
             stderr_tail=None,
             stdout_tail=None,
-            temp_root=str(temp_root),
+            temp_root=str(temp_root) if keep_temp else None,
+            duration_seconds=time.monotonic() - start_time,
         )
+        if not keep_temp:
+            cleanup_temp_root(temp_root)
+        return result
 
     try:
-        completed = subprocess.run(
+        process = subprocess.Popen(
             command,
             cwd=REPO_ROOT,
             env=env,
             text=True,
-            capture_output=True,
-            timeout=timeout_seconds,
-            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
-    except subprocess.TimeoutExpired as exc:
-        return ProbeResult(
+    except OSError as exc:
+        result = ProbeResult(
             fixture=case.fixture,
             kind=case.kind,
             prompt=case.prompt,
             expected=case.expected,
-            actual="timeout",
+            actual="error",
             passed=False,
             harness="codex",
             command=command,
             marker=case.marker,
             output="",
             returncode=None,
-            stderr_tail=command_tail(exc.stderr or ""),
-            stdout_tail=command_tail(exc.stdout or ""),
-            temp_root=str(temp_root),
+            stderr_tail=str(exc),
+            stdout_tail=None,
+            temp_root=str(temp_root) if keep_temp else None,
+            duration_seconds=time.monotonic() - start_time,
         )
+        if not keep_temp:
+            cleanup_temp_root(temp_root)
+        return result
+
+    next_heartbeat_seconds = progress_interval_seconds
+    while True:
+        returncode = process.poll()
+        elapsed = time.monotonic() - start_time
+        if returncode is not None:
+            break
+        if elapsed >= timeout_seconds:
+            process.kill()
+            stdout, stderr = process.communicate()
+            emit_progress(
+                progress_enabled,
+                format_progress_event(
+                    "case_timeout",
+                    status=format_progress_status("TIMEOUT", progress_tty()),
+                    case=f"{case_index}/{total_cases}",
+                    skill=case.fixture,
+                    kind=case.kind,
+                    duration=format_duration(elapsed),
+                ),
+            )
+            result = ProbeResult(
+                fixture=case.fixture,
+                kind=case.kind,
+                prompt=case.prompt,
+                expected=case.expected,
+                actual="timeout",
+                passed=False,
+                harness="codex",
+                command=command,
+                marker=case.marker,
+                output="",
+                returncode=None,
+                stderr_tail=command_tail(stderr or ""),
+                stdout_tail=command_tail(stdout or ""),
+                temp_root=str(temp_root) if keep_temp else None,
+                duration_seconds=elapsed,
+            )
+            if not keep_temp:
+                cleanup_temp_root(temp_root)
+            return result
+        if progress_interval_seconds > 0 and elapsed >= next_heartbeat_seconds:
+            emit_progress(
+                progress_enabled,
+                format_progress_event(
+                    "case_running",
+                    status=format_progress_status("RUNNING", progress_tty()),
+                    case=f"{case_index}/{total_cases}",
+                    skill=case.fixture,
+                    kind=case.kind,
+                    elapsed=format_duration(elapsed),
+                    timeout_seconds=timeout_seconds,
+                ),
+            )
+            next_heartbeat_seconds += progress_interval_seconds
+        time.sleep(1)
+
+    stdout, stderr = process.communicate()
 
     output = output_path.read_text(encoding="utf-8").strip() if output_path.exists() else ""
-    if completed.returncode != 0 and not output:
-        actual = "error"
-    elif output == case.marker:
-        actual = "triggered"
-    elif output == NO_SKILL_SENTINEL:
-        actual = "not_triggered"
-    else:
-        actual = "indeterminate"
+    elapsed = time.monotonic() - start_time
+    actual = classify_output(case, output, process.returncode)
 
-    return ProbeResult(
+    result = ProbeResult(
         fixture=case.fixture,
         kind=case.kind,
         prompt=case.prompt,
@@ -357,79 +538,83 @@ def run_codex_case(case: ProbeCase, timeout_seconds: int, dry_run: bool) -> Prob
         command=command,
         marker=case.marker,
         output=output,
-        returncode=completed.returncode,
-        stderr_tail=command_tail(completed.stderr),
-        stdout_tail=command_tail(completed.stdout),
-        temp_root=str(temp_root),
+        returncode=process.returncode,
+        stderr_tail=command_tail(stderr),
+        stdout_tail=command_tail(stdout),
+        temp_root=str(temp_root) if keep_temp else None,
+        duration_seconds=elapsed,
+    )
+    if not keep_temp:
+        cleanup_temp_root(temp_root)
+    return result
+
+
+def run_probe_cases(
+    cases: list[ProbeCase],
+    timeout_seconds: int,
+    dry_run: bool,
+    keep_temp: bool,
+    progress_enabled: bool,
+    progress_interval_seconds: int,
+    jobs: int,
+) -> list[ProbeResult]:
+    total_cases = len(cases)
+    if total_cases == 0:
+        return []
+
+    worker_count = max(1, min(jobs, total_cases))
+    emit_progress(
+        progress_enabled,
+        format_progress_event(
+            "run_start",
+            status=format_progress_status("START", progress_tty()),
+            total_cases=total_cases,
+            jobs=worker_count,
+        ),
     )
 
+    indexed_results: list[ProbeResult | None] = [None] * total_cases
+    completed_count = 0
 
-def run_probe_cases(cases: list[ProbeCase], timeout_seconds: int, dry_run: bool) -> list[ProbeResult]:
-    results: list[ProbeResult] = []
-    for case in cases:
-        results.append(run_codex_case(case, timeout_seconds=timeout_seconds, dry_run=dry_run))
-    return results
-
-
-def codex_support_report() -> dict[str, object]:
-    codex_path = shutil.which("codex")
-    if not codex_path:
-        return {
-            "available": False,
-            "reason": "codex binary not found in PATH",
+    with concurrent.futures.ThreadPoolExecutor(max_workers=worker_count) as executor:
+        future_to_index = {
+            executor.submit(
+                run_codex_case,
+                case,
+                timeout_seconds,
+                dry_run,
+                keep_temp,
+                progress_enabled,
+                progress_interval_seconds,
+                index,
+                total_cases,
+            ): index - 1
+            for index, case in enumerate(cases, start=1)
         }
+        for future in concurrent.futures.as_completed(future_to_index):
+            result_index = future_to_index[future]
+            result = future.result()
+            indexed_results[result_index] = result
+            completed_count += 1
+            case = cases[result_index]
+            bar = progress_bar(completed_count, total_cases)
+            verdict = "DRY-RUN" if result.actual == "dry-run" else ("PASS" if result.passed else "FAIL")
+            emit_progress(
+                progress_enabled,
+                format_progress_event(
+                    "case_done",
+                    progress=bar,
+                    status=format_progress_status(verdict, progress_tty()),
+                    completed=f"{completed_count}/{total_cases}",
+                    skill=case.fixture,
+                    kind=case.kind,
+                    expected=result.expected,
+                    actual=result.actual,
+                    duration=format_duration(result.duration_seconds),
+                ),
+            )
 
-    help_output = subprocess.run(
-        ["codex", "exec", "--help"],
-        cwd=REPO_ROOT,
-        text=True,
-        capture_output=True,
-        check=False,
-    )
-    stdout = help_output.stdout
-    source_codex_home = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex")).expanduser()
-
-    return {
-        "available": True,
-        "path": codex_path,
-        "supports_json": "--json" in stdout,
-        "supports_output_last_message": "--output-last-message" in stdout or "-o, --output-last-message" in stdout,
-        "supports_ephemeral": "--ephemeral" in stdout,
-        "supports_ignore_user_config": "--ignore-user-config" in stdout,
-        "auth_source": str(source_codex_home),
-        "auth_present": (source_codex_home / "auth.json").exists() or bool(os.environ.get("OPENAI_API_KEY")),
-        "skills_home": "$CODEX_HOME/skills",
-        "selection_reason": "Codex provides a writable isolated skills home plus non-interactive JSON output.",
-    }
-
-
-def claude_support_report() -> dict[str, object]:
-    claude_path = shutil.which("claude")
-    if not claude_path:
-        return {
-            "available": False,
-            "reason": "claude binary not found in PATH",
-        }
-
-    help_output = subprocess.run(
-        ["claude", "--help"],
-        cwd=REPO_ROOT,
-        text=True,
-        capture_output=True,
-        check=False,
-    )
-    stdout = help_output.stdout
-    claude_home = Path.home() / ".claude"
-
-    return {
-        "available": True,
-        "path": claude_path,
-        "supports_print": "--print" in stdout or "-p, --print" in stdout,
-        "supports_output_format_json": "--output-format <format>" in stdout,
-        "supports_plugin_dir": "--plugin-dir <path>" in stdout,
-        "credentials_present": (claude_home / ".credentials.json").exists(),
-        "note": "Claude remains a candidate for future comparison, but Codex is the default proxy harness.",
-    }
+    return [result for result in indexed_results if result is not None]
 
 
 def summarize_results(results: list[ProbeResult]) -> dict[str, int]:
@@ -456,24 +641,33 @@ def summarize_results(results: list[ProbeResult]) -> dict[str, int]:
 
 
 def print_text_results(results: list[ProbeResult]) -> None:
+    use_color = sys.stdout.isatty()
+    if results and all(result.actual == "dry-run" for result in results):
+        print(colorize(f"Dry-run planned {len(results)} cases", ANSI_YELLOW, use_color))
+        print(json.dumps({"summary": summarize_results(results)}, indent=2))
+        return
+
+    failures: list[ProbeResult] = []
     for result in results:
+        if result.actual != "dry-run" and result.passed:
+            continue
+        failures.append(result)
+
+    if failures:
+        print(f"Detailed failures: {len(failures)}")
+    else:
+        print(colorize("All cases passed", ANSI_GREEN, use_color))
+
+    for result in failures:
         if result.actual == "dry-run":
-            verdict = "DRY-RUN"
+            verdict = colorize("DRY-RUN", ANSI_YELLOW, use_color)
         else:
-            verdict = "PASS" if result.passed else "FAIL"
-        print(f"[{verdict}] {result.fixture} {result.kind}: expected={result.expected} actual={result.actual}")
+            verdict = colorize("PASS", ANSI_GREEN, use_color) if result.passed else colorize("FAIL", ANSI_RED, use_color)
+        print(f"[{verdict}] {result.fixture} {result.kind}")
+        print(f"  expected: {result.expected}")
+        print(f"  result: {result.actual}")
         print(f"  prompt: {result.prompt}")
-        if result.output:
-            print(f"  output: {result.output}")
-        if result.stderr_tail:
-            print("  stderr tail:")
-            print(textwrap.indent(result.stderr_tail, "    "))
-        if result.stdout_tail:
-            print("  stdout tail:")
-            print(textwrap.indent(result.stdout_tail, "    "))
-        if result.temp_root:
-            print(f"  temp root: {result.temp_root}")
-        print(f"  command: {' '.join(result.command)}")
+        print(f"  llm output: {result.output if result.output else '<empty>'}")
 
     print(json.dumps({"summary": summarize_results(results)}, indent=2))
 
@@ -483,32 +677,26 @@ def list_fixtures() -> None:
     payload = [asdict(fixture) for fixture in fixtures]
     print(json.dumps(payload, indent=2))
 
-
-def run_spike(as_json: bool) -> int:
-    payload = {
-        "selected_proxy_harness": DEFAULT_HARNESS,
-        "codex": codex_support_report(),
-        "claude": claude_support_report(),
-    }
-    if as_json:
-        print(json.dumps(payload, indent=2))
-    else:
-        print(json.dumps(payload, indent=2))
-    return 0
-
-
 def run_command(args: argparse.Namespace) -> int:
     fixtures = load_fixtures(selected_skill=args.skill)
     cases = build_probe_cases(fixtures)
     if args.limit is not None:
         cases = cases[: args.limit]
-    results = run_probe_cases(cases, timeout_seconds=args.timeout_seconds, dry_run=args.dry_run)
+    results = run_probe_cases(
+        cases,
+        timeout_seconds=args.timeout_seconds,
+        dry_run=args.dry_run,
+        keep_temp=args.keep_temp,
+        progress_enabled=not args.no_progress,
+        progress_interval_seconds=args.progress_interval_seconds,
+        jobs=args.jobs,
+    )
 
     if args.json:
         print(
             json.dumps(
                 {
-                    "harness": DEFAULT_HARNESS,
+                    "harness": "codex",
                     "results": [asdict(result) for result in results],
                     "summary": summarize_results(results),
                 },
@@ -530,15 +718,20 @@ def build_parser() -> argparse.ArgumentParser:
     list_parser = subparsers.add_parser("list-fixtures", help="List available trigger fixtures.")
     list_parser.set_defaults(handler=lambda _args: list_fixtures() or 0)
 
-    spike_parser = subparsers.add_parser("spike", help="Report local CLI capabilities for the proxy harness decision.")
-    spike_parser.add_argument("--json", action="store_true", help="Print the spike report as JSON.")
-    spike_parser.set_defaults(handler=lambda ns: run_spike(as_json=ns.json))
-
     run_parser = subparsers.add_parser("run", help="Run trigger fixtures with the default proxy harness.")
     run_parser.add_argument("--skill", help="Run only one skill fixture by name.")
     run_parser.add_argument("--limit", type=int, help="Run only the first N cases after filtering.")
     run_parser.add_argument("--dry-run", action="store_true", help="Build the runtime plan without executing Codex.")
+    run_parser.add_argument("--keep-temp", action="store_true", help="Preserve temporary CODEX_HOME and workspace directories for debugging.")
     run_parser.add_argument("--json", action="store_true", help="Print results as JSON.")
+    run_parser.add_argument("--jobs", type=int, default=3, help="Run up to N probe cases in parallel.")
+    run_parser.add_argument("--no-progress", action="store_true", help="Disable live progress reports on stderr.")
+    run_parser.add_argument(
+        "--progress-interval-seconds",
+        type=int,
+        default=10,
+        help="Emit a still-running progress heartbeat every N seconds while a case is in flight.",
+    )
     run_parser.add_argument("--timeout-seconds", type=int, default=90, help="Per-case Codex timeout in seconds.")
     run_parser.set_defaults(handler=run_command)
     return parser

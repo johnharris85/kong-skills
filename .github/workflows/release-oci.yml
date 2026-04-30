@@ -1,0 +1,138 @@
+name: Release OCI Skills Artifact
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Semver version to release, without the leading v
+        required: true
+
+env:
+  ECR_ACCOUNT_ID: "910202568813"
+  ECR_SINGLE_REGISTRY: 910202568813.dkr.ecr.us-east-2.amazonaws.com/${{ github.event.repository.name }}
+  ECR_SINGLE_ROLE: arn:aws:iam::910202568813:role/ecr-github-kong-konnect-${{ github.event.repository.name }}
+  ECR_PULL_ROLE: arn:aws:iam::910202568813:role/konnect-base-images-github-actions-pull
+
+jobs:
+  validate:
+    name: Validate Release Input
+    runs-on: ubuntu-latest-kong
+    timeout-minutes: ${{ fromJSON(vars.GHA_DEFAULT_TIMEOUT) }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          fetch-depth: 0
+
+      - uses: jdx/mise-action@v2
+
+      - name: Validate repo
+        run: mise run ci
+
+      - name: Validate version format
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if ! printf '%s' "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Version must be semver like 1.2.3" >&2
+            exit 1
+          fi
+
+      - name: Verify tag does not already exist
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          TAG="v$VERSION"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag already exists locally: $TAG" >&2
+            exit 1
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            echo "Tag already exists on origin: $TAG" >&2
+            exit 1
+          fi
+
+  publish-oci:
+    name: Publish OCI Skills Artifact
+    needs: [validate]
+    runs-on: ubuntu-latest-arm64-kong
+    timeout-minutes: 30
+    environment: dev
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        id: kong-app-token
+        with:
+          app-id: ${{ vars.KONG_GH_APP_READ_ID }}
+          private-key: ${{ secrets.KONG_GH_APP_READ_PRIVATE_KEY }}
+          owner: Kong
+
+      - uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf
+        id: kong-konnect-app-token
+        with:
+          app-id: ${{ vars.KONG_KONNECT_GH_AUTOMATION_ID }}
+          private-key: ${{ secrets.KONG_KONNECT_GH_AUTOMATION_APP_KEY }}
+          owner: Kong-Konnect
+
+      - name: Build OCI artifact image
+        id: docker-build
+        uses: Kong/shared-actions/actions/docker/konnect-build-push-scan-image@54eaa58a2ef418a8740c30b7ed35582475fecefe # 0.9.0
+        with:
+          build_args: |
+            APP_VERSION=v${{ inputs.version }}
+            BUILD_DATETIME=${{ github.event.repository.updated_at }}
+            GIT_COMMIT=${{ github.sha }}
+            REPO_URL=https://github.com/${{ github.repository }}
+          build_context: .
+          build_file: ./Dockerfile.skills
+          build_tag: ${{ env.ECR_SINGLE_REGISTRY }}:v${{ inputs.version }}
+          build_target: artifact
+          build_secrets: |
+            github_kong_org_token=${{ steps.kong-app-token.outputs.token }}
+            github_kong_konnect_org_token=${{ steps.kong-konnect-app-token.outputs.token }}
+          github_kong_org_token: ${{ steps.kong-app-token.outputs.token }}
+          github_repository_token: ${{ steps.kong-konnect-app-token.outputs.token }}
+          github_organization: 'kong-konnect'
+          github_repository: ${{ github.event.repository.name }}
+          export_cache_image: 'false'
+          skip_cis_scan: 'true'
+          disable_sbom_action: 'true'
+
+  release:
+    name: Tag And Release
+    needs: [publish-oci]
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest-kong
+    timeout-minutes: ${{ fromJSON(vars.GHA_DEFAULT_TIMEOUT) }}
+    steps:
+      - name: Generate kong bot app token
+        id: github-app-token
+        uses: actions/create-github-app-token@8ab05a8a84060745bdc8f0b4f6d8f403c29e06b8 # v2
+        with:
+          app-id: ${{ vars.KONG_KONNECT_GH_AUTOMATION_ID }}
+          private-key: ${{ secrets.KONG_KONNECT_GH_AUTOMATION_APP_KEY }}
+
+      - name: Checkout source code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          token: ${{ steps.github-app-token.outputs.token }}
+          fetch-depth: 0
+
+      - name: Create GitHub tag
+        uses: Kong/github-tag-action@e528bc2b9628971ce0e6f823f3052d1dcd9d512c # v1.71.0
+        env:
+          CUSTOM_TAG: v${{ inputs.version }}
+          GITHUB_TOKEN: ${{ steps.github-app-token.outputs.token }}
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ steps.github-app-token.outputs.token }}
+        run: |
+          gh release create "v${{ inputs.version }}" \
+            --target "${{ github.sha }}" \
+            --generate-notes \
+            --notes "OCI image: \`${{ env.ECR_SINGLE_REGISTRY }}:v${{ inputs.version }}\`"

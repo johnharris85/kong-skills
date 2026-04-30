@@ -1,0 +1,15 @@
+FROM scratch AS artifact
+
+ARG APP_VERSION=dev
+ARG BUILD_DATETIME
+ARG GIT_COMMIT
+ARG REPO_URL=https://github.com/kong/kong-skills
+
+LABEL org.opencontainers.image.created="$BUILD_DATETIME" \
+      org.opencontainers.image.source="$REPO_URL" \
+      org.opencontainers.image.version="$APP_VERSION" \
+      org.opencontainers.image.revision="$GIT_COMMIT" \
+      org.opencontainers.image.title="kong-skills OCI volume" \
+      org.opencontainers.image.description="Portable Kong skills packaged for Kubernetes image volumes"
+
+COPY skills/ /

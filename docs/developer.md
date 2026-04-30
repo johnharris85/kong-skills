@@ -8,11 +8,28 @@ This repo keeps authoring simple:
 4. run optional trigger checks when you change routing-sensitive descriptions
 5. do manual spot checks only for the install surfaces you changed
 
+This repo is optimized for contributors maintaining the shared source package. Consumers generally see the synced plugin manifests, extension metadata, or installed skill content through their host tool rather than this working tree.
+
+For local guardrails, install the repo hooks once:
+
+```bash
+mise run hooks:install
+```
+
+That enables the checked-in `pre-commit` and `pre-push` hooks, both of which run `mise run check`.
+
 ## Add A Skill
 
-Create:
+Scaffold the boilerplate with one command:
+
+```bash
+mise run skill:new -- your-skill-name
+```
+
+That creates:
 
 - `skills/<skill-name>/SKILL.md`
+- `tests/trigger-fixtures/<skill-name>.yaml`
 
 Start with:
 
@@ -41,9 +58,22 @@ Optional companion directories are supported:
 
 Keep `SKILL.md` as the only file at the skill root. Companion content should stay lightweight, non-hidden, non-executable, and easy to review.
 
+`mise run skill:new` creates both:
+
+- a starter `SKILL.md` with the required frontmatter and placeholders you are expected to replace
+- the trigger fixture with placeholder positive and negative prompts you are expected to tune for routing sensitivity
+
+If you need to add or recreate only the trigger fixture later, use:
+
+```bash
+mise run trigger:new -- your-skill-name
+```
+
 ## Sync And Validate
 
 ```bash
+mise run deps
+mise run skill:new -- your-skill-name
 mise run sync
 mise run check
 mise run trigger:test -- --skill your-skill-name --dry-run
@@ -58,11 +88,18 @@ If `mise` says the repo is not trusted:
 mise trust
 ```
 
+If you have not already enabled the repo hooks, do that once as well:
+
+```bash
+mise run hooks:install
+```
+
 ## What Sync Updates
 
 - the skill arrays in [`.claude-plugin/plugin.json`](../.claude-plugin/plugin.json)
 - the Claude marketplace keywords in [`.claude-plugin/marketplace.json`](../.claude-plugin/marketplace.json)
 - the skill arrays in [`.codex-plugin/plugin.json`](../.codex-plugin/plugin.json)
+- the Codex marketplace listing in [`.agents/plugins/marketplace.json`](../.agents/plugins/marketplace.json)
 - the generated Codex plugin keywords and capabilities
 - the generated skill inventory in [docs/skills.md](skills.md)
 - the aligned MCP config surfaces
@@ -74,6 +111,7 @@ mise trust
 - harness-specific install prose
 - decisions about whether a skill needs `references/`, `assets/`, or `scripts/`
 - decisions about which prompts belong in the trigger fixtures
+- replacing scaffold placeholders with real Kong-specific content
 
 ## Conventions
 
@@ -124,8 +162,9 @@ After that, run:
 
 ```bash
 mise run check
-git tag -a v1.0.1 -m "v1.0.1"
 ```
+
+Use `mise run release:prepare` when you want the version bump staged locally without publishing anything yet.
 
 ## Full Release Flow
 
@@ -140,10 +179,9 @@ That flow:
 - updates versioned manifests
 - validates the repo
 - commits the release bump
-- creates the git tag
 - pushes `main`
-- pushes the tag
-- creates a GitHub release with `gh release create --generate-notes`
+- creates the GitHub release and remote tag with `gh release create --target main --generate-notes`
+- fetches the created tag back into the local repo
 
 Release prerequisites:
 

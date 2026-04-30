@@ -201,6 +201,14 @@ That means:
 
 The repo tooling will sync the shared skill inventory into the relevant plugin manifests and generated documentation.
 
+Treat this repo as the contributor-facing source package, not the end-user product surface.
+
+- keep reusable skill behavior in `skills/`
+- keep checked-in install metadata and context files aligned with the skills that actually ship
+- prefer pointing docs at checked-in reference files over duplicating large inline config snippets that can drift
+
+If you touch harness-specific context files such as `GEMINI.md` or install snippets under `docs/install/`, verify that they only mention current skills and current checked-in config shapes.
+
 ## Quality Bar For Submission
 
 Before considering the skill done, check:
@@ -210,6 +218,7 @@ Before considering the skill done, check:
 - does the skill prescribe a real workflow
 - does it contain Kong-specific value
 - does it avoid generic filler
+- were all scaffold placeholders replaced with real content
 - would an agent using this skill likely perform better than without it
 
 If the answer to the last question is not clearly yes, the skill probably needs to be narrowed or rewritten.

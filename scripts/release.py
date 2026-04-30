@@ -30,6 +30,40 @@ def capture(*args: str) -> str:
     return subprocess.run(args, cwd=REPO_ROOT, check=True, text=True, capture_output=True).stdout.strip()
 
 
+def preflight(version: str, tag: str) -> int:
+    status = capture("git", "status", "--short")
+    if status:
+        print("working tree must be clean before release", file=sys.stderr)
+        print(status, file=sys.stderr)
+        return 1
+
+    existing_local_tag = capture("git", "tag", "--list", tag)
+    if existing_local_tag:
+        print(f"tag already exists locally: {tag}", file=sys.stderr)
+        return 1
+
+    remote_tags = capture("git", "ls-remote", "--tags", "origin", tag)
+    if remote_tags:
+        print(f"tag already exists on origin: {tag}", file=sys.stderr)
+        return 1
+
+    try:
+        capture("gh", "auth", "status")
+    except subprocess.CalledProcessError as exc:
+        print("gh must be installed and authenticated before release", file=sys.stderr)
+        if exc.stderr:
+            print(exc.stderr.strip(), file=sys.stderr)
+        return 1
+
+    try:
+        capture("gh", "release", "view", tag)
+    except subprocess.CalledProcessError:
+        return 0
+
+    print(f"GitHub release already exists: {tag}", file=sys.stderr)
+    return 1
+
+
 def main() -> int:
     if len(sys.argv) != 2:
         print("usage: python scripts/release.py <version>", file=sys.stderr)
@@ -41,25 +75,16 @@ def main() -> int:
         return 1
 
     tag = f"v{version}"
-    status = capture("git", "status", "--short")
-    if status:
-        print("working tree must be clean before release", file=sys.stderr)
-        print(status, file=sys.stderr)
+    if preflight(version, tag) != 0:
         return 1
 
-    existing = capture("git", "tag", "--list", tag)
-    if existing:
-        print(f"tag already exists: {tag}", file=sys.stderr)
-        return 1
-
-    run("python", "scripts/release_prepare.py", version)
-    run("python", "scripts/check_repo.py")
+    run(sys.executable, "scripts/release_prepare.py", version)
+    run(sys.executable, "scripts/check_repo.py")
     run("git", "add", *GENERATED_TARGETS)
     run("git", "commit", "-m", f"Release {tag}")
-    run("git", "tag", "-a", tag, "-m", tag)
     run("git", "push", "origin", "main")
-    run("git", "push", "origin", tag)
-    run("gh", "release", "create", tag, "--generate-notes")
+    run("gh", "release", "create", tag, "--target", "main", "--generate-notes")
+    run("git", "fetch", "--tags", "origin")
     print(f"released {tag}")
     return 0
 

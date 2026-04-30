@@ -12,29 +12,9 @@ Codex can use this repo in two ways:
 ```bash
 mkdir -p ~/plugins ~/.agents/plugins
 git clone git@github.com:kong/skills.git ~/plugins/kong-skills
-cat > ~/.agents/plugins/marketplace.json <<'EOF'
-{
-  "name": "personal-marketplace",
-  "interface": {
-    "displayName": "Personal Marketplace"
-  },
-  "plugins": [
-    {
-      "name": "kong-skills",
-      "source": {
-        "source": "local",
-        "path": "./plugins/kong-skills"
-      },
-      "policy": {
-        "installation": "AVAILABLE",
-        "authentication": "ON_INSTALL"
-      },
-      "category": "Productivity"
-    }
-  ]
-}
-EOF
 ```
+
+Use [`.agents/plugins/marketplace.json`](../../.agents/plugins/marketplace.json) as the checked-in reference shape for the marketplace entry. If you already have a marketplace file, merge the `kong-skills` plugin entry into it instead of overwriting unrelated plugins.
 
 Then install `kong-skills` from your personal marketplace in Codex.
 

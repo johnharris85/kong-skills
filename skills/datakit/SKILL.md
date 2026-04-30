@@ -14,17 +14,29 @@ metadata:
 
 You are an expert assistant for Kong DataKit — the API orchestration plugin for Kong Gateway Enterprise. You help users design, build, debug, and iterate on DataKit flows.
 
-## What is DataKit?
+## When To Use
 
-DataKit (Kong Gateway Enterprise 3.11+) orchestrates complex API workflows through composable **nodes** that form a directed acyclic graph (DAG). Instead of writing custom code, users declare nodes in YAML (via decK declarative config) that call APIs, transform data, branch conditionally, cache results, and manipulate request/response properties.
+Use this skill when the request is specifically about Kong DataKit flow design, debugging, or YAML authoring. Typical triggers:
 
-**Execution model:**
-- Nodes with no interdependencies execute **concurrently**
-- A node executes only after all its input dependencies resolve
-- The DAG is optimized at config time; execution order may differ from declaration order
-- Flows run in the **access phase** (pre-proxy) or **response phase** (post-proxy)
+- building a DataKit flow from an API workflow description
+- debugging DataKit node wiring, jq expressions, or phase mistakes
+- choosing DataKit node types, branching, caching, or format-conversion patterns
+- translating an imperative API orchestration idea into declarative decK config
 
-**Target version:** Kong Gateway 3.13+ (all 9 node types available). Earlier versions lack: branch/cache (pre-3.12), xml_to_json/json_to_xml (pre-3.13), dynamic URL inputs (pre-3.13).
+Do not use this skill for generic decK, Kong Gateway, or Konnect questions unless the user is clearly working with the DataKit plugin itself.
+
+## References To Load
+
+Load only the reference file needed for the current task:
+
+- `references/node-reference.md`
+  - Use for node field details, input/output shapes, and version-specific node availability.
+- `references/patterns.md`
+  - Use for complete YAML examples such as multi-API merge, conditional caching, XML/JSON conversion, and dynamic URL resolution.
+- `references/resources-and-debugging.md`
+  - Use for cache/vault resource setup, Redis details, and debugging guidance.
+
+Prefer these references over repeating large product tables inline.
 
 ## Workflow
 
@@ -37,7 +49,7 @@ When a user asks for help with DataKit, follow this approach:
 - Any caching, branching, or conditional logic needed?
 
 ### 2. Identify Node Types
-Select from the 9 explicit node types based on what each step needs to do. See the Quick Reference below.
+Select node types based on what each step needs to do. When field-level details matter, load `references/node-reference.md` instead of guessing.
 
 ### 3. Design the DAG
 - Map out which nodes depend on which (input connections)
@@ -51,27 +63,12 @@ Select from the 9 explicit node types based on what each step needs to do. See t
 - Wire inputs/outputs correctly using connection syntax
 
 ### 5. Validate
+- Confirm the target Kong Gateway version supports every node or feature you use
 - Check type compatibility between connected nodes
 - Verify all referenced node names exist
 - Confirm implicit node fields are used correctly (e.g., `request.body` not `request.data`)
 - Ensure exit nodes have appropriate status codes
 - Verify resource blocks exist for cache/vault nodes
-
-## Quick Reference: Node Types
-
-| Type | Purpose | Key Fields | Inputs | Outputs | Since |
-|------|---------|-----------|--------|---------|-------|
-| **call** | HTTP request to external/internal API | `method`, `url`, `timeout`, `ssl_verify` | `url`, `body`, `headers`, `query`, proxy fields | `status`, `body`, `headers` | 3.11 |
-| **jq** | Transform data with jq expressions | `jq` (max 10240 chars) | `input` or named `inputs` | single output (any type) | 3.11 |
-| **exit** | Short-circuit and return response to client | `status` (200–599), `warn_headers_sent` | `body`, `headers` | none | 3.11 |
-| **property** | Get/set Kong internal properties | `property`, `content_type` | `input` (SET mode) | value (GET mode) | 3.11 |
-| **static** | Emit hardcoded config-time values | `values` (key-value object) | none | `output` (whole), or by key name | 3.11 |
-| **branch** | Conditional execution paths | `input` | boolean condition | none (controls flow via `then`/`else`) | 3.12 |
-| **cache** | Store/retrieve cached data | `ttl`, `bypass_on_error` | `key`, `data`, `ttl` | `hit`, `miss`, `stored`, `data` | 3.12 |
-| **xml_to_json** | Convert XML string to JSON | `xpath`, `recognize_type` | XML string | JSON object | 3.13 |
-| **json_to_xml** | Convert JSON to XML string | `root_element_name`, `text_block_name` | JSON object | XML string | 3.13 |
-
-For complete field specifications, see `references/node-reference.md`.
 
 ## Quick Reference: Implicit Nodes
 
@@ -252,12 +249,6 @@ For cache/vault resource configuration and Redis setup details, see `references/
 
 | Constraint | Limit |
 |-----------|-------|
-| Max nodes per flow | 64 |
-| Node name length | 1–255 characters |
-| Node name format | Letters, digits, underscores, hyphens |
-| jq expression length | 10,240 characters |
-| URL length | 255 characters |
-| Exit status code range | 200–599 |
 | Call timeout range | 0–2,147,483,646 ms |
 | Vault entries | 64 max |
 | Branch then/else arrays | 64 entries each |

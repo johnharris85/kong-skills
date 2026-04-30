@@ -14,7 +14,23 @@
         "installation": "AVAILABLE",
         "authentication": "ON_INSTALL"
       },
-      "category": "Productivity"
+      "category": "Productivity",
+      "keywords": [
+        "kong",
+        "skills",
+        "mcp",
+        "datakit",
+        "orchestration",
+        "gateway",
+        "kongctl-declarative",
+        "kongctl",
+        "declarative",
+        "konnect",
+        "apiops",
+        "kongctl-query",
+        "query",
+        "read-only"
+      ]
     }
   ]
 }

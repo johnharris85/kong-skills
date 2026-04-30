@@ -2,6 +2,8 @@
 
 Portable Kong skills plus `kong-konnect` MCP configuration for AI coding harnesses.
 
+This repo is the contributor-facing source of truth for the packaged skills and install metadata. End users normally consume these assets through host tools such as plugin catalogs, extensions, or shared-skill installers rather than by reading this repo directly.
+
 ## Getting Started
 
 - Installation docs: [docs/install/README.md](docs/install/README.md)

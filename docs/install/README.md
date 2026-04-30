@@ -2,6 +2,8 @@
 
 Choose the install path that matches the tool you use.
 
+These pages document the generated install surfaces that this source repo maintains. Most users will follow one tool-specific page and will not need any contributor context from the rest of the repository.
+
 [![Claude Code](https://img.shields.io/badge/Claude_Code-plugin-111111?style=for-the-badge&logo=anthropic&logoColor=white)](./claude-code.md)
 [![Codex](https://img.shields.io/badge/Codex-plugin-0A0A0A?style=for-the-badge&logo=openai&logoColor=white)](./codex.md)
 [![Gemini CLI](https://img.shields.io/badge/Gemini_CLI-extension-4285F4?style=for-the-badge&logo=googlegemini&logoColor=white)](./gemini-cli.md)

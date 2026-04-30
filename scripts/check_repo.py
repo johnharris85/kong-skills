@@ -46,6 +46,15 @@ SECRET_PATTERNS = [
     re.compile(r"\bgithub_pat_[A-Za-z0-9_]{20,}\b"),
     re.compile(r"\bsk-[A-Za-z0-9]{20,}\b"),
 ]
+SCAFFOLD_PLACEHOLDER_SNIPPETS = [
+    "Replace this with a routing-sensitive summary.",
+    "replace this bullet with the request pattern that should trigger the skill",
+    "Replace this section with the real do/do-not guidance for the workflow.",
+    "Remove generic filler before committing the skill.",
+    "Replace this with a prompt that should clearly trigger the",
+    "Replace this with a prompt that should clearly not trigger the",
+    "Replace this with a short note explaining what routing boundary these prompts are testing.",
+]
 
 
 @dataclass
@@ -213,6 +222,29 @@ def sync_claude_marketplace(skills: list[Skill]) -> object:
     plugin = plugins[0]
     if not isinstance(plugin, dict):
         raise ValueError(".claude-plugin/marketplace.json: first plugin entry is invalid")
+    plugin["keywords"] = derived_keywords(skills)
+    return data
+
+
+def sync_codex_marketplace(skills: list[Skill]) -> object:
+    path = REPO_ROOT / ".agents" / "plugins" / "marketplace.json"
+    data = load_json(path)
+    plugins = data.get("plugins")
+    if not isinstance(plugins, list) or not plugins:
+        raise ValueError(".agents/plugins/marketplace.json: plugins list is missing")
+    plugin = plugins[0]
+    if not isinstance(plugin, dict):
+        raise ValueError(".agents/plugins/marketplace.json: first plugin entry is invalid")
+    plugin["name"] = PLUGIN_NAME
+    plugin["source"] = {
+        "source": "local",
+        "path": "./",
+    }
+    plugin["policy"] = {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL",
+    }
+    plugin["category"] = "Productivity"
     plugin["keywords"] = derived_keywords(skills)
     return data
 
@@ -413,6 +445,23 @@ def validate_no_generic_skills(skills: list[Skill]) -> list[str]:
     return errors
 
 
+def validate_no_scaffold_placeholders(skills: list[Skill]) -> list[str]:
+    errors: list[str] = []
+    for skill in skills:
+        skill_path = SKILLS_DIR / skill.dir_name / "SKILL.md"
+        text = read_text(skill_path)
+        for snippet in SCAFFOLD_PLACEHOLDER_SNIPPETS[:4]:
+            if snippet in text:
+                errors.append(f"{skill_path.relative_to(REPO_ROOT)}: scaffold placeholder remains: {snippet!r}")
+
+    for path in sorted(TRIGGER_FIXTURES_DIR.glob("*.yaml")):
+        text = read_text(path)
+        for snippet in SCAFFOLD_PLACEHOLDER_SNIPPETS[4:]:
+            if snippet in text:
+                errors.append(f"{path.relative_to(REPO_ROOT)}: scaffold placeholder remains: {snippet!r}")
+    return errors
+
+
 def validate_trigger_fixtures(skills: list[Skill]) -> list[str]:
     errors: list[str] = []
     if not TRIGGER_FIXTURES_DIR.exists():
@@ -463,7 +512,8 @@ def validate_trigger_fixtures(skills: list[Skill]) -> list[str]:
 def validate_text_files() -> list[str]:
     errors: list[str] = []
     checks: dict[Path, list[str]] = {
-        REPO_ROOT / "README.md": ["docs/install/README.md", "npx skills add kong/skills --skill datakit", "supply-chain or security risk", "docs/trigger-harness.md"],
+        REPO_ROOT / "README.md": ["docs/install/README.md", "npx skills add kong/skills --skill datakit", "supply-chain or security risk", "docs/trigger-harness.md", "contributor-facing source of truth"],
+        REPO_ROOT / "GEMINI.md": ["datakit", "kongctl-declarative", "kongctl-query", TOKEN_ENV],
         REPO_ROOT / "docs" / "install" / "README.md": [MCP_NAME, MCP_URL, TOKEN_ENV, "gh skill"],
         REPO_ROOT / "docs" / "install" / "github-copilot.md": [MCP_NAME, MCP_URL, TOKEN_ENV, ".vscode/mcp.json", "npx skills add kong/skills"],
         REPO_ROOT / "docs" / "install" / "cursor.md": [MCP_NAME, MCP_URL, TOKEN_ENV, "npx skills add kong/skills"],
@@ -471,10 +521,10 @@ def validate_text_files() -> list[str]:
         REPO_ROOT / "docs" / "install" / "codex.md": ["Codex", "npx skills add kong/skills", MCP_NAME],
         REPO_ROOT / "docs" / "install" / "gemini-cli.md": ["Gemini CLI", TOKEN_ENV, MCP_NAME],
         REPO_ROOT / "docs" / "install" / "other-tools.md": ["gh skill install kong/skills", "npx skills add kong/skills", MCP_NAME],
-        REPO_ROOT / "docs" / "structure.md": ["reference snippets", "copilot-mcp.json", "cursor-mcp.json"],
-        REPO_ROOT / "docs" / "developer.md": ["assets/", "references/", "scripts/", "mise run sync", "trigger:test"],
-        REPO_ROOT / "docs" / "testing.md": ["trigger:spike", "trigger:test", "docs/trigger-harness.md"],
-        REPO_ROOT / "docs" / "trigger-harness.md": ["CODEX_HOME/skills", "NO_SKILL", "trigger:spike"],
+        REPO_ROOT / "docs" / "structure.md": ["reference snippets", "copilot-mcp.json", "cursor-mcp.json", "contributor file map"],
+        REPO_ROOT / "docs" / "developer.md": ["assets/", "references/", "scripts/", "mise run sync", "mise run deps", "skill:new", "trigger:new", "trigger:test", "Consumers generally see", "That creates:"],
+        REPO_ROOT / "docs" / "testing.md": ["mise run deps", "skill:new", "trigger:new", "trigger:test", "docs/trigger-harness.md", "kong-skills:datakit"],
+        REPO_ROOT / "docs" / "trigger-harness.md": ["CODEX_HOME/skills", "NO_SKILL", "mise run deps", "kong-skills:datakit", "trigger:new", "skill:new"],
         REPO_ROOT / "AGENTS.md": ["assets/", "references/", "scripts/", "agents/openai.yaml"],
     }
     for path, snippets in checks.items():
@@ -509,6 +559,7 @@ def main() -> int:
     errors: list[str] = []
 
     compare_or_write(SKILLS_DOC, sync_skills_doc(skills), args.fix, errors)
+    compare_or_write(REPO_ROOT / ".agents" / "plugins" / "marketplace.json", dump_json(sync_codex_marketplace(skills)), args.fix, errors)
     compare_or_write(REPO_ROOT / ".claude-plugin" / "marketplace.json", dump_json(sync_claude_marketplace(skills)), args.fix, errors)
     compare_or_write(REPO_ROOT / ".claude-plugin" / "plugin.json", dump_json(sync_claude_plugin(skills)), args.fix, errors)
     compare_or_write(REPO_ROOT / "claude.mcp.json", dump_json(sync_claude_mcp()), args.fix, errors)
@@ -523,6 +574,7 @@ def main() -> int:
     errors.extend(validate_skill_contents(skills))
     errors.extend(validate_trigger_fixtures(skills))
     errors.extend(validate_no_generic_skills(skills))
+    errors.extend(validate_no_scaffold_placeholders(skills))
     errors.extend(validate_text_files())
 
     if errors:

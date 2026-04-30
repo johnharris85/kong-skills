@@ -4,9 +4,10 @@ This repo favors lightweight checks over tool-driven install automation.
 
 ## Default Workflow
 
-1. Run `mise run check`.
-2. If you changed install docs, plugin manifests, or MCP config surfaces, manually verify only the affected tools.
-3. Use a scratch project or disposable user profile when a tool writes local state.
+1. Run `mise run deps`.
+2. Run `mise run check`.
+3. If you changed install docs, plugin manifests, or MCP config surfaces, manually verify only the affected tools.
+4. Use a scratch project or disposable user profile when a tool writes local state.
 
 ## Trigger Harness
 
@@ -14,13 +15,21 @@ For routing-only regression checks, use the Codex proxy harness described in [do
 
 Useful commands:
 
-- `mise run trigger:spike`
+- `mise run skill:new -- your-skill-name`
+- `mise run trigger:new -- your-skill-name`
 - `mise run trigger:list`
 - `mise run trigger:test`
+- `mise run trigger:test -- --jobs 3`
 - `mise run trigger:test -- --skill datakit`
 - `mise run trigger:test -- --dry-run`
+- `mise run trigger:test -- --keep-temp`
+- `mise run trigger:test -- --progress-interval-seconds 5`
 
 The trigger harness uses synthetic mini-skills and only checks whether a prompt appears to route to a skill. It does not test the real skill body.
+
+`mise run skill:new` already creates the matching trigger fixture. Use `mise run trigger:new` only when you need to add or recreate the fixture separately.
+
+Triggered outputs are normalized by the harness. A positive case counts as triggered when Codex returns either the synthetic marker, the raw skill name, or the plugin-qualified form such as `kong-skills:datakit`.
 
 ## Shared Skill Installers
 

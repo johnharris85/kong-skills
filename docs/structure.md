@@ -2,6 +2,8 @@
 
 This file maps the install/config surfaces generated or maintained in this repo, including manual reference snippets.
 
+This is a contributor file map, not an end-user guide. The goal is to keep the repo minimal and self-contained: shared skill content lives once under `skills/`, generated install metadata stays near repo root, and tool-specific docs point back to those checked-in reference shapes.
+
 ## Shared Skills
 
 - `skills/`
