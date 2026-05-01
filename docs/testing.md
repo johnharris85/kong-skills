@@ -6,30 +6,11 @@ This repo favors lightweight checks over tool-driven install automation.
 
 1. Run `mise run deps`.
 2. Run `mise run check`.
-3. If you changed install docs, plugin manifests, or MCP config surfaces, manually verify only the affected tools.
-4. Use a scratch project or disposable user profile when a tool writes local state.
+3. Run `mise run artifact:check` when you change OCI packaging, release metadata, or shared install surfaces.
+4. If you changed install docs, plugin manifests, or MCP config surfaces, manually verify only the affected tools.
+5. Use a scratch project or disposable user profile when a tool writes local state.
 
-## Trigger Harness
-
-For routing-only regression checks, use the Codex proxy harness described in [docs/trigger-harness.md](./trigger-harness.md).
-
-Useful commands:
-
-- `mise run skill:new -- your-skill-name`
-- `mise run trigger:new -- your-skill-name`
-- `mise run trigger:list`
-- `mise run trigger:test`
-- `mise run trigger:test -- --jobs 3`
-- `mise run trigger:test -- --skill datakit`
-- `mise run trigger:test -- --dry-run`
-- `mise run trigger:test -- --keep-temp`
-- `mise run trigger:test -- --progress-interval-seconds 5`
-
-The trigger harness uses synthetic mini-skills and only checks whether a prompt appears to route to a skill. It does not test the real skill body.
-
-`mise run skill:new` already creates the matching trigger fixture. Use `mise run trigger:new` only when you need to add or recreate the fixture separately.
-
-Triggered outputs are normalized by the harness. A positive case counts as triggered when Codex returns either the synthetic marker, the raw skill name, or the plugin-qualified form such as `kong-skills:datakit`.
+If a spot check exercises the shared MCP configuration, export `KONNECT_TOKEN` or use the host tool's secure settings flow before you test it.
 
 ## Shared Skill Installers
 
@@ -51,6 +32,12 @@ Triggered outputs are normalized by the harness. A positive case counts as trigg
 - Expected result: install completes without errors and the `datakit` skill is available in the target host
 - Quick prompt: `When should you use the datakit skill?`
 - Cleanup: remove the installed skill from the target host or discard the scratch profile
+
+## OCI Artifact
+
+- Command: `mise run artifact:check`
+- Use when: `Dockerfile.skills`, `.dockerignore`, release metadata, or the shipped file layout changes
+- Expected result: the scratch image builds, label values match, and the extracted payload matches `skills/`
 
 ## Tool Spot Checks
 
@@ -102,5 +89,4 @@ You do not need to manually verify every tool for every change.
 - Skill text only: `mise run check` is usually enough.
 - Tool-specific manifest or install doc: verify only that tool.
 - Shared MCP config changes: verify one plugin-style path and one skill-plus-MCP path.
-- Release prep: run `mise run check` and spot-check the tools affected by the release.
-- Trigger tuning: run `mise run trigger:test` for the affected skill before doing broader manual checks.
+- Release prep: run `mise run check`, `mise run artifact:check`, and spot-check the tools affected by the release.

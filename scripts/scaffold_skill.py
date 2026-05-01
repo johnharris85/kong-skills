@@ -10,7 +10,6 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SKILLS_DIR = REPO_ROOT / "skills"
-TRIGGER_FIXTURES_DIR = REPO_ROOT / "tests" / "trigger-fixtures"
 
 
 def normalize_name(value: str) -> str:
@@ -36,7 +35,7 @@ def skill_template(skill_name: str) -> str:
         f"""\
         ---
         name: {skill_name}
-        description: One-line description used for discovery and matching. Replace this with a routing-sensitive summary.
+        description: One-line Kong-specific description used for discovery and matching. Replace this with a real summary.
         metadata:
           product: kong
           category: workflow
@@ -69,41 +68,13 @@ def skill_template(skill_name: str) -> str:
     )
 
 
-def trigger_fixture_template(skill_name: str) -> str:
-    return textwrap.dedent(
-        f"""\
-        skill: {skill_name}
-        positive_prompts:
-          - Replace this with a prompt that should clearly trigger the {skill_name} skill.
-          - Add a second routing-sensitive prompt for {skill_name}.
-        negative_prompts:
-          - Replace this with a prompt that should clearly not trigger the {skill_name} skill.
-          - Add a second prompt that belongs to some other Kong workflow.
-        notes: Replace this with a short note explaining what routing boundary these prompts are testing.
-        """
-    )
-
-
 def scaffold_skill(args: argparse.Namespace) -> int:
     skill_name = normalize_name(args.name)
     skill_dir = SKILLS_DIR / skill_name
     skill_md = skill_dir / "SKILL.md"
-    fixture_path = TRIGGER_FIXTURES_DIR / f"{skill_name}.yaml"
     ensure_missing(skill_dir)
-    ensure_missing(fixture_path)
     write_text(skill_md, skill_template(skill_name))
-    write_text(fixture_path, trigger_fixture_template(skill_name))
     print(skill_md.relative_to(REPO_ROOT))
-    print(fixture_path.relative_to(REPO_ROOT))
-    return 0
-
-
-def scaffold_trigger(args: argparse.Namespace) -> int:
-    skill_name = normalize_name(args.name)
-    fixture_path = TRIGGER_FIXTURES_DIR / f"{skill_name}.yaml"
-    ensure_missing(fixture_path)
-    write_text(fixture_path, trigger_fixture_template(skill_name))
-    print(fixture_path.relative_to(REPO_ROOT))
     return 0
 
 
@@ -113,14 +84,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     skill_parser = subparsers.add_parser(
         "skill",
-        help="Create a new skill directory plus its trigger fixture boilerplate.",
+        help="Create a new skill directory with SKILL.md boilerplate.",
     )
     skill_parser.add_argument("name", help="Skill name. This becomes the directory name and frontmatter name.")
     skill_parser.set_defaults(handler=scaffold_skill)
-
-    trigger_parser = subparsers.add_parser("trigger", help="Create a trigger fixture boilerplate for a skill.")
-    trigger_parser.add_argument("name", help="Skill name for the trigger fixture filename and skill field.")
-    trigger_parser.set_defaults(handler=scaffold_trigger)
     return parser
 
 

@@ -6,12 +6,8 @@ description = "Sync Python dependencies with uv"
 run = "UV_CACHE_DIR=.tmp/uv-cache uv sync"
 
 [tasks."skill:new"]
-description = "Scaffold a new skill plus its trigger fixture"
+description = "Scaffold a new skill"
 run = "UV_CACHE_DIR=.tmp/uv-cache uv run python scripts/scaffold_skill.py skill"
-
-[tasks."trigger:new"]
-description = "Scaffold a trigger fixture under tests/trigger-fixtures/<name>.yaml"
-run = "UV_CACHE_DIR=.tmp/uv-cache uv run python scripts/scaffold_skill.py trigger"
 
 [tasks.sync]
 description = "Sync generated repo metadata and skill listings"
@@ -25,14 +21,6 @@ depends = ["sync"]
 description = "Validate manifests, skills, and generated content"
 run = "UV_CACHE_DIR=.tmp/uv-cache uv run python scripts/check_repo.py"
 
-[tasks."trigger:list"]
-description = "List trigger fixtures"
-run = "UV_CACHE_DIR=.tmp/uv-cache uv run python scripts/trigger_harness.py list-fixtures"
-
-[tasks."trigger:test"]
-description = "Run trigger fixtures against the Codex proxy harness"
-run = "UV_CACHE_DIR=.tmp/uv-cache uv run python scripts/trigger_harness.py run"
-
 [tasks.lint]
 description = "Alias for check"
 depends = ["check"]
@@ -42,12 +30,8 @@ description = "Run the same validation used in CI"
 depends = ["check"]
 
 [tasks."release:prepare"]
-description = "Update manifest versions for a release"
+description = "Update manifest versions for a release commit"
 run = "UV_CACHE_DIR=.tmp/uv-cache uv run python scripts/release_prepare.py"
-
-[tasks.release]
-description = "Prepare, tag, push, and publish a GitHub release"
-run = "UV_CACHE_DIR=.tmp/uv-cache uv run python scripts/release.py"
 
 [tasks."artifact:check"]
 description = "Build and validate the local OCI skills artifact image"

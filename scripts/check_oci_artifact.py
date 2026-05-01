@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import tarfile
 from pathlib import Path
 
 
@@ -65,18 +66,56 @@ def inspect_labels(image_tag: str) -> dict[str, str]:
     return {str(key): str(value) for key, value in labels.items()}
 
 
+def save_image_archive(image_tag: str, archive_path: Path) -> None:
+    run("docker", "save", "-o", str(archive_path), image_tag)
+
+
+def safe_extract_layer(layer_tar: tarfile.TarFile, destination: Path) -> None:
+    root = destination.resolve()
+    for member in layer_tar:
+        member_path = (destination / member.name).resolve()
+        if member_path != root and root not in member_path.parents:
+            raise ValueError(f"unsafe path in layer tar: {member.name!r}")
+        if member.isdir():
+            member_path.mkdir(parents=True, exist_ok=True)
+            continue
+        if member.issym() or member.islnk():
+            raise ValueError(f"links are not supported in the OCI artifact verifier: {member.name!r}")
+        if not member.isfile():
+            continue
+
+        member_path.parent.mkdir(parents=True, exist_ok=True)
+        source = layer_tar.extractfile(member)
+        if source is None:
+            raise ValueError(f"failed to read layer member {member.name!r}")
+        with source, member_path.open("wb") as dest:
+            shutil.copyfileobj(source, dest)
+
+
 def extract_image_rootfs(image_tag: str, destination: Path) -> None:
-    container_id = capture("docker", "create", image_tag)
-    try:
-        run("docker", "cp", f"{container_id}:/.", str(destination))
-    finally:
-        subprocess.run(
-            ("docker", "rm", "-f", container_id),
-            cwd=REPO_ROOT,
-            check=False,
-            text=True,
-            capture_output=True,
-        )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        archive_path = Path(tmpdir) / "image.tar"
+        save_image_archive(image_tag, archive_path)
+        with tarfile.open(archive_path, "r") as outer_tar:
+            manifest_member = outer_tar.extractfile("manifest.json")
+            if manifest_member is None:
+                raise ValueError("docker save archive is missing manifest.json")
+            manifest = json.load(manifest_member)
+            if not isinstance(manifest, list) or not manifest:
+                raise ValueError("docker save archive has an invalid manifest.json")
+            layers = manifest[0].get("Layers")
+            if not isinstance(layers, list) or not layers:
+                raise ValueError("docker save archive does not list any layers")
+
+            for layer_name in layers:
+                if not isinstance(layer_name, str):
+                    raise ValueError("docker save archive contains a non-string layer entry")
+                layer_member = outer_tar.extractfile(layer_name)
+                if layer_member is None:
+                    raise ValueError(f"docker save archive is missing layer {layer_name!r}")
+                with layer_member:
+                    with tarfile.open(fileobj=layer_member, mode="r|*") as layer_tar:
+                        safe_extract_layer(layer_tar, destination)
 
 
 def host_skill_files() -> list[Path]:
@@ -143,7 +182,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--repo-url",
-        default="https://github.com/kong-konnect/kong-skills",
+        default="https://github.com/kong/skills",
         help="Source repository URL label to embed.",
     )
     parser.add_argument(

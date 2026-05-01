@@ -10,7 +10,7 @@ This repo is the contributor-facing source of truth for the packaged skills and 
 - Available skills: [docs/skills.md](docs/skills.md)
 - Developer guide: [docs/developer.md](docs/developer.md)
 - Testing guide: [docs/testing.md](docs/testing.md)
-- Trigger harness: [docs/trigger-harness.md](docs/trigger-harness.md)
+- Security policy: [SECURITY.md](SECURITY.md)
 - Repo structure: [docs/structure.md](docs/structure.md)
 
 ## Install Targets

@@ -87,7 +87,8 @@ Optional companion directories are allowed when they support the skill:
 - `references/` for supporting reference material
 - `assets/` for lightweight images or other bundled assets
 - `scripts/` for helper scripts an agent may inspect or run explicitly
-- `agents/` only for `agents/openai.yaml` when a Codex MCP dependency is truly required
+
+This repo does not currently allow per-skill MCP dependency declarations such as `agents/openai.yaml`. For v1, keep MCP configuration shared at the repo level and keep skills portable.
 
 Keep the package shape simple:
 
@@ -176,18 +177,6 @@ Be careful with:
 - fast-changing product matrices
 
 If a detail is likely to drift, either omit it, frame it as version-specific, or place it in a reference file that can be updated cleanly.
-
-## Add MCP Dependencies Only When They Matter
-
-Only add `agents/openai.yaml` when the skill truly depends on a specific MCP server being available for Codex.
-
-Do not add MCP dependency declarations reflexively. They should communicate a real runtime dependency, not just a possible convenience.
-
-When you do add one:
-
-- keep it minimal
-- use the repo's canonical MCP name and URL
-- avoid inventing alternate names for the same server
 
 ## Fit The Skill To This Repo
 

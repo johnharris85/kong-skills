@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import argparse
 import re
 import sys
 from pathlib import Path
@@ -9,6 +10,11 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
+VERSION_TARGETS = [
+    REPO_ROOT / ".claude-plugin" / "plugin.json",
+    REPO_ROOT / ".codex-plugin" / "plugin.json",
+    REPO_ROOT / "gemini-extension.json",
+]
 
 
 def load_json(path: Path) -> object:
@@ -26,22 +32,43 @@ def update_version(path: Path, version: str) -> None:
     write_json(path, data)
 
 
-def main() -> int:
-    if len(sys.argv) != 2:
-        print("usage: python scripts/release_prepare.py <version>", file=sys.stderr)
-        return 1
+def manifest_version(path: Path) -> str | None:
+    data = load_json(path)
+    value = data.get("version")
+    return value if isinstance(value, str) else None
 
-    version = sys.argv[1].strip()
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Prepare or verify versioned release manifests.")
+    parser.add_argument("version", help="Semver version like 1.2.3")
+    parser.add_argument("--check", action="store_true", help="Verify manifests already match the supplied version.")
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    version = args.version.strip()
     if not VERSION_RE.match(version):
         print(f"invalid version: {version!r} (expected semver like 1.2.3)", file=sys.stderr)
         return 1
 
-    targets = [
-        REPO_ROOT / ".claude-plugin" / "plugin.json",
-        REPO_ROOT / ".codex-plugin" / "plugin.json",
-        REPO_ROOT / "gemini-extension.json",
-    ]
-    for target in targets:
+    if args.check:
+        mismatches: list[str] = []
+        for target in VERSION_TARGETS:
+            actual = manifest_version(target)
+            if actual != version:
+                mismatches.append(f"{target.relative_to(REPO_ROOT)}={actual!r}")
+        if mismatches:
+            print(
+                "checked-in manifest versions do not match the requested release version: "
+                + ", ".join(mismatches),
+                file=sys.stderr,
+            )
+            return 1
+        print(f"release manifests already match {version}")
+        return 0
+
+    for target in VERSION_TARGETS:
         update_version(target, version)
 
     print(f"prepared release {version}")

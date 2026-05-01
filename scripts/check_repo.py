@@ -14,7 +14,6 @@ import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SKILLS_DIR = REPO_ROOT / "skills"
-TRIGGER_FIXTURES_DIR = REPO_ROOT / "tests" / "trigger-fixtures"
 MCP_NAME = "kong-konnect"
 MCP_URL = "https://us.mcp.konghq.com"
 TOKEN_ENV = "KONNECT_TOKEN"
@@ -24,8 +23,7 @@ AVAILABLE_SKILLS_START = "<!-- generated:available-skills:start -->"
 AVAILABLE_SKILLS_END = "<!-- generated:available-skills:end -->"
 SKILLS_DOC = REPO_ROOT / "docs" / "skills.md"
 ALLOWED_SKILL_ROOT_FILES = {"SKILL.md"}
-ALLOWED_SKILL_DIRS = {"references", "assets", "scripts", "agents"}
-ALLOWED_AGENT_FILES = {Path("agents/openai.yaml")}
+ALLOWED_SKILL_DIRS = {"references", "assets", "scripts"}
 MAX_COMPANION_FILE_BYTES = 1_000_000
 TEXT_FILE_EXTENSIONS = {
     ".json",
@@ -47,13 +45,10 @@ SECRET_PATTERNS = [
     re.compile(r"\bsk-[A-Za-z0-9]{20,}\b"),
 ]
 SCAFFOLD_PLACEHOLDER_SNIPPETS = [
-    "Replace this with a routing-sensitive summary.",
+    "Replace this with a real summary.",
     "replace this bullet with the request pattern that should trigger the skill",
     "Replace this section with the real do/do-not guidance for the workflow.",
     "Remove generic filler before committing the skill.",
-    "Replace this with a prompt that should clearly trigger the",
-    "Replace this with a prompt that should clearly not trigger the",
-    "Replace this with a short note explaining what routing boundary these prompts are testing.",
 ]
 
 
@@ -360,23 +355,6 @@ def validate_static_metadata() -> list[str]:
     return errors
 
 
-def validate_openai_yaml(skills: list[Skill]) -> list[str]:
-    errors: list[str] = []
-    for skill in skills:
-        yaml_path = SKILLS_DIR / skill.dir_name / "agents" / "openai.yaml"
-        if not yaml_path.exists():
-            continue
-        text = read_text(yaml_path)
-        required_snippets = [
-            f'value: "{MCP_NAME}"',
-            f'url: "{MCP_URL}"',
-        ]
-        for snippet in required_snippets:
-            if snippet not in text:
-                errors.append(f"{yaml_path.relative_to(REPO_ROOT)}: missing {snippet}")
-    return errors
-
-
 def validate_skill_contents(skills: list[Skill]) -> list[str]:
     errors: list[str] = []
     for skill in skills:
@@ -396,15 +374,13 @@ def validate_skill_contents(skills: list[Skill]) -> list[str]:
                 continue
             if entry.is_dir() and entry.name not in ALLOWED_SKILL_DIRS:
                 errors.append(
-                    f"{entry.relative_to(REPO_ROOT)}: unexpected directory; allowed companion directories are agents/, assets/, references/, scripts/"
+                    f"{entry.relative_to(REPO_ROOT)}: unexpected directory; allowed companion directories are assets/, references/, scripts/"
                 )
                 continue
 
         for path in sorted(skill_dir.rglob("*")):
             if path == skill_dir:
                 continue
-            rel_path = path.relative_to(skill_dir)
-            top_level = rel_path.parts[0]
 
             if path.name.startswith("."):
                 errors.append(f"{path.relative_to(REPO_ROOT)}: hidden files and directories are not allowed in skill packages")
@@ -414,9 +390,6 @@ def validate_skill_contents(skills: list[Skill]) -> list[str]:
                 continue
             if path.is_dir():
                 continue
-
-            if top_level == "agents" and rel_path not in ALLOWED_AGENT_FILES:
-                errors.append(f"{path.relative_to(REPO_ROOT)}: only agents/openai.yaml is allowed under agents/")
 
             if path.stat().st_size > MAX_COMPANION_FILE_BYTES:
                 errors.append(
@@ -450,69 +423,28 @@ def validate_no_scaffold_placeholders(skills: list[Skill]) -> list[str]:
     for skill in skills:
         skill_path = SKILLS_DIR / skill.dir_name / "SKILL.md"
         text = read_text(skill_path)
-        for snippet in SCAFFOLD_PLACEHOLDER_SNIPPETS[:4]:
+        for snippet in SCAFFOLD_PLACEHOLDER_SNIPPETS:
             if snippet in text:
                 errors.append(f"{skill_path.relative_to(REPO_ROOT)}: scaffold placeholder remains: {snippet!r}")
-
-    for path in sorted(TRIGGER_FIXTURES_DIR.glob("*.yaml")):
-        text = read_text(path)
-        for snippet in SCAFFOLD_PLACEHOLDER_SNIPPETS[4:]:
-            if snippet in text:
-                errors.append(f"{path.relative_to(REPO_ROOT)}: scaffold placeholder remains: {snippet!r}")
     return errors
 
 
-def validate_trigger_fixtures(skills: list[Skill]) -> list[str]:
+def validate_repo_files() -> list[str]:
     errors: list[str] = []
-    if not TRIGGER_FIXTURES_DIR.exists():
-        return ["tests/trigger-fixtures: directory is missing"]
-
-    expected_names = {skill.name for skill in skills}
-    seen_names: set[str] = set()
-
-    for path in sorted(TRIGGER_FIXTURES_DIR.glob("*.yaml")):
-        try:
-            data = yaml.safe_load(read_text(path))
-        except yaml.YAMLError as exc:
-            errors.append(f"{path.relative_to(REPO_ROOT)}: invalid YAML ({exc})")
-            continue
-        if not isinstance(data, dict):
-            errors.append(f"{path.relative_to(REPO_ROOT)}: fixture must be a YAML mapping")
-            continue
-
-        skill_name = data.get("skill")
-        positive = data.get("positive_prompts")
-        negative = data.get("negative_prompts")
-        notes = data.get("notes")
-
-        if not isinstance(skill_name, str) or not skill_name.strip():
-            errors.append(f"{path.relative_to(REPO_ROOT)}: skill must be a non-empty string")
-            continue
-        skill_name = skill_name.strip()
-        seen_names.add(skill_name)
-
-        if path.stem != skill_name:
-            errors.append(f"{path.relative_to(REPO_ROOT)}: filename must match skill {skill_name!r}")
-        if skill_name not in expected_names:
-            errors.append(f"{path.relative_to(REPO_ROOT)}: unknown skill {skill_name!r}")
-
-        if not isinstance(positive, list) or not positive or not all(isinstance(item, str) and item.strip() for item in positive):
-            errors.append(f"{path.relative_to(REPO_ROOT)}: positive_prompts must be a non-empty list of strings")
-        if not isinstance(negative, list) or not negative or not all(isinstance(item, str) and item.strip() for item in negative):
-            errors.append(f"{path.relative_to(REPO_ROOT)}: negative_prompts must be a non-empty list of strings")
-        if notes is not None and not isinstance(notes, str):
-            errors.append(f"{path.relative_to(REPO_ROOT)}: notes must be a string when present")
-
-    missing = expected_names.difference(seen_names)
-    for skill_name in sorted(missing):
-        errors.append(f"tests/trigger-fixtures/{skill_name}.yaml: missing trigger fixture for skill {skill_name!r}")
+    required = [
+        REPO_ROOT / ".dockerignore",
+        REPO_ROOT / "SECURITY.md",
+    ]
+    for path in required:
+        if not path.exists():
+            errors.append(f"{path.relative_to(REPO_ROOT)}: required repo file is missing")
     return errors
 
 
 def validate_text_files() -> list[str]:
     errors: list[str] = []
     checks: dict[Path, list[str]] = {
-        REPO_ROOT / "README.md": ["docs/install/README.md", "npx skills add kong/skills --skill datakit", "supply-chain or security risk", "docs/trigger-harness.md", "contributor-facing source of truth"],
+        REPO_ROOT / "README.md": ["docs/install/README.md", "npx skills add kong/skills --skill datakit", "supply-chain or security risk", "contributor-facing source of truth", "SECURITY.md"],
         REPO_ROOT / "GEMINI.md": ["datakit", "kongctl-declarative", "kongctl-query", TOKEN_ENV],
         REPO_ROOT / "docs" / "install" / "README.md": [MCP_NAME, MCP_URL, TOKEN_ENV, "gh skill"],
         REPO_ROOT / "docs" / "install" / "github-copilot.md": [MCP_NAME, MCP_URL, TOKEN_ENV, ".vscode/mcp.json", "npx skills add kong/skills"],
@@ -522,10 +454,10 @@ def validate_text_files() -> list[str]:
         REPO_ROOT / "docs" / "install" / "gemini-cli.md": ["Gemini CLI", TOKEN_ENV, MCP_NAME],
         REPO_ROOT / "docs" / "install" / "other-tools.md": ["gh skill install kong/skills", "npx skills add kong/skills", MCP_NAME],
         REPO_ROOT / "docs" / "structure.md": ["reference snippets", "copilot-mcp.json", "cursor-mcp.json", "contributor file map"],
-        REPO_ROOT / "docs" / "developer.md": ["assets/", "references/", "scripts/", "mise run sync", "mise run deps", "skill:new", "trigger:new", "trigger:test", "Consumers generally see", "That creates:"],
-        REPO_ROOT / "docs" / "testing.md": ["mise run deps", "skill:new", "trigger:new", "trigger:test", "docs/trigger-harness.md", "kong-skills:datakit"],
-        REPO_ROOT / "docs" / "trigger-harness.md": ["CODEX_HOME/skills", "NO_SKILL", "mise run deps", "kong-skills:datakit", "trigger:new", "skill:new"],
-        REPO_ROOT / "AGENTS.md": ["assets/", "references/", "scripts/", "agents/openai.yaml"],
+        REPO_ROOT / "docs" / "developer.md": ["assets/", "references/", "scripts/", "mise run sync", "mise run deps", "skill:new", "artifact:check", "Consumers generally see", "GitHub Actions workflow is the only publishing path"],
+        REPO_ROOT / "docs" / "testing.md": ["mise run deps", "mise run check", "mise run artifact:check", "scratch project", "KONNECT_TOKEN"],
+        REPO_ROOT / "AGENTS.md": ["assets/", "references/", "scripts/", "This repo does not currently allow per-skill MCP dependency declarations"],
+        REPO_ROOT / "SECURITY.md": ["vulnerability@konghq.com", "Do not open a public GitHub issue"],
     }
     for path, snippets in checks.items():
         text = read_text(path)
@@ -570,11 +502,10 @@ def main() -> int:
     compare_or_write(REPO_ROOT / "copilot-mcp.json", dump_json(sync_copilot_mcp()), args.fix, errors)
 
     errors.extend(validate_static_metadata())
-    errors.extend(validate_openai_yaml(skills))
     errors.extend(validate_skill_contents(skills))
-    errors.extend(validate_trigger_fixtures(skills))
     errors.extend(validate_no_generic_skills(skills))
     errors.extend(validate_no_scaffold_placeholders(skills))
+    errors.extend(validate_repo_files())
     errors.extend(validate_text_files())
 
     if errors:

@@ -8,8 +8,8 @@ This is a contributor file map, not an end-user guide. The goal is to keep the r
 
 - `skills/`
   - Canonical shared skills used by `npx skills` and plugin installs that bundle shared skills.
-- `tests/trigger-fixtures/`
-  - Prompt fixtures used by the synthetic mini-skill trigger harness.
+- `docs/skills.md`
+  - Generated inventory of the currently shipped skills.
 
 ## Claude Code
 
@@ -37,3 +37,12 @@ This is a contributor file map, not an end-user guide. The goal is to keep the r
 
 - `cursor-mcp.json`
   - Manual reference snippet for `.cursor/mcp.json`
+
+## Release And Validation
+
+- `.github/workflows/validate.yml`
+  - Validates generated metadata and the OCI artifact packaging path on pull requests and `main`.
+- `.github/workflows/release-oci.yml`
+  - Canonical publishing workflow for tags, GitHub releases, and the OCI artifact.
+- `.dockerignore`
+  - Narrows the OCI build context to the shipped skill payload.

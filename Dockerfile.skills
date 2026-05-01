@@ -3,7 +3,7 @@ FROM scratch AS artifact
 ARG APP_VERSION=dev
 ARG BUILD_DATETIME
 ARG GIT_COMMIT
-ARG REPO_URL=https://github.com/kong/kong-skills
+ARG REPO_URL=https://github.com/kong/skills
 
 LABEL org.opencontainers.image.created="$BUILD_DATETIME" \
       org.opencontainers.image.source="$REPO_URL" \
