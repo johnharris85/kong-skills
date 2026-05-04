@@ -9,9 +9,31 @@ This repo is the contributor-facing source of truth for the packaged skills and 
 - Installation docs: [docs/install/README.md](docs/install/README.md)
 - Available skills: [docs/skills.md](docs/skills.md)
 - Developer guide: [docs/developer.md](docs/developer.md)
+- Release process: [docs/release.md](docs/release.md)
 - Testing guide: [docs/testing.md](docs/testing.md)
 - Security policy: [SECURITY.md](SECURITY.md)
 - Repo structure: [docs/structure.md](docs/structure.md)
+
+## Contributor Prerequisites
+
+For repo maintenance, install:
+
+- `mise`: https://mise.jdx.dev/
+- `git`
+- `uv`: https://docs.astral.sh/uv/
+
+Then bootstrap the repo:
+
+```bash
+mise trust
+mise install
+mise run preflight
+mise run deps
+```
+
+`mise install` provisions the repo-managed Python toolchain from [mise.toml](mise.toml). `uv` remains an explicit prerequisite, and additional tools such as Docker, GitHub CLI, Node.js, or host-specific agent CLIs are only needed for the corresponding optional verification flows.
+
+For release gating and recommended GitHub repository protections, see [docs/release.md](docs/release.md) and [SECURITY.md](SECURITY.md).
 
 ## Install Targets
 
@@ -37,7 +59,8 @@ Authorization: Bearer ${KONNECT_TOKEN}
 - Install the whole repo with `npx skills add kong/skills`.
 - Install one skill with `npx skills add kong/skills --skill datakit`.
 - Update one installed skill with `npx skills update -g -y datakit` or `gh skill update datakit`.
-- Claude Code and Gemini CLI both support startup hooks that can auto-update installed skills. See the per-tool install docs for examples.
-- Be careful with startup auto-update hooks: they can pull newer skill instructions automatically at session start and may introduce supply-chain or security risk.
+- Prefer native marketplace or extension update flows in Claude Code and Gemini CLI over custom startup hooks.
+- Be careful with any automatic update path: it can pull newer skill instructions automatically and may introduce supply-chain or security risk.
+- For `gh skill`, preview before install with `gh skill preview kong/skills datakit`.
 
 Claude Code uses [claude.mcp.json](claude.mcp.json) as its MCP reference shape. Codex-compatible tools use [`.mcp.json`](.mcp.json).

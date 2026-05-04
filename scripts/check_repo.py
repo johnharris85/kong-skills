@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+"""Validate checked-in skills, generated metadata, and key repo docs.
+
+This script intentionally keeps all repo-level sync and validation in one place.
+It is long, but the behavior is narrowly scoped: discover skills, regenerate the
+derived manifests/docs, then apply package-policy and drift checks.
+"""
 from __future__ import annotations
 
 import argparse
@@ -43,6 +49,8 @@ SECRET_PATTERNS = [
     re.compile(r"\bghp_[A-Za-z0-9]{20,}\b"),
     re.compile(r"\bgithub_pat_[A-Za-z0-9_]{20,}\b"),
     re.compile(r"\bsk-[A-Za-z0-9]{20,}\b"),
+    re.compile(r"\bkpat_[A-Za-z0-9]{20,}\b"),
+    re.compile(r"\bspat_[A-Za-z0-9]{20,}\b"),
 ]
 SCAFFOLD_PLACEHOLDER_SNIPPETS = [
     "Replace this with a real summary.",
@@ -57,6 +65,7 @@ class Skill:
     dir_name: str
     name: str
     description: str
+    license: str
     product: str
     category: str
     tags: list[str]
@@ -148,10 +157,13 @@ def discover_skills() -> list[Skill]:
         frontmatter = parse_frontmatter(skill_md)
         name = frontmatter.get("name")
         description = frontmatter.get("description")
+        license_value = frontmatter.get("license")
         if not isinstance(name, str) or not isinstance(description, str) or not name.strip() or not description.strip():
             raise ValueError(f"{skill_md}: frontmatter requires name and description")
         if name != entry.name:
             raise ValueError(f"{skill_md}: frontmatter name {name!r} must match directory {entry.name!r}")
+        if not isinstance(license_value, str) or not license_value.strip():
+            raise ValueError(f"{skill_md}: frontmatter requires license")
 
         metadata = frontmatter.get("metadata")
         if not isinstance(metadata, dict):
@@ -174,6 +186,7 @@ def discover_skills() -> list[Skill]:
                 dir_name=entry.name,
                 name=name.strip(),
                 description=description.strip(),
+                license=license_value.strip(),
                 product=product.strip(),
                 category=category.strip(),
                 tags=[tag.strip() for tag in tags],
@@ -182,6 +195,7 @@ def discover_skills() -> list[Skill]:
     return skills
 
 
+# Generated-file sync helpers.
 def replace_generated_section(text: str, start: str, end: str, body: str) -> str:
     pattern = re.compile(re.escape(start) + r".*?" + re.escape(end), re.DOTALL)
     replacement = f"{start}\n{body}\n{end}"
@@ -321,6 +335,7 @@ def sync_claude_mcp() -> object:
     }
 
 
+# Validation helpers.
 def validate_static_metadata() -> list[str]:
     errors: list[str] = []
 
@@ -452,11 +467,11 @@ def validate_text_files() -> list[str]:
         REPO_ROOT / "docs" / "install" / "claude-code.md": ["Claude Code", "kong-skills", MCP_NAME],
         REPO_ROOT / "docs" / "install" / "codex.md": ["Codex", "npx skills add kong/skills", MCP_NAME],
         REPO_ROOT / "docs" / "install" / "gemini-cli.md": ["Gemini CLI", TOKEN_ENV, MCP_NAME],
-        REPO_ROOT / "docs" / "install" / "other-tools.md": ["gh skill install kong/skills", "npx skills add kong/skills", MCP_NAME],
-        REPO_ROOT / "docs" / "structure.md": ["reference snippets", "copilot-mcp.json", "cursor-mcp.json", "contributor file map"],
-        REPO_ROOT / "docs" / "developer.md": ["assets/", "references/", "scripts/", "mise run sync", "mise run deps", "skill:new", "artifact:check", "Consumers generally see", "GitHub Actions workflow is the only publishing path"],
-        REPO_ROOT / "docs" / "testing.md": ["mise run deps", "mise run check", "mise run artifact:check", "scratch project", "KONNECT_TOKEN"],
-        REPO_ROOT / "AGENTS.md": ["assets/", "references/", "scripts/", "This repo does not currently allow per-skill MCP dependency declarations"],
+        REPO_ROOT / "docs" / "install" / "other-tools.md": ["gh skill install kong/skills", "gh skill preview", "npx skills add kong/skills", MCP_NAME],
+        REPO_ROOT / "docs" / "release.md": ["workflow_dispatch", "mise run ci", "mise run artifact:check", "Release OCI Skills Artifact"],
+        REPO_ROOT / "docs" / "structure.md": ["reference snippets", "copilot-mcp.json", "cursor-mcp.json", "contributor file map", "CLAUDE.md", "AGENTS.md"],
+        REPO_ROOT / "docs" / "developer.md": ["assets/", "references/", "scripts/", "mise install", "mise run preflight", "mise run sync", "mise run deps", "skill:new", "artifact:check", "gh skill publish --dry-run", "Consumers generally see", "GitHub Actions workflow is the only publishing path"],
+        REPO_ROOT / "docs" / "testing.md": ["mise run preflight", "mise run deps", "mise run check", "mise run artifact:check", "gh skill publish --dry-run", "scratch project", "KONNECT_TOKEN", "docs/install/other-tools.md"],
         REPO_ROOT / "SECURITY.md": ["vulnerability@konghq.com", "Do not open a public GitHub issue"],
     }
     for path, snippets in checks.items():
@@ -467,6 +482,7 @@ def validate_text_files() -> list[str]:
     return errors
 
 
+# Compare expected generated content with checked-in files.
 def compare_or_write(path: Path, expected: str, fix: bool, errors: list[str]) -> None:
     actual = read_text(path)
     if actual == expected:

@@ -18,3 +18,9 @@ All routes use the same MCP server:
 - auth: `Authorization: Bearer ${KONNECT_TOKEN}`
 
 `KONNECT_TOKEN` is only required for MCP-backed installs. If you only install the shared skills with `npx skills` or `gh skill`, you do not need the token.
+
+For skill-only installs from GitHub, prefer previewing before install:
+
+```bash
+gh skill preview kong/skills datakit
+```

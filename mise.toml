@@ -1,6 +1,10 @@
 [tools]
 python = "3.12"
 
+[tasks.preflight]
+description = "Check local prerequisites for contributor workflows"
+run = "python scripts/preflight.py"
+
 [tasks.deps]
 description = "Sync Python dependencies with uv"
 run = "UV_CACHE_DIR=.tmp/uv-cache uv sync"
@@ -27,7 +31,10 @@ depends = ["check"]
 
 [tasks.ci]
 description = "Run the same validation used in CI"
-depends = ["check"]
+run = """
+UV_CACHE_DIR=.tmp/uv-cache uv run python scripts/check_repo.py
+gh skill publish --dry-run
+"""
 
 [tasks."release:prepare"]
 description = "Update manifest versions for a release commit"

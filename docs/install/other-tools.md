@@ -40,6 +40,12 @@ npx skills update -g -y datakit
 
 `gh skill` is available in GitHub CLI v2.90.0+ and is currently in public preview.
 
+Preview a skill before installing it:
+
+```bash
+gh skill preview kong/skills datakit
+```
+
 ```bash
 gh skill install kong/skills
 ```
@@ -51,6 +57,12 @@ gh skill install kong/skills datakit
 ```
 
 If `gh skill` does not pick the right host automatically, pass `--agent`.
+
+Pin an install to a reviewed tag or SHA when you need reproducibility:
+
+```bash
+gh skill install kong/skills datakit --pin v1.0.0
+```
 
 Update all installed skills:
 
@@ -66,9 +78,15 @@ gh skill update datakit
 
 These skill-only installs do not require `KONNECT_TOKEN`.
 
+If you maintain this skills repo, validate GitHub-side publishability without publishing:
+
+```bash
+gh skill publish --dry-run
+```
+
 ## Auto-Update Caution
 
-Be careful with startup auto-update hooks. They can pull newer skill instructions automatically at session start, which may introduce supply-chain or security risk if a skill changes upstream without review.
+Be careful with any automatic update path. It can pull newer skill instructions without review, which may introduce supply-chain or security risk if content changes upstream.
 
 If you use auto-update, prefer updating one known skill first:
 
@@ -82,7 +100,7 @@ Or with GitHub CLI:
 gh skill update datakit
 ```
 
-Claude Code and Gemini CLI both support startup hooks for this workflow. See their install pages for examples.
+Claude Code and Gemini CLI both have native update flows. See their install pages for the current recommended approach.
 
 ## MCP Config Reference
 

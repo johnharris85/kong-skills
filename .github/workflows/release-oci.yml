@@ -35,7 +35,7 @@ jobs:
           fi
 
       - name: Validate repo
-        run: mise run check
+        run: mise run ci
 
       - name: Validate version format
         env:
@@ -118,6 +118,9 @@ jobs:
           github_organization: 'kong-konnect'
           github_repository: ${{ github.event.repository.name }}
           export_cache_image: 'false'
+          # This artifact is a scratch image that only contains checked-in skill files.
+          # We keep the release gate on repo validation plus artifact content validation,
+          # and skip CIS/SBOM steps here because there is no package-managed base layer to inventory.
           skip_cis_scan: 'true'
           disable_sbom_action: 'true'
 

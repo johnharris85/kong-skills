@@ -9,6 +9,7 @@ Claude Code uses the plugin manifest in [`.claude-plugin/plugin.json`](../../.cl
 ```bash
 /plugin marketplace add kong/skills
 /plugin install kong-skills@kong-skills
+/reload-plugins
 ```
 
 ## What Gets Installed
@@ -34,51 +35,20 @@ That does not require `KONNECT_TOKEN`.
 
 If you installed via `gh skill`, you can also update one installed skill with `gh skill update datakit`.
 
-## Optional Startup Auto-Update Hook
+## Auto-Update
 
-Claude Code supports hooks in `~/.claude/settings.json` or `.claude/settings.json`.
+Prefer Claude Code's marketplace auto-update support over a custom shell hook.
 
-Update all globally installed skills at session startup:
+In Claude Code:
 
-```json
-{
-  "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "startup",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "npx skills update -g -y 2>/dev/null"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
+1. Run `/plugin`.
+2. Open the `Marketplaces` tab.
+3. Select the `kong-skills` marketplace.
+4. Enable or disable auto-update there.
 
-Update one installed skill instead:
+If plugins were updated during a session, run `/reload-plugins`.
 
-```json
-{
-  "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "startup",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "npx skills update -g -y datakit 2>/dev/null"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-Be careful with startup auto-update hooks. They can pull newer skill instructions automatically at session start, which may introduce supply-chain or security risk if a skill changes upstream without review.
+Be careful with auto-update. It can pull newer skill instructions automatically, which may introduce supply-chain or security risk if content changes upstream without review.
 
 If you also want the MCP server without using the plugin wrapper, add the `kong-konnect` server manually using [`.mcp.json`](../../.mcp.json) as the reference shape. That is when `KONNECT_TOKEN` is required.
 If you are configuring Claude directly, use [claude.mcp.json](../../claude.mcp.json) as the Claude-specific MCP reference shape.

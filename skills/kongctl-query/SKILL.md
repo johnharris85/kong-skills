@@ -1,6 +1,7 @@
 ---
 name: kongctl-query
 description: Inspect and query Kong Konnect resources with read-only kongctl commands. Use when the user wants to list, get, or check Konnect resources, verify authentication, discover kongctl commands, or format output as text, json, or yaml.
+license: MIT
 metadata:
   product: kongctl
   category: query

@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+"""Build and verify the OCI artifact used to ship repo skills.
+
+The artifact is intentionally minimal: a scratch image whose payload is just the
+contents of `skills/`. Validation checks labels, extracted layout, and byte-for-
+byte file parity with the checked-in skill tree.
+"""
 from __future__ import annotations
 
 import argparse

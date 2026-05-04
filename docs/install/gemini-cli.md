@@ -12,6 +12,12 @@ The extension configures the `kong-konnect` MCP server at `https://us.mcp.konghq
 gemini extensions install https://github.com/kong/skills
 ```
 
+To enable Gemini's native extension auto-update at install time:
+
+```bash
+gemini extensions install https://github.com/kong/skills --auto-update
+```
+
 ## Authentication
 
 Gemini CLI should prompt for `KONNECT_TOKEN` from the extension settings and send:
@@ -38,52 +44,22 @@ That does not require `KONNECT_TOKEN`.
 
 If you installed via `gh skill`, you can also update one installed skill with `gh skill update datakit`.
 
-## Optional Startup Auto-Update Hook
+## Auto-Update
 
-Gemini CLI supports hooks in `~/.gemini/settings.json` or `.gemini/settings.json`.
+Prefer Gemini CLI's native extension update flow over a custom startup hook.
 
-Update all globally installed skills at session startup:
+Update one installed extension explicitly:
 
-```json
-{
-  "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "startup",
-        "hooks": [
-          {
-            "name": "skills-update",
-            "type": "command",
-            "command": "npx skills update -g -y 2>/dev/null"
-          }
-        ]
-      }
-    ]
-  }
-}
+```bash
+gemini extensions update kong-skills
 ```
 
-Update one installed skill instead:
+Update all installed extensions:
 
-```json
-{
-  "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "startup",
-        "hooks": [
-          {
-            "name": "skills-update-datakit",
-            "type": "command",
-            "command": "npx skills update -g -y datakit 2>/dev/null"
-          }
-        ]
-      }
-    ]
-  }
-}
+```bash
+gemini extensions update --all
 ```
 
-Be careful with startup auto-update hooks. They can pull newer skill instructions automatically at session start, which may introduce supply-chain or security risk if a skill changes upstream without review.
+Be careful with auto-update. It can pull newer skill instructions automatically, which may introduce supply-chain or security risk if content changes upstream without review.
 
 If you want the MCP server without the full extension wrapper, configure `kong-konnect` manually using [`.mcp.json`](../../.mcp.json) or the server block in [`gemini-extension.json`](../../gemini-extension.json). That is when `KONNECT_TOKEN` is required.

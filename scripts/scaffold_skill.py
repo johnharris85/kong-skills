@@ -36,6 +36,7 @@ def skill_template(skill_name: str) -> str:
         ---
         name: {skill_name}
         description: One-line Kong-specific description used for discovery and matching. Replace this with a real summary.
+        license: MIT
         metadata:
           product: kong
           category: workflow

@@ -1,6 +1,7 @@
 ---
 name: kongctl-declarative
 description: Set up, initialize, and manage kongctl declarative configuration for Kong Konnect. Use when the user wants to configure a repository with Konnect declarative resources, create kongctl manifests, generate config from OpenAPI specs, run plan/diff/apply/sync/delete/adopt workflows, or scaffold CI/CD pipelines for Konnect APIOps.
+license: MIT
 metadata:
   product: kongctl
   category: declarative
