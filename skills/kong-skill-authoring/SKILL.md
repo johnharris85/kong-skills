@@ -184,8 +184,8 @@ Before finishing authoring work, verify:
 - companion files are justified
 - the new or revised skill does not overlap too heavily with another skill's
   trigger surface
-- the repo loop is complete: update the skill, run `mise run sync`, run
-  `mise run check`
+- the repo loop is complete: update the skill, run `mise run gen`, run
+  `mise run lint`
 
 ## Handoffs
 

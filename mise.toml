@@ -21,26 +21,18 @@ arg "<name>" help="Skill name. Lowercase letters, digits, and dashes are recomme
 '''
 run = "uv run --python 3.12 --cache-dir .tmp/uv-cache python scripts/scaffold_skill.py skill {{ usage.name }}"
 
-[tasks.sync]
+[tasks.gen]
 description = "Sync generated repo metadata and skill listings"
 run = "uv run --python 3.12 --cache-dir .tmp/uv-cache python scripts/check_repo.py --fix"
 
-[tasks.generate]
-description = "Alias for sync"
-depends = ["sync"]
-
-[tasks.check]
+[tasks.lint]
 description = "Validate manifests, skills, and generated content"
 run = "uv run --python 3.12 --cache-dir .tmp/uv-cache python scripts/check_repo.py"
-
-[tasks.lint]
-description = "Alias for check"
-depends = ["check"]
 
 [tasks.ci]
 description = "Run the same validation used in CI"
 run = [
-  { task = "check" },
+  { task = "lint" },
   "gh skill publish --dry-run",
 ]
 

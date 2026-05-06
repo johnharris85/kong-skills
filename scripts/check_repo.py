@@ -612,8 +612,8 @@ def validate_text_files() -> list[str]:
         REPO_ROOT / "docs" / "install" / "other-tools.md": ["gh skill install kong/skills", "gh skill preview", "npx skills add kong/skills", MCP_NAME],
         REPO_ROOT / "docs" / "release.md": ["workflow_dispatch", "mise run ci", "mise run artifact:check", "Release OCI Skills Artifact"],
         REPO_ROOT / "docs" / "structure.md": ["reference snippets", "copilot-mcp.json", "cursor-mcp.json", "contributor file map", "CLAUDE.md", "AGENTS.md"],
-        REPO_ROOT / "docs" / "developer.md": ["assets/", "references/", "scripts/", "mise install", "mise run preflight", "mise run sync", "mise run deps", "skill:new", "artifact:check", "gh skill publish --dry-run", "Consumers generally see", "GitHub Actions workflow is the only publishing path", "kong-skill-authoring", "description budget", "overlap"],
-        REPO_ROOT / "docs" / "testing.md": ["mise run preflight", "mise run deps", "mise run check", "mise run artifact:check", "gh skill publish --dry-run", "scratch project", "KONNECT_TOKEN", "docs/install/other-tools.md", "description budget", "overlap"],
+        REPO_ROOT / "docs" / "developer.md": ["assets/", "references/", "scripts/", "mise install", "mise run preflight", "mise run gen", "mise run deps", "skill:new", "artifact:check", "gh skill publish --dry-run", "Consumers generally see", "GitHub Actions workflow is the only publishing path", "kong-skill-authoring", "description budget", "overlap"],
+        REPO_ROOT / "docs" / "testing.md": ["mise run preflight", "mise run deps", "mise run lint", "mise run artifact:check", "gh skill publish --dry-run", "scratch project", "KONNECT_TOKEN", "docs/install/other-tools.md", "description budget", "overlap"],
         REPO_ROOT / "SECURITY.md": ["vulnerability@konghq.com", "Do not open a public GitHub issue"],
     }
     for path, snippets in checks.items():
@@ -632,7 +632,7 @@ def compare_or_write(path: Path, expected: str, fix: bool, errors: list[str]) ->
     if fix:
         write_text(path, expected)
     else:
-        errors.append(f"{path.relative_to(REPO_ROOT)} is out of sync; run `mise run sync`")
+        errors.append(f"{path.relative_to(REPO_ROOT)} is out of sync; run `mise run gen`")
 
 
 def main() -> int:

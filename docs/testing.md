@@ -30,7 +30,7 @@ Baseline local tools:
 
 1. Run `mise run preflight`.
 2. Run `mise run deps`.
-3. Run `mise run check`.
+3. Run `mise run lint`.
 4. Run `mise run artifact:check` when you change OCI packaging, release metadata, or shared install surfaces.
 5. Run `gh skill publish --dry-run` when you change skill metadata or prepare a release, or use `mise run ci` to include it in the standard CI path.
 6. If you changed install docs, plugin manifests, or MCP config surfaces, manually verify only the affected tools.
@@ -38,7 +38,7 @@ Baseline local tools:
 
 Use the smallest path that covers the change. Most edits do not require every check.
 
-`mise run check` covers more than generated-file drift. It is also the repo's
+`mise run lint` covers more than generated-file drift. It is also the repo's
 default authoring guardrail for:
 
 - scaffold placeholders
@@ -142,8 +142,8 @@ back to user-profile locations.
 
 You do not need to manually verify every tool for every change.
 
-- Skill text only: `mise run check` is usually enough.
+- Skill text only: `mise run lint` is usually enough.
 - Tool-specific manifest or install doc: verify only that tool.
 - Shared MCP config changes: verify one plugin-style path and one skill-plus-MCP path.
-- Release prep: run `mise run check`, `mise run artifact:check`, and spot-check the tools affected by the release.
+- Release prep: run `mise run lint`, `mise run artifact:check`, and spot-check the tools affected by the release.
 - Release prep: also run `mise run ci` or `gh skill publish --dry-run`.

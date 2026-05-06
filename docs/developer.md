@@ -42,9 +42,9 @@ When a task takes arguments, prefer `mise run <task> --help` to see the expected
 
 Use the smallest workflow that matches the change:
 
-- Skill text only: `mise run preflight`, `mise run check`
-- New skill or frontmatter change: `mise run preflight`, `mise run check`, and `gh skill publish --dry-run`
-- Packaging or shared MCP/install surface change: `mise run preflight`, `mise run check`, and `mise run artifact:check`
+- Skill text only: `mise run preflight`, `mise run lint`
+- New skill or frontmatter change: `mise run preflight`, `mise run lint`, and `gh skill publish --dry-run`
+- Packaging or shared MCP/install surface change: `mise run preflight`, `mise run lint`, and `mise run artifact:check`
 - Release prep: `mise run preflight`, `mise run ci`, and `mise run artifact:check`
 
 For local guardrails, install the repo hooks once:
@@ -53,7 +53,7 @@ For local guardrails, install the repo hooks once:
 mise run hooks:install
 ```
 
-That enables the checked-in `pre-commit` and `pre-push` hooks, both of which run `mise run check`.
+That enables the checked-in `pre-commit` and `pre-push` hooks, both of which run `mise run lint`.
 
 ## Add A Skill
 
@@ -137,8 +137,8 @@ mise install
 mise run preflight
 mise run deps
 mise run skill:new -- your-skill-name
-mise run sync
-mise run check
+mise run gen
+mise run lint
 mise run artifact:check
 gh skill publish --dry-run
 ```
@@ -155,7 +155,7 @@ If you have not already enabled the repo hooks, do that once as well:
 mise run hooks:install
 ```
 
-`mise run check` is the main repo guardrail for authoring quality. It now
+`mise run lint` is the main repo guardrail for authoring quality. It now
 checks:
 
 - generated metadata drift
@@ -164,7 +164,7 @@ checks:
 - description budget
 - high-similarity trigger overlap between skills
 
-## What Sync Updates
+## What Generate Updates
 
 - the skill arrays in [`.claude-plugin/plugin.json`](../.claude-plugin/plugin.json)
 - the Claude marketplace keywords in [`.claude-plugin/marketplace.json`](../.claude-plugin/marketplace.json)
