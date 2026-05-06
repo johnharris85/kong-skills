@@ -41,7 +41,11 @@ Use this skill for Terraform-managed Konnect work. Do not turn a `kongctl` or
 - Hand off to `kongctl-declarative` when the repository already uses `kongctl`
   YAML instead of HCL.
 
-## Preconditions
+## Validation Contract
+
+### Preflight
+
+Before writing HCL or proposing a plan:
 
 - Confirm Terraform is installed and runnable: `terraform version`
 - Confirm the repo's backend and workspace expectations before editing files
@@ -49,6 +53,56 @@ Use this skill for Terraform-managed Konnect work. Do not turn a `kongctl` or
   checked-in literals
 - Inspect existing provider blocks, modules, and variable names before writing
   new HCL
+- Confirm which module, workspace, and resource addresses own the target
+  Konnect slice
+- Confirm whether existing live resources must be imported before planning
+
+### Preview
+
+Use Terraform's native preview surface before apply:
+
+- run `terraform fmt -check` only when the repository uses that convention for
+  validation
+- run `terraform validate`
+- run `terraform plan`
+- import first when live resources already exist in scope and should be brought
+  under state instead of recreated
+- check the exact addresses, module boundaries, and create-update-destroy shape
+  before considering apply
+
+### Execute
+
+- Describe the intended effect before any mutating command.
+- Run `terraform apply` only when the user explicitly asked for live mutation.
+- Apply the same workspace, variable set, and module boundary already previewed
+  in `plan`.
+
+### Prove
+
+After a requested apply:
+
+- confirm the planned addresses match the intended ownership boundary
+- use Terraform-native proof such as `terraform state list`,
+  `terraform state show <address>`, relevant outputs, or a follow-up
+  `terraform plan` that shows no remaining intended changes
+- prove the exact resources touched rather than treating apply success as proof
+
+## References To Load
+
+Load only the reference file that matches the active branch:
+
+- `references/provider-selection.md`
+  - Load when deciding whether the official `kong/konnect` provider is enough
+    or whether the user explicitly needs `kong/konnect-beta`.
+- `references/import-moved-and-adoption.md`
+  - Load when existing Konnect resources must be normalized into Terraform
+    state rather than recreated.
+- `references/module-boundaries.md`
+  - Load when the main question is where a new Konnect resource belongs in an
+    existing Terraform layout.
+- `references/gateway-entities-inside-konnect.md`
+  - Load when the task mixes Konnect platform resources with Gateway entities
+    inside a Konnect control plane.
 
 ## Provider Basics
 
@@ -80,6 +134,8 @@ Never hardcode tokens into committed `.tf` files.
 - Preserve imports, `moved` blocks, and module addresses when refactoring.
 - Avoid mixing one-off UI edits with Terraform-managed resources without
   calling out drift.
+- Do not treat a successful `terraform apply` as proof by itself; follow with
+  state or plan-based verification of the touched addresses.
 
 ## Workflow
 
@@ -107,7 +163,10 @@ Pin down:
 
 Do not assume every requested resource belongs in the same module.
 
-### 3. Choose the Terraform path
+Load `references/module-boundaries.md` if ownership between modules,
+environments, or product slices is unclear.
+
+### 3. Preview the intended change
 
 Default paths:
 
@@ -117,6 +176,17 @@ Default paths:
   default starting point when Gateway config already exists in `decK` or live
   Gateway state
 - beta-only feature: use `kong/konnect-beta` only when explicitly required
+
+Use `references/provider-selection.md` for provider choice and
+`references/import-moved-and-adoption.md` for state-normalization work.
+
+Preview expectations:
+
+- use `terraform fmt -check` only when the repo expects it
+- run `terraform validate`
+- run `terraform plan`
+- inspect whether the plan touches only the intended module and addresses
+- import first if the plan would recreate something that already exists live
 
 ### 4. Author HCL with stable ownership boundaries
 
@@ -128,16 +198,31 @@ When writing HCL:
 - preserve stable names and identifiers where the repo already has them
 - add outputs only when downstream modules or CI actually need them
 
-### 5. Validate state interactions
+Load `references/gateway-entities-inside-konnect.md` when Gateway entities and
+platform resources might belong in different parts of the repo.
 
-Before apply, verify:
+### 5. Execute only when requested
 
-- provider selection and version constraints
-- backend and workspace target
-- import needs for existing resources
-- whether the change affects only HCL or also live state
+- Describe the intended live effect before presenting or running
+  `terraform apply`.
+- Use the same workspace, variable set, and directory that produced the
+  reviewed plan.
+- Run `terraform apply` only when the user explicitly asked to mutate live
+  Konnect state.
 
-### 6. Report both config and state impact
+### 6. Prove the result with Terraform-native checks
+
+After any requested `terraform apply`:
+
+- confirm the touched resource addresses now appear in `terraform state list`
+- inspect key addresses with `terraform state show <address>` or the repo's
+  normal output surface
+- when practical, run a follow-up `terraform plan` and expect no remaining
+  intended changes for the touched slice
+- call out any drift or ownership mismatch instead of hiding it behind apply
+  success
+
+### 7. Report both config and state impact
 
 State:
 
@@ -163,6 +248,7 @@ Preferred sequence:
 3. run `terraform fmt` and validation steps used by the repo
 4. run `terraform plan`
 5. apply only when requested
+6. prove the touched addresses through state or follow-up plan output
 
 ### Adopt existing resources
 
@@ -209,7 +295,9 @@ Before answering, verify that you can state:
 - whether `kong/konnect` or `kong/konnect-beta` is actually needed
 - which module or file owns the target resources
 - whether import or adoption is required
+- which preview commands prove the intended change before mutation
 - whether the change should stop at HCL authoring or continue to `plan/apply`
+- how the exact resource addresses will be proved after apply
 - whether another tool skill should own the implementation instead
 
 ## Handoffs

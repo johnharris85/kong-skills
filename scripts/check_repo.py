@@ -295,7 +295,7 @@ def sync_claude_plugin(skills: list[Skill]) -> object:
     path = REPO_ROOT / ".claude-plugin" / "plugin.json"
     data = load_json(path)
     data["skills"] = [skill.rel_path for skill in skills]
-    data["mcpServers"] = "./claude.mcp.json"
+    data["mcpServers"] = "./.mcp.json"
     return data
 
 
@@ -347,18 +347,9 @@ def sync_codex_plugin(skills: list[Skill]) -> object:
 
 def sync_root_mcp() -> object:
     return {
-        MCP_NAME: {
-            "type": "streamable_http",
-            "url": MCP_URL,
-            "headers": {"Authorization": f"Bearer ${{{TOKEN_ENV}}}"},
-        }
-    }
-
-
-def sync_cursor_mcp() -> object:
-    return {
         "mcpServers": {
             MCP_NAME: {
+                "type": "http",
                 "url": MCP_URL,
                 "headers": {"Authorization": f"Bearer ${{{TOKEN_ENV}}}"},
             }
@@ -366,50 +357,32 @@ def sync_cursor_mcp() -> object:
     }
 
 
-def sync_gemini_extension() -> object:
-    path = REPO_ROOT / "gemini-extension.json"
+def sync_cursor_plugin(skills: list[Skill]) -> object:
+    path = REPO_ROOT / ".cursor-plugin" / "plugin.json"
     data = load_json(path)
-    data["mcpServers"] = {
-        MCP_NAME: {
-            "url": MCP_URL,
-            "headers": {"Authorization": f"Bearer ${{{TOKEN_ENV}}}"},
-        }
-    }
-    data["settings"] = [
-        {
-            "name": "Konnect Bearer Token",
-            "description": "Bearer token used to authenticate requests to the Kong MCP server.",
-            "envVar": TOKEN_ENV,
-            "sensitive": True,
-        }
-    ]
+    data["skills"] = "skills"
+    data["mcpServers"] = ".mcp.json"
+    data["keywords"] = derived_keywords(skills)
     return data
 
 
-def sync_copilot_mcp() -> object:
-    return {
-        "servers": {
-            MCP_NAME: {
-                "type": "http",
-                "url": MCP_URL,
-                "requestInit": {
-                    "headers": {"Authorization": f"Bearer ${{{TOKEN_ENV}}}"}
-                },
-            }
-        }
-    }
-
-
-def sync_claude_mcp() -> object:
-    return {
-        "mcpServers": {
-            MCP_NAME: {
-                "type": "http",
-                "url": MCP_URL,
-                "headers": {"Authorization": f"Bearer ${{{TOKEN_ENV}}}"},
-            }
-        }
-    }
+def sync_cursor_marketplace() -> object:
+    path = REPO_ROOT / ".cursor-plugin" / "marketplace.json"
+    data = load_json(path)
+    plugins = data.get("plugins")
+    if not isinstance(plugins, list) or not plugins:
+        raise ValueError(".cursor-plugin/marketplace.json: plugins list is missing")
+    plugin = plugins[0]
+    if not isinstance(plugin, dict):
+        raise ValueError(".cursor-plugin/marketplace.json: first plugin entry is invalid")
+    metadata = data.get("metadata")
+    if not isinstance(metadata, dict):
+        raise ValueError(".cursor-plugin/marketplace.json: metadata is missing")
+    metadata["version"] = plugin.get("version", metadata.get("version"))
+    plugin["name"] = PLUGIN_NAME
+    plugin["source"] = "./"
+    plugin["skills"] = "skills"
+    return data
 
 
 # Validation helpers.
@@ -418,18 +391,21 @@ def validate_static_metadata() -> list[str]:
 
     codex_marketplace = load_json(REPO_ROOT / ".agents" / "plugins" / "marketplace.json")
     claude_marketplace = load_json(REPO_ROOT / ".claude-plugin" / "marketplace.json")
+    cursor_marketplace = load_json(REPO_ROOT / ".cursor-plugin" / "marketplace.json")
     codex_plugin = load_json(REPO_ROOT / ".codex-plugin" / "plugin.json")
     claude_plugin = load_json(REPO_ROOT / ".claude-plugin" / "plugin.json")
-    gemini_extension = load_json(REPO_ROOT / "gemini-extension.json")
+    cursor_plugin = load_json(REPO_ROOT / ".cursor-plugin" / "plugin.json")
 
     if codex_plugin.get("name") != PLUGIN_NAME:
         errors.append(".codex-plugin/plugin.json: unexpected plugin name")
     if claude_plugin.get("name") != PLUGIN_NAME:
         errors.append(".claude-plugin/plugin.json: unexpected plugin name")
+    if cursor_plugin.get("name") != PLUGIN_NAME:
+        errors.append(".cursor-plugin/plugin.json: unexpected plugin name")
     expected_versions = {
         ".codex-plugin/plugin.json": codex_plugin.get("version"),
         ".claude-plugin/plugin.json": claude_plugin.get("version"),
-        "gemini-extension.json": gemini_extension.get("version"),
+        ".cursor-plugin/plugin.json": cursor_plugin.get("version"),
     }
     versions = {value for value in expected_versions.values()}
     if len(versions) != 1:
@@ -440,10 +416,14 @@ def validate_static_metadata() -> list[str]:
         errors.append(".claude-plugin/marketplace.json: unexpected marketplace name")
     if codex_marketplace.get("name") != PLUGIN_NAME:
         errors.append(".agents/plugins/marketplace.json: unexpected marketplace name")
+    if cursor_marketplace.get("name") != PLUGIN_NAME:
+        errors.append(".cursor-plugin/marketplace.json: unexpected marketplace name")
     if claude_marketplace.get("plugins", [{}])[0].get("name") != PLUGIN_NAME:
         errors.append(".claude-plugin/marketplace.json: plugin listing name drift")
     if codex_marketplace.get("plugins", [{}])[0].get("name") != PLUGIN_NAME:
         errors.append(".agents/plugins/marketplace.json: plugin listing name drift")
+    if cursor_marketplace.get("plugins", [{}])[0].get("name") != PLUGIN_NAME:
+        errors.append(".cursor-plugin/marketplace.json: plugin listing name drift")
     return errors
 
 
@@ -602,18 +582,15 @@ def validate_text_files() -> list[str]:
     errors: list[str] = []
     checks: dict[Path, list[str]] = {
         REPO_ROOT / "README.md": ["docs/install/README.md", "npx skills add kong/skills --skill gateway-plugin-datakit", "supply-chain or security risk", "contributor-facing source of truth", "SECURITY.md"],
-        REPO_ROOT / "GEMINI.md": ["gateway-plugin-datakit", "kongctl-declarative", "kongctl-query", TOKEN_ENV],
         REPO_ROOT / "docs" / "install" / "README.md": [MCP_NAME, MCP_URL, TOKEN_ENV, "gh skill"],
-        REPO_ROOT / "docs" / "install" / "github-copilot.md": [MCP_NAME, MCP_URL, TOKEN_ENV, ".vscode/mcp.json", "npx skills add kong/skills"],
-        REPO_ROOT / "docs" / "install" / "cursor.md": [MCP_NAME, MCP_URL, TOKEN_ENV, "npx skills add kong/skills"],
+        REPO_ROOT / "docs" / "install" / "cursor.md": [MCP_NAME, MCP_URL, TOKEN_ENV, ".cursor-plugin/plugin.json", "npx skills add kong/skills"],
         REPO_ROOT / "docs" / "install" / "claude-code.md": ["Claude Code", "kong-skills", MCP_NAME],
         REPO_ROOT / "docs" / "install" / "codex.md": ["Codex", "npx skills add kong/skills", MCP_NAME],
-        REPO_ROOT / "docs" / "install" / "gemini-cli.md": ["Gemini CLI", TOKEN_ENV, MCP_NAME],
         REPO_ROOT / "docs" / "install" / "other-tools.md": ["gh skill install kong/skills", "gh skill preview", "npx skills add kong/skills", MCP_NAME],
         REPO_ROOT / "docs" / "release.md": ["workflow_dispatch", "mise run ci", "mise run artifact:check", "Release OCI Skills Artifact"],
-        REPO_ROOT / "docs" / "structure.md": ["reference snippets", "copilot-mcp.json", "cursor-mcp.json", "contributor file map", "CLAUDE.md", "AGENTS.md"],
-        REPO_ROOT / "docs" / "developer.md": ["assets/", "references/", "scripts/", "mise install", "mise run preflight", "mise run gen", "mise run deps", "skill:new", "artifact:check", "gh skill publish --dry-run", "Consumers generally see", "GitHub Actions workflow is the only publishing path", "kong-skill-authoring", "description budget", "overlap"],
-        REPO_ROOT / "docs" / "testing.md": ["mise run preflight", "mise run deps", "mise run lint", "mise run artifact:check", "gh skill publish --dry-run", "scratch project", "KONNECT_TOKEN", "docs/install/other-tools.md", "description budget", "overlap"],
+        REPO_ROOT / "docs" / "structure.md": [".cursor-plugin/plugin.json", ".mcp.json", "contributor file map", "CLAUDE.md", "AGENTS.md"],
+        REPO_ROOT / "docs" / "developer.md": ["assets/", "references/", "scripts/", "mise install", "mise run preflight", "mise run gen", "mise run deps", "skill:new", "artifact:check", "gh skill publish --dry-run", "Consumers generally see", "GitHub Actions workflow is the only publishing path", "kong-skill-authoring", "description budget", "overlap", ".cursor-plugin/plugin.json"],
+        REPO_ROOT / "docs" / "testing.md": ["mise run preflight", "mise run deps", "mise run lint", "mise run artifact:check", "gh skill publish --dry-run", "scratch project", "KONNECT_TOKEN", "docs/install/other-tools.md", "description budget", "overlap", "docs/install/cursor.md"],
         REPO_ROOT / "SECURITY.md": ["vulnerability@konghq.com", "Do not open a public GitHub issue"],
     }
     for path, snippets in checks.items():
@@ -652,12 +629,10 @@ def main() -> int:
     compare_or_write(REPO_ROOT / ".agents" / "plugins" / "marketplace.json", dump_json(sync_codex_marketplace(skills)), args.fix, errors)
     compare_or_write(REPO_ROOT / ".claude-plugin" / "marketplace.json", dump_json(sync_claude_marketplace(skills)), args.fix, errors)
     compare_or_write(REPO_ROOT / ".claude-plugin" / "plugin.json", dump_json(sync_claude_plugin(skills)), args.fix, errors)
-    compare_or_write(REPO_ROOT / "claude.mcp.json", dump_json(sync_claude_mcp()), args.fix, errors)
     compare_or_write(REPO_ROOT / ".codex-plugin" / "plugin.json", dump_json(sync_codex_plugin(skills)), args.fix, errors)
     compare_or_write(REPO_ROOT / ".mcp.json", dump_json(sync_root_mcp()), args.fix, errors)
-    compare_or_write(REPO_ROOT / "cursor-mcp.json", dump_json(sync_cursor_mcp()), args.fix, errors)
-    compare_or_write(REPO_ROOT / "gemini-extension.json", dump_json(sync_gemini_extension()), args.fix, errors)
-    compare_or_write(REPO_ROOT / "copilot-mcp.json", dump_json(sync_copilot_mcp()), args.fix, errors)
+    compare_or_write(REPO_ROOT / ".cursor-plugin" / "plugin.json", dump_json(sync_cursor_plugin(skills)), args.fix, errors)
+    compare_or_write(REPO_ROOT / ".cursor-plugin" / "marketplace.json", dump_json(sync_cursor_marketplace()), args.fix, errors)
 
     errors.extend(validate_static_metadata())
     errors.extend(validate_skill_contents(skills))

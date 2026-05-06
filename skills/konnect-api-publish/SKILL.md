@@ -40,6 +40,21 @@ Do not turn this into generic Portal documentation.
 Default to read-first inspection. Only move to mutation when the missing link
 in the publication chain is understood.
 
+## References To Load
+
+Load only the reference file that matches the active branch:
+
+- `references/publication-chain.md`
+  - Load when "not published" is underspecified and you need to separate
+    managed API presence, catalog readiness, portal publication, and consumer
+    use.
+- `references/portal-visibility-vs-access.md`
+  - Load when an API may be published but still not visible, discoverable, or
+    usable by the intended audience.
+- `references/downstream-auth-handoffs.md`
+  - Load when the real issue shifts from publication into developer app auth,
+    registration, approval, or credential flow ownership.
+
 ## Inspection Order
 
 ### 1. Identify the missing outcome
@@ -54,6 +69,9 @@ Clarify what "not published" means:
 - API exists internally but is not ready for developer consumption
 
 Do not use one answer path for all of these.
+
+If the operator uses "publish" loosely, load `references/publication-chain.md`
+and classify the missing stage before proposing any fix.
 
 ### 2. Confirm the managed API and version exist
 
@@ -79,6 +97,9 @@ Inspect whether the API is actually ready for cataloging:
 If the managed asset is incomplete, explain that publication is blocked
 upstream rather than treating Portal as the problem.
 
+Use `references/publication-chain.md` when the managed-API-to-catalog boundary
+is still unclear.
+
 ### 4. Trace publication into the developer-facing surface
 
 Verify:
@@ -89,6 +110,9 @@ Verify:
 - the API should appear in the specific portal view the user is checking
 
 Separate "API is published" from "viewer can currently find it."
+
+Load `references/portal-visibility-vs-access.md` when the main question is
+whether the intended audience should actually see or discover the API.
 
 ### 5. Check registration and access workflow
 
@@ -101,6 +125,9 @@ If the API is visible but unusable, inspect the consumer path:
   but use fails
 
 This is where many "publish" issues become access or onboarding issues.
+
+Load `references/downstream-auth-handoffs.md` when registration, approvals,
+credentials, or auth strategy become the real blocker.
 
 ### 6. Return the missing link in the chain
 

@@ -38,6 +38,20 @@ broken.
 - If live Konnect state matters and `kong-konnect` MCP is not connected, say
   so early and continue with CLI or user-provided artifacts.
 
+## References To Load
+
+Load only the reference file that matches the active branch:
+
+- `references/dataset-map.md`
+  - Load when the user may be looking in the wrong observability surface for
+    the question they are asking.
+- `references/scope-time-window-checks.md`
+  - Load when the likely issue is wrong control plane, entity, slice, or time
+    range rather than ingestion failure.
+- `references/visibility-vs-ingestion.md`
+  - Load when data may exist but is delayed, permission-limited, partially
+    visible, or confused with total loss.
+
 ## Workflow
 
 ### 1. Identify the observability surface
@@ -54,6 +68,9 @@ Clarify what the user expects to see:
 Do not assume these are interchangeable. Missing data often starts with the
 wrong surface selection.
 
+Load `references/dataset-map.md` when the operator is mixing API, LLM, and
+platform observability surfaces.
+
 ### 2. Verify scope, subject, and time window
 
 Confirm:
@@ -64,6 +81,9 @@ Confirm:
 - whether the user expects organization-wide visibility or a narrower slice
 
 Many empty dashboards are valid results for the chosen scope or time window.
+
+Load `references/scope-time-window-checks.md` when the likely problem is the
+slice being inspected rather than the telemetry itself.
 
 ### 3. Prove underlying activity exists
 
@@ -98,6 +118,9 @@ Investigate whether missing data is caused by:
 - partial rollout or resource association issues
 
 Keep "configuration missing" separate from "viewer cannot see it."
+
+Load `references/visibility-vs-ingestion.md` when the hard question is whether
+the data is absent, delayed, hidden, or only partially scoped.
 
 ### 6. Return the smallest credible root cause
 

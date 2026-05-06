@@ -42,6 +42,20 @@ Dev Portal help.
   early and continue with user-provided artifacts or adjacent CLI/config
   sources.
 
+## References To Load
+
+Load only the reference file that matches the active branch:
+
+- `references/managed-api-readiness.md`
+  - Load when the main question is whether the API object, version, and
+    upstream catalog shape are complete enough before publication.
+- `references/spec-version-and-metadata.md`
+  - Load when the hard part is versioning model, spec quality, docs, or
+    metadata alignment.
+- `references/package-and-implementation-boundaries.md`
+  - Load when packages, implementations, Gateway Service linkage, or
+    package-versus-API modeling is the real issue.
+
 ## Workflow
 
 ### 1. Identify the catalog object that is actually missing
@@ -59,6 +73,9 @@ Clarify whether the operator is missing:
 Do not jump straight to Portal troubleshooting if the Catalog object model is
 incomplete.
 
+Load `references/managed-api-readiness.md` when "missing from catalog" is
+really a question about what object in the chain is incomplete.
+
 ### 2. Confirm API identity and versioning model
 
 Inspect:
@@ -75,6 +92,9 @@ Default guidance:
   version style
 - create a distinct API per major version when that matches the lifecycle
   boundary
+
+Load `references/spec-version-and-metadata.md` when the versioning or
+documentation model is the main decision branch.
 
 ### 3. Check spec and documentation readiness
 
@@ -109,6 +129,9 @@ When API packages are involved, verify:
 - whether the package boundary is business-facing or merely technical
 
 Packages are for grouping and presentation, not for hiding a broken API model.
+
+Load `references/package-and-implementation-boundaries.md` when grouping,
+implementation linkage, or package boundaries are the main question.
 
 ### 6. Hand off only after Catalog readiness is clear
 

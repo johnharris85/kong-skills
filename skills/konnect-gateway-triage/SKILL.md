@@ -40,6 +40,23 @@ as proof of deployed behavior.
 Prefer to inspect before suggesting restarts, reprovisioning, or config
 rewrites.
 
+## References To Load
+
+Load only the reference file that matches the active branch:
+
+- `references/connection-bootstrap.md`
+  - Load when a data plane is disconnected, never joins, or looks blocked by
+    registration, network, TLS, DNS, or proxy setup.
+- `references/live-vs-declarative-drift.md`
+  - Load when the repository's intended state and live Gateway state disagree,
+    or when the operator is mixing runtime symptoms with IaC drift.
+- `references/traffic-path-vs-control-plane.md`
+  - Load when control plane and data plane health look good but requests still
+    fail, route incorrectly, or miss the expected plugin behavior.
+- `references/common-failure-signals.md`
+  - Load when the operator only has a symptom and you need a fast pattern map
+    before choosing the deeper branch.
+
 ## Inspection Order
 
 ### 1. Define the observed symptom
@@ -54,6 +71,9 @@ Classify the problem up front:
 
 Do not investigate all paths at once. Pick the failing operator symptom and
 follow it.
+
+If the symptom is still vague after this first pass, load
+`references/common-failure-signals.md`.
 
 ### 2. Confirm the target control plane
 
@@ -81,6 +101,8 @@ Look for:
 - version skew that could affect expected behavior
 
 If the data plane is not healthy, stop treating the problem as a config bug.
+Load `references/connection-bootstrap.md` when registration or attachment is
+the active failure branch.
 
 ### 4. Separate network bootstrap from Konnect state
 
@@ -94,6 +116,9 @@ If a data plane will not connect, isolate whether the blocker is:
 
 Do not jump to service or route debugging until the control-plane connection is
 healthy.
+
+Use `references/connection-bootstrap.md` for concrete bootstrap-versus-network
+separation.
 
 ### 5. Compare intended config with live state
 
@@ -109,6 +134,10 @@ that should be deployed:
 If repo config disagrees with live state, call that drift explicitly.
 If live state is correct but traffic still fails, move to request-path
 troubleshooting instead of deployment troubleshooting.
+
+Load `references/live-vs-declarative-drift.md` for repo-versus-live ownership
+questions, or `references/traffic-path-vs-control-plane.md` when healthy
+attachment still does not produce the expected traffic behavior.
 
 ### 6. Classify the failure domain
 

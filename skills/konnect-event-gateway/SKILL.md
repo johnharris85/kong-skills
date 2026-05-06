@@ -39,6 +39,23 @@ client -> listener -> virtual cluster -> backend cluster -> policy and auth
 Do not reuse generic gateway triage blindly. Event Gateway deserves a dedicated
 inspection order because the operator objects differ.
 
+## References To Load
+
+Load only the reference file that matches the active branch:
+
+- `references/event-path-map.md`
+  - Load when the operator only has a symptom and you need to map the failing
+    hop across listener, virtual cluster, backend cluster, auth, and policy.
+- `references/listener-and-hostname-mapping.md`
+  - Load when the likely issue is listener reachability, hostname mapping, TLS,
+    or protocol assumptions.
+- `references/cluster-routing-boundaries.md`
+  - Load when virtual-cluster to backend-cluster routing intent is the hard
+    part.
+- `references/auth-and-policy-order.md`
+  - Load when clients connect but get denied, rewritten, or otherwise fail
+    after reachability is already proven.
+
 ## Inspection Order
 
 ### 1. Identify the failing event path
@@ -52,6 +69,9 @@ Clarify:
 - whether the failure is connection, routing, auth, or policy related
 
 Keep the path concrete before inspecting objects.
+
+Load `references/event-path-map.md` when the symptom is still too vague to pick
+the right Event Gateway hop.
 
 ### 2. Confirm control plane and object presence
 
@@ -79,6 +99,9 @@ For connection-oriented symptoms, inspect:
 Do not treat a TCP or protocol-level connect as proof that the request is
 authorized or routed correctly.
 
+Load `references/listener-and-hostname-mapping.md` when the real question is
+whether the listener path itself is the wrong one.
+
 ### 4. Check cluster routing intent
 
 Once the listener is correct, verify that the virtual cluster points at the
@@ -91,6 +114,9 @@ Use this step to separate:
 - missing backend associations
 - healthy reachability with broken policy enforcement
 
+Load `references/cluster-routing-boundaries.md` when the routing chain from
+virtual to backend cluster is the main ambiguity.
+
 ### 5. Evaluate auth and policy separately from connectivity
 
 If clients can reach the listener but fail afterward, inspect:
@@ -101,6 +127,9 @@ If clients can reach the listener but fail afterward, inspect:
 - whether the client identity matches the policy assumptions
 
 This is the default path for "connects but gets denied" reports.
+
+Load `references/auth-and-policy-order.md` when reachability is proven and the
+remaining issue is auth or policy evaluation.
 
 ### 6. Return a single failure domain
 

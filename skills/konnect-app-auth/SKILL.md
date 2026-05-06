@@ -38,6 +38,20 @@ Use this skill when the problem is not merely “is the API published?” but
 - If live Konnect state matters and `kong-konnect` MCP is not connected, say so
   early and continue with user-provided artifacts or repo context.
 
+## References To Load
+
+Load only the reference file that matches the active branch:
+
+- `references/auth-strategy-selection.md`
+  - Load when choosing between key auth, self-managed OIDC, and DCR is the
+    main decision.
+- `references/registration-and-approval-flows.md`
+  - Load when the strategy is plausible but self-service, approvals, or
+    registration state still block developers.
+- `references/linked-service-and-enforcement.md`
+  - Load when the hard question is whether auth can actually be enforced on the
+    linked Gateway Service path.
+
 ## Workflow
 
 ### 1. Separate user auth from application auth
@@ -64,6 +78,9 @@ For developer self-service to work as intended, inspect:
 
 If any link is missing, stop there before debugging credentials.
 
+Load `references/linked-service-and-enforcement.md` when the chain appears
+complete on the portal side but runtime enforcement still looks wrong.
+
 ### 3. Choose the right auth strategy model
 
 Interpret the strategy shape explicitly:
@@ -77,6 +94,9 @@ Remember:
 - strategies are reusable across APIs and Portals
 - a developer can use only one auth strategy per application
 
+Load `references/auth-strategy-selection.md` when the main question is which
+strategy model fits the intended developer workflow.
+
 ### 4. Check approvals, RBAC, and registration status
 
 If the strategy is correct but access still fails, inspect:
@@ -88,6 +108,9 @@ If the strategy is correct but access still fails, inspect:
 
 Treat “published but unusable” as a workflow-state problem until proven
 otherwise.
+
+Load `references/registration-and-approval-flows.md` when pending, approved,
+rejected, or RBAC-gated state is the likely blocker.
 
 ### 5. Check linked-service enforcement assumptions
 

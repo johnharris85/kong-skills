@@ -81,6 +81,14 @@ many domain skills.
   Terraform tutorial
 - do not create generic tool skills with no Kong-specific value
 
+Use thin router skills only when broad discovery is a real problem.
+
+- a router skill should classify and hand off, not absorb specialist workflows
+- keep router skills light on product facts and references
+- do not build a company-wide umbrella docs tree under a router skill
+- put shared platform defaults in the router only when specialist skills also
+  keep a concise local version, because specialists may trigger directly
+
 Examples:
 
 - `konnect-gateway-triage` owns diagnosis of Gateway Manager problems;
@@ -194,10 +202,24 @@ Use `scripts/` only when a checked-in helper is materially better than restating
 the logic inline.
 
 - prefer scripts for fragile, repetitive, or deterministic transformations
+- prefer a skill-local validator or inspector script when the repeated failure
+  modes are mostly static structure problems that can be checked mechanically
+- tell the agent exactly when to run the script and what it validates
 - keep scripts lightweight and reviewable
 - do not rely on hidden wrappers or special packaging behavior
 - do not add executable files or permission-dependent setup just to make a skill
   work
+
+When you use `references/`, make them progressively discoverable.
+
+- keep `SKILL.md` as the stable workflow and decision layer
+- use `references/` for conditional depth, not for always-needed instructions
+- split references by decision branch or failure domain, not by vague topic
+  buckets like `overview.md` or `more.md`
+- name reference files so the load condition is obvious from the filename
+- add a `References To Load` section in `SKILL.md` that says when each file
+  should be loaded
+- avoid placing critical common guidance only in references
 
 ### Tool And MCP Boundaries
 
@@ -234,6 +256,18 @@ For tool skills:
 - make the covered Kong product or resource surface explicit
 - say when another domain skill should own diagnosis first
 - say which neighboring tools the skill should not replace
+- include an explicit validation contract with these gates:
+  - `Preflight`: confirm tool install, auth, repo or toolchain ownership, and
+    target environment, workspace, namespace, or profile
+  - `Preview`: use the smallest safe inspect-only command, state the expected
+    preview artifact or output shape, and say what must be checked before
+    mutation
+  - `Execute`: describe the intended effect first and only present mutating
+    commands when the user requested mutation
+  - `Prove`: use tool-native post-change verification, confirm the exact
+    resource slice touched, and distinguish command success from intended state
+- keep domain skills focused on diagnosis quality and handoff expectations
+  rather than absorbing full mutation playbooks
 
 For declarative tool selection, use these defaults unless the repo or the user
 already chose another path:
@@ -354,6 +388,14 @@ If a detail is likely to drift, either omit it, frame it as version-specific, or
 
 Prefer stable operating patterns in `SKILL.md` and push volatile details into references.
 
+For common cross-skill guidance, use this placement rule:
+
+- put platform-wide defaults in a thin router skill when one exists
+- repeat a concise local version in specialist skills that can trigger
+  directly
+- do not rely on references as the only place for core defaults like
+  "prefer live MCP state when available" or "preserve the existing toolchain"
+
 For MCP-backed skills, prefer stable capability language such as "use
 `kong-konnect` MCP for live inspection of current Konnect state" over rapidly
 changing tool catalogs. The skill should describe when MCP is the right choice,
@@ -408,7 +450,7 @@ Treat this repo as the contributor-facing source package, not the end-user produ
 - keep checked-in install metadata and context files aligned with the skills that actually ship
 - prefer pointing docs at checked-in reference files over duplicating large inline config snippets that can drift
 
-If you touch harness-specific context files such as `GEMINI.md` or install snippets under `docs/install/`, verify that they only mention current skills and current checked-in config shapes.
+If you touch harness-specific install snippets under `docs/install/`, verify that they only mention current skills and current checked-in config shapes.
 
 ## Quality Bar For Submission
 

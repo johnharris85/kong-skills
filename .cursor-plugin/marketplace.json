@@ -1,0 +1,18 @@
+{
+  "name": "kong-skills",
+  "owner": {
+    "name": "kong"
+  },
+  "metadata": {
+    "description": "Portable Kong skills plus remote MCP configuration for Cursor.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "kong-skills",
+      "source": "./",
+      "skills": "skills",
+      "description": "Portable Kong skills plus remote MCP configuration for Cursor."
+    }
+  ]
+}

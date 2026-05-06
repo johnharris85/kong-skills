@@ -2,7 +2,10 @@
 
 ![Claude Code](https://img.shields.io/badge/Claude_Code-plugin-111111?style=for-the-badge&logo=anthropic&logoColor=white)
 
-Claude Code uses the plugin manifest in [`.claude-plugin/plugin.json`](../../.claude-plugin/plugin.json) and the marketplace catalog in [`.claude-plugin/marketplace.json`](../../.claude-plugin/marketplace.json).
+Claude Code uses the plugin manifest in
+[`.claude-plugin/plugin.json`](../../.claude-plugin/plugin.json) and the
+marketplace catalog in
+[`.claude-plugin/marketplace.json`](../../.claude-plugin/marketplace.json).
 
 ## Install
 
@@ -50,5 +53,6 @@ If plugins were updated during a session, run `/reload-plugins`.
 
 Be careful with auto-update. It can pull newer skill instructions automatically, which may introduce supply-chain or security risk if content changes upstream without review.
 
-If you also want the MCP server without using the plugin wrapper, add the `kong-konnect` server manually using [`.mcp.json`](../../.mcp.json) as the reference shape. That is when `KONNECT_TOKEN` is required.
-If you are configuring Claude directly, use [claude.mcp.json](../../claude.mcp.json) as the Claude-specific MCP reference shape.
+If you want the MCP server without the full plugin wrapper, add
+`kong-konnect` manually using [`.mcp.json`](../../.mcp.json) as the reference
+shape. That is when `KONNECT_TOKEN` is required.

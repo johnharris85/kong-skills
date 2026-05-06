@@ -38,6 +38,21 @@ it for ongoing incident triage.
 - If live Konnect state matters and `kong-konnect` MCP is not connected, say so
   early and continue with user-provided artifacts or repo context.
 
+## References To Load
+
+Load only the reference file that matches the active branch:
+
+- `references/topology-choice.md`
+  - Load when the main question is hosted versus self-hosted data planes,
+    quick local bootstrap versus durable shared environment, or environment
+    shape.
+- `references/bootstrap-artifacts.md`
+  - Load when the user needs to separate control plane creation, data plane
+    attachment, and first Gateway config into concrete bootstrap milestones.
+- `references/ownership-boundaries.md`
+  - Load when naming, labels, region, repo ownership, or durable management
+    path is the real bootstrap decision.
+
 ## Workflow
 
 ### 1. Identify the intended deployment shape
@@ -52,6 +67,9 @@ Clarify:
 
 Do not treat a tutorial quickstart as the final production shape by default.
 
+Load `references/topology-choice.md` when the deployment shape itself is still
+the hard part.
+
 ### 2. Confirm region, naming, and ownership boundaries
 
 Decide:
@@ -64,6 +82,9 @@ Decide:
 Bootstrap errors here cause long-lived confusion later, especially when several
 control planes look similar.
 
+Load `references/ownership-boundaries.md` when region, labels, names, or team
+ownership are the main source of ambiguity.
+
 ### 3. Separate platform bootstrap from Gateway config
 
 For a new control plane, keep these concerns distinct:
@@ -74,6 +95,9 @@ For a new control plane, keep these concerns distinct:
 - applying the first Gateway entities
 
 The control plane is not “done” just because it exists in Konnect.
+
+Load `references/bootstrap-artifacts.md` when the operator needs the bootstrap
+milestones spelled out more explicitly.
 
 ### 4. Choose the first durable management path
 

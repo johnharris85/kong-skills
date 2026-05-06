@@ -39,6 +39,19 @@ authorization.
 Do not treat declarative config in a repo as proof that a user should be able
 to see or edit the live resource. Live access always wins over intended state.
 
+## References To Load
+
+Load only the reference file that matches the active branch:
+
+- `references/region-org-and-team-checks.md`
+  - Load when wrong region, org, team, or resource slice is the likely cause.
+- `references/visibility-vs-permission.md`
+  - Load when the hard question is whether the resource exists, is visible, or
+    is writable by this identity.
+- `references/idp-and-role-model.md`
+  - Load when SSO, SCIM, IdP-managed groups, additive roles, or external
+    identity mastering is the real boundary.
+
 ## Workflow
 
 ### 1. Identify the failing surface
@@ -69,6 +82,9 @@ kongctl get me -o json
 If those succeed, authentication is present. If they fail, stop there and fix
 auth or endpoint selection first.
 
+Load `references/region-org-and-team-checks.md` when the main ambiguity is
+where the caller is pointed rather than what permissions they have.
+
 ### 3. Separate resource existence from visibility
 
 Check whether the target resource exists in the organization independently of
@@ -80,6 +96,9 @@ the affected user.
   resource lifecycle rather than permissions.
 - If the resource exists under a different product surface than expected,
   explain the mismatch instead of calling it a permission failure.
+
+Load `references/visibility-vs-permission.md` when the core question is whether
+the resource is absent, hidden, or only non-mutable.
 
 ### 4. Evaluate scope and role layering
 
@@ -102,6 +121,9 @@ Konnect.
 
 Treat externally managed identity data as read-only from the Konnect side
 unless you can confirm otherwise.
+
+Load `references/idp-and-role-model.md` when role layering, IdP mastery, or
+team/identity mapping is the main decision branch.
 
 ### 6. Explain the narrowest root cause
 

@@ -13,7 +13,7 @@ VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
 VERSION_TARGETS = [
     REPO_ROOT / ".claude-plugin" / "plugin.json",
     REPO_ROOT / ".codex-plugin" / "plugin.json",
-    REPO_ROOT / "gemini-extension.json",
+    REPO_ROOT / ".cursor-plugin" / "plugin.json",
 ]
 
 

@@ -29,7 +29,7 @@ That updates:
 
 - [`.claude-plugin/plugin.json`](../.claude-plugin/plugin.json)
 - [`.codex-plugin/plugin.json`](../.codex-plugin/plugin.json)
-- [`gemini-extension.json`](../gemini-extension.json)
+- [`.cursor-plugin/plugin.json`](../.cursor-plugin/plugin.json)
 
 Then validate the release candidate:
 

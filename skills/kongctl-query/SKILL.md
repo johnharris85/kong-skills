@@ -30,10 +30,26 @@ concise, structured results.
 - For mutation requests, preserve the repository's existing toolchain and hand
   off to `kongctl-declarative`, `deck-gateway`, `terraform-konnect`, or
   `terraform-kong-gateway` as appropriate.
-- Do not use this skill for manifest authoring, `kongctl` plan/apply/sync`, or
-  CI/CD scaffolding.
+- Do not use this skill for manifest authoring, `kongctl` `plan`/`apply`/`sync`
+  workflows, or CI/CD scaffolding.
 
-## Preconditions
+## References To Load
+
+Load only the reference file that matches the active branch:
+
+- `references/resource-discovery.md`
+  - Load when the main question is which `kongctl get` resource or child
+    resource path should be queried.
+- `references/output-shaping.md`
+  - Load when the user cares more about JSON/YAML/text shaping and concise
+    summarization than raw command discovery.
+- `references/auth-and-scope-checks.md`
+  - Load when the real problem may be auth, profile, region, or scope rather
+    than the resource query itself.
+
+## Validation Contract
+
+### Preflight
 
 - Confirm CLI is installed and runnable: `kongctl version`
 - Authenticate with one of:
@@ -46,6 +62,34 @@ concise, structured results.
   This works with all token types (PAT, SPAT, browser login). If it
   returns organization info, auth is confirmed. Do not guess or try other
   commands to check auth.
+- Confirm the organization, region, profile, or parent resource scope before
+  interpreting a read result as proof.
+
+### Preview
+
+- Choose the smallest read-only command that proves the point:
+  - `kongctl help` or `kongctl get <resource> --help` for command shape
+  - `kongctl get <resource> -o json` for list proof
+  - `kongctl get <resource> "<name-or-id>" -o json` for exact object proof
+  - child-resource reads when the proof depends on a parent boundary
+- State the expected output shape before relying on it, especially when `--jq`
+  filtering or parent-child paths narrow the slice.
+
+### Execute
+
+- Do not mutate. This skill never runs `apply`, `sync`, `adopt`, `patch`, or
+  `delete`.
+- When another workflow changes state, use this skill only to provide the
+  read-only verification commands that should be run afterward.
+
+### Prove
+
+- After another tool mutates state, rerun the exact `get` command that shows
+  the affected live object now exists or now has the intended fields.
+- Confirm the exact resource slice touched instead of treating org-level auth
+  success as proof of the resulting object.
+- If the result is empty, distinguish "no resources found" from auth or scope
+  failure.
 
 ## Config and Environment Overrides
 
@@ -65,14 +109,17 @@ concise, structured results.
 - Prefer `get`, `list`, and `help` commands.
 - Do not run mutating commands such as `create`, `apply`, `patch`, `delete`,
   or `adopt`.
+- Treat this skill as the CLI-shaped verification companion for other Konnect
+  workflows when the user wants exact read-only proof.
 - Hand off mutation requests to the tool skill that matches the repository:
   `kongctl-declarative`, `deck-gateway`, `terraform-konnect`, or
   `terraform-kong-gateway`.
 
 ## Workflow
 
-1. Identify the resource type and output expected by the user.
-2. Discover command shape when unsure:
+1. Identify the resource type and the exact proof the user needs.
+2. Run preflight checks for CLI availability, auth, and scope.
+3. Discover command shape when unsure:
    - `kongctl help`
    - `kongctl get --help`
    - `kongctl get <resource> --help`
@@ -84,14 +131,19 @@ concise, structured results.
      capture && $1 ~ /^[a-z0-9-]+$/ {print $1}
      '
      ```
-3. Query resource state with structured output:
+4. Preview the smallest read-only command that proves the intended slice:
    - Default to JSON output unless YAML is explicitly requested.
    - List resources: `kongctl get <resource> -o json`
-   - Get one resource by name or ID: `kongctl get <resource> "<name-or-id>" -o json`
+   - Get one resource by name or ID:
+     `kongctl get <resource> "<name-or-id>" -o json`
    - Query child resources:
      `kongctl get <parent> <child> --<parent>-name "<name>" -o json`
-4. Filter and summarize relevant fields for the user.
-5. Return findings with IDs, names, and timestamps when available.
+5. Summarize the proof with IDs, names, and timestamps when available.
+6. For post-change verification, state the exact `kongctl get` command that
+   proves the mutated resource slice now matches intent.
+
+If command shape, output shaping, or auth-scope diagnosis remains unclear after
+the first pass, load the matching reference file.
 
 ## Common Commands
 
@@ -202,6 +254,17 @@ kongctl get me -o json --jq '{id, email}'
 - If access is denied, report the exact command and resource.
 - If no resources are found, report an empty result without treating it as an
   execution error.
+
+## Validation Checklist
+
+Before answering, verify that you can state:
+
+- which auth and scope checks prove the read is happening in the right Konnect
+  context
+- which exact `kongctl get` or `help` command is the smallest safe proof
+- whether the request is pure read-only inspection or a post-change
+  verification handoff from another tool
+- how an empty result would be distinguished from a scope or auth failure
 
 ## Online Documentation
 

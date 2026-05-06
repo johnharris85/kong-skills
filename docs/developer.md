@@ -8,7 +8,9 @@ This repo keeps authoring simple:
 4. manually spot-check only the install surfaces you changed
 5. prepare release-versioned manifests in git, then publish from GitHub Actions
 
-This repo is optimized for contributors maintaining the shared source package. Consumers generally see the synced plugin manifests, extension metadata, or installed skill content through their host tool rather than this working tree.
+This repo is optimized for contributors maintaining the shared source package.
+Consumers generally see the synced plugin manifests or installed skill content
+through their host tool rather than this working tree.
 
 The GitHub Actions workflow is the only publishing path for public releases. Local tooling prepares and validates release content, but it does not tag or publish.
 
@@ -170,9 +172,11 @@ checks:
 - the Claude marketplace keywords in [`.claude-plugin/marketplace.json`](../.claude-plugin/marketplace.json)
 - the skill arrays in [`.codex-plugin/plugin.json`](../.codex-plugin/plugin.json)
 - the Codex marketplace listing in [`.agents/plugins/marketplace.json`](../.agents/plugins/marketplace.json)
+- the Cursor plugin manifest in [`.cursor-plugin/plugin.json`](../.cursor-plugin/plugin.json)
+- the Cursor marketplace listing in [`.cursor-plugin/marketplace.json`](../.cursor-plugin/marketplace.json)
 - the generated Codex plugin keywords and capabilities
 - the generated skill inventory in [docs/skills.md](skills.md)
-- the aligned MCP config surfaces
+- the shared MCP config in [`.mcp.json`](../.mcp.json)
 
 ## What Stays Manual
 
@@ -199,9 +203,7 @@ For authoring guidance on what makes a good skill, see [AGENTS.md](../AGENTS.md)
 
 - Claude Code: https://code.claude.com/docs
 - Codex: https://developers.openai.com/codex/
-- Gemini CLI: https://geminicli.com/docs/
 - Cursor: https://docs.cursor.com/
-- GitHub Copilot: https://docs.github.com/en/copilot
 - GitHub CLI `gh skill`: https://cli.github.com/
 - `npx skills`: https://github.com/vercel-labs/skills
 

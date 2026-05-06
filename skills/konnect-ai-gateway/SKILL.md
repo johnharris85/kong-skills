@@ -39,6 +39,20 @@ prompt-engineering advice.
 - If live Konnect state matters and `kong-konnect` MCP is not connected, say so
   early and continue with repo config or user-provided artifacts.
 
+## References To Load
+
+Load only the reference file that matches the active branch:
+
+- `references/provider-routing.md`
+  - Load when the main question is model/provider selection, route targeting,
+    fallback, or provider-specific request behavior.
+- `references/guardrails-and-policy-intent.md`
+  - Load when traffic works technically but policy intent, prompt shaping, or
+    governance behavior looks wrong.
+- `references/observability-and-cost-signals.md`
+  - Load when the question is about tokens, latency, AI-specific analytics, or
+    operational visibility rather than request construction.
+
 ## Workflow
 
 ### 1. Identify the failing AI Gateway layer
@@ -54,6 +68,9 @@ Clarify whether the issue is:
 - LLM usage, latency, or token visibility
 
 Do not flatten all AI Gateway issues into “the plugin is broken.”
+
+Load `references/provider-routing.md` when the problem is fundamentally about
+where AI traffic is being sent.
 
 ### 2. Separate baseline proxying from AI governance
 
@@ -80,6 +97,9 @@ For governed LLM traffic, inspect the stack in this order:
 This prevents chasing a guardrail symptom when the route or provider layer is
 wrong.
 
+Load `references/guardrails-and-policy-intent.md` when the operator needs to
+separate technically valid traffic from policy-valid traffic.
+
 ### 4. Use LLM analytics for AI-specific runtime questions
 
 If the question is about usage, tokens, latency, or cost-like behavior, prefer
@@ -90,6 +110,9 @@ Use AI-specific observability to answer:
 - whether requests are reaching the AI Gateway
 - whether token usage aligns with expectations
 - whether latency or error rates are concentrated by route, provider, or model
+
+Load `references/observability-and-cost-signals.md` when the real problem is
+runtime visibility, token behavior, or latency concentration.
 
 ### 5. Distinguish product governance from provider behavior
 

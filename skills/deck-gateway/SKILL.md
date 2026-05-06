@@ -38,7 +38,28 @@ Terraform.
   `kongctl-declarative` when the user wants HCL or `kongctl` rather than
   `decK`.
 
-## Preconditions
+## References To Load
+
+Load only the reference file that matches the active branch:
+
+- `references/command-paths.md`
+  - Load when choosing between validate, diff, sync, dump, or file-generation
+    paths.
+- `references/openapi-generation.md`
+  - Load when the user is starting from an OpenAPI document and wants Gateway
+    entities derived from it.
+- `references/state-shaping-and-tags.md`
+  - Load when file split, tags, include boundaries, or ownership shape matters
+    more than the entity content itself.
+- `references/dump-diff-sync-safety.md`
+  - Load when the main question is how to inspect live state safely before
+    mutating it.
+
+## Validation Contract
+
+### Preflight
+
+Before editing files or proposing a live sync:
 
 - Confirm `deck` is installed and runnable: `deck version`
 - Confirm the target deployment model:
@@ -47,13 +68,43 @@ Terraform.
 - Confirm credentials are already available through environment variables,
   config files, or secure host settings. Never echo or commit secrets.
 - Inspect the current file structure before writing new files.
+- Confirm the ownership boundary:
+  - which state file, directory, include path, or wrapper script is in scope
+  - whether tags are used to scope ownership
+  - which environment or control plane the commands should touch
+
+### Preview
+
+- Run `deck gateway validate` against the exact file, directory, or include
+  path being edited.
+- Run the smallest scoped `deck gateway diff` that shows only the intended
+  entity slice.
+- Use scoped `deck gateway dump` only when live inspection is required.
+- Check file scope, include boundaries, tag scope, and unintended deletes
+  before any `sync`.
+
+### Execute
+
+- Describe the intended live effect before any mutating command.
+- Run `deck gateway sync` only when the user explicitly asked for mutation.
+- Keep `sync` aligned with the already previewed file, directory, tags, or
+  include boundary.
+
+### Prove
+
+- Rerun the same scoped `deck gateway diff` and expect no remaining intended
+  changes.
+- Verify the exact entity slice touched when the change is narrower than the
+  whole repo.
+- Do not treat sync success alone as proof that the live Gateway now matches
+  intent.
 
 ## Operating Rules
 
 - Treat `decK` as the source-controlled representation of Gateway entities, not
   as proof that the live Gateway currently matches it.
-- Prefer `diff` or validation before `sync` unless the user explicitly requests
-  immediate mutation.
+- Treat `deck gateway validate` plus a scoped `deck gateway diff` as the
+  required preview surface before `sync`.
 - Preserve existing file segmentation and tags when the repository already has
   them.
 - Prefer additive or scoped changes over broad re-dumps of an entire control
@@ -90,17 +141,32 @@ Pin down:
 Do not treat platform resources such as teams, portals, or access rules as
 Gateway entities.
 
-### 3. Choose the right `decK` path
+### 3. Preview with `decK`'s native safety surface
 
 Default paths:
 
 - validate structure or command shape: `deck file` or `deck gateway validate`
-- inspect drift: `deck gateway diff`
-- apply intended state: `deck gateway sync`
-- export live Gateway config: `deck gateway dump`
+- inspect drift before mutation: `deck gateway diff`
+- export live Gateway config only when inspection needs it: scoped
+  `deck gateway dump`
+- apply intended state only when requested: `deck gateway sync`
 - generate Gateway config from OpenAPI: the relevant `deck file` workflow
 
-Prefer the smallest path that answers the user request.
+Preview expectations:
+
+- run `deck gateway validate` against the exact file, directory, or include
+  path being edited
+- run the smallest scoped `deck gateway diff` that shows only the intended
+  entity slice
+- use `deck gateway dump` only when live inspection is required and keep the
+  dump scoped to the target slice when possible
+- check for unintended deletes, tag-scope mistakes, include-boundary mistakes,
+  or environment mismatches before any `sync`
+
+Prefer the smallest preview path that answers the user request.
+
+Load `references/command-paths.md` when several `decK` paths could fit and you
+need a sharper decision rule.
 
 ### 4. Author or update state files
 
@@ -111,16 +177,34 @@ When editing state:
 - avoid unnecessary reordering or formatting churn
 - add only the entities needed for the requested change
 
-### 5. Validate before applying
+Load `references/state-shaping-and-tags.md` when the repo's split, tags, or
+include boundaries are the main constraint.
 
-Before mutation, verify:
+### 5. Execute only when requested
 
-- target environment and credentials
-- file paths and include patterns
-- tag scoping or selective sync boundaries
-- whether the user expects a preview, a diff, or direct execution
+- State the intended live effect before presenting or running a mutating
+  command.
+- Use `deck gateway sync` only when the user explicitly asked for live
+  mutation.
+- Keep the command scoped to the file, tags, select-tags, or include boundary
+  already previewed.
 
-### 6. Report the exact effect
+Load `references/dump-diff-sync-safety.md` when the user needs a safer
+inspection-first path or is about to use a broad dump/sync flow.
+
+### 6. Prove the result with `decK`
+
+After any requested `sync`:
+
+- rerun the same scoped `deck gateway diff` and expect no remaining intended
+  changes
+- when the task is narrower than the repo, verify the target entity slice
+  rather than trusting a broad sync success message
+- call out any remaining drift outside the owned slice instead of hiding it
+- do not treat `sync` exit status alone as proof that the live Gateway now
+  matches the intended state
+
+### 7. Report the exact effect
 
 State:
 
@@ -144,9 +228,10 @@ Preferred sequence:
 
 1. inspect existing `decK` files
 2. update only the relevant entities
-3. validate
-4. run `deck gateway diff`
+3. run `deck gateway validate`
+4. run scoped `deck gateway diff`
 5. run `deck gateway sync` only when the user asks to execute
+6. rerun scoped `deck gateway diff` to prove the live slice is clean
 
 ### Export or review drift
 
@@ -189,9 +274,11 @@ Before answering, verify that you can state:
 
 - why `decK` is the right tool for this repository or request
 - which Gateway entities are in scope
+- which `deck` preview commands prove the intended change safely
 - whether the task is authoring, diffing, dumping, or syncing
 - which environment the commands should target
 - whether a live mutation was requested or only a declarative change
+- how the post-change proof step will confirm the exact affected slice
 - whether another tool skill should own the implementation instead
 
 ## Handoffs

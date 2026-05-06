@@ -114,29 +114,13 @@ back to user-profile locations.
 - Quick prompt: `Explain what the gateway-plugin-datakit skill is for in one paragraph.`
 - Cleanup: remove the skill install or discard the scratch profile
 
-### Gemini CLI
-
-- Install path: [docs/install/gemini-cli.md](./install/gemini-cli.md)
-- Verify after install: the extension or skill install completes and `gateway-plugin-datakit` is available in a fresh session
-- MCP check when using the extension path: confirm the session can see `kong-konnect`
-- Quick prompt: `When should you reach for the gateway-plugin-datakit skill instead of generic reasoning?`
-- Cleanup: uninstall the extension or remove the skill install from the scratch profile
-
 ### Cursor
 
 - Install path: [docs/install/cursor.md](./install/cursor.md)
-- Verify after install: the MCP config is present and `gateway-plugin-datakit` is available to the project
+- Verify after install: the plugin is present and `gateway-plugin-datakit` is available in a fresh session
 - MCP check: confirm the session can see `kong-konnect`
 - Quick prompt: `Summarize the gateway-plugin-datakit skill in two sentences.`
-- Cleanup: remove the copied MCP config and installed skill from the scratch project
-
-### GitHub Copilot
-
-- Install path: [docs/install/github-copilot.md](./install/github-copilot.md)
-- Verify after install: `.vscode/mcp.json` is present and the shared skill install completes
-- MCP check: confirm the session can see `kong-konnect`
-- Quick prompt: `What task category should trigger the gateway-plugin-datakit skill?`
-- Cleanup: remove the copied MCP config and installed skill from the scratch project
+- Cleanup: remove the local plugin or discard the scratch profile
 
 ## When To Stop
 

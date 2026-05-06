@@ -27,7 +27,8 @@ If you installed via `gh skill`, you can also update one installed skill with `g
 
 Codex does not currently have a documented SessionStart-style startup hook equivalent in the official docs I checked, so this repo does not document automatic `npx skills update` hooks for Codex.
 
-If you also want the `kong-konnect` MCP server, add the MCP config from [`.mcp.json`](../../.mcp.json). That is when `KONNECT_TOKEN` is required.
+If you also want the `kong-konnect` MCP server, add the MCP config from
+[`.mcp.json`](../../.mcp.json). That is when `KONNECT_TOKEN` is required.
 
 ## Personal Marketplace Path
 
@@ -38,6 +39,9 @@ mkdir -p ~/plugins ~/.agents/plugins
 git clone https://github.com/kong/skills.git ~/plugins/kong-skills
 ```
 
-Use [`.agents/plugins/marketplace.json`](../../.agents/plugins/marketplace.json) as the checked-in reference shape for the marketplace entry. If you already have a marketplace file, merge the `kong-skills` plugin entry into it instead of overwriting unrelated plugins.
+Use [`.agents/plugins/marketplace.json`](../../.agents/plugins/marketplace.json)
+as the checked-in reference shape for the marketplace entry. If you already
+have a marketplace file, merge the `kong-skills` plugin entry into it instead
+of overwriting unrelated plugins.
 
 Then install `kong-skills` from your personal marketplace in Codex.

@@ -41,7 +41,11 @@ Choose the execution approach from user intent:
 - User-run mode: provide commands and explain what each command does.
 - Agent-run mode: execute commands directly and report outcomes.
 
-## Preconditions
+## Validation Contract
+
+### Preflight
+
+Before editing manifests or proposing any declarative execution:
 
 - Confirm CLI is installed and runnable: `kongctl version`
 - Authenticate with one of:
@@ -53,10 +57,45 @@ Choose the execution approach from user intent:
   This works with all token types (PAT, SPAT, browser login). If it
   returns organization info, auth is confirmed. Do not guess or try other
   commands to check auth.
+- Confirm namespace, profile, output mode, and `--base-dir` assumptions before
+  previewing or mutating.
+- Confirm the repository already owns the target Konnect slice through
+  `kongctl` YAML instead of `decK` or Terraform.
 - Verify command syntax when unsure:
   - `kongctl plan --help`
   - `kongctl dump declarative --help`
   - `kongctl adopt --help`
+
+### Preview
+
+Use `kongctl`'s native preview surface before mutation:
+
+- use `kongctl plan` when a reviewable plan artifact is useful
+- use `kongctl diff --mode apply` or `kongctl diff --mode sync` to show the
+  exact change surface
+- use `--dry-run` as the default before inline `apply`, `sync`, or `delete`
+- check namespace ownership, `!file` resolution, referenced resource IDs, and
+  unexpected deletes before moving forward
+
+### Execute
+
+- Describe the intended effect in plain language before any mutating command.
+- Run `apply`, `sync`, or `delete` only when the user explicitly asked for live
+  mutation.
+- Keep execution aligned with the previewed path:
+  - explicit plan path: `plan` -> `diff --plan` -> `apply/sync --plan`
+  - inline path: `apply -f`, `sync -f`, or `delete -f`
+
+### Prove
+
+After a requested mutation:
+
+- rerun the matching `kongctl diff` and expect no remaining intended changes
+- confirm the namespace and resource slice now reflects the intended state
+- for adopt or dump workflows, prove zero drift after integration instead of
+  stopping at a successful `adopt` or `dump`
+- use `kongctl-query` when a separate read-only CLI proof of the resulting live
+  object is useful
 
 ## Config and Environment Overrides
 
@@ -66,7 +105,7 @@ Choose the execution approach from user intent:
 - Pass explicit `-o yaml`, `-o json`, or `-o text` on command lines to avoid
   unexpected output behavior.
 
-## Skill References
+## References To Load
 
 Load only the reference file needed for the active task:
 
@@ -102,6 +141,8 @@ structure from live data using:
   `kongctl` change into a cross-tool migration.
 - Use `kongctl-query` first when the real task is discovery of resources,
   authentication state, or exact read-only CLI syntax.
+- Use `kongctl-query` after a mutation when the user wants exact read-only CLI
+  proof of the resulting live object.
 - Choose path from user intent:
   - Preview/review/audit/CI request: use explicit plan artifacts.
   - "Do it now" execution request: use inline commands.
@@ -143,13 +184,13 @@ structure from live data using:
    - User-run mode (teach + provide commands)
    - Agent-run mode (execute commands directly)
 4. Load the relevant `references/*.md` file for the task.
-5. If execution is needed, pick execution style:
-   - Explicit plan artifact workflow (generate plan, then pass it to apply or
-     sync)
-   - Inline command workflow
-6. Validate and/or execute `diff`, `apply`, `sync`, `delete`, or `adopt` per
-   user ask.
-7. Report created files, commands run, and resulting plan or execution
+5. Run the validation gates in order:
+   - Preflight: auth, profile, namespace, output, and repo ownership
+   - Preview: `plan`, `diff`, or inline `--dry-run`
+   - Execute: only if the user requested mutation
+   - Prove: rerun the matching `diff` and, when useful, confirm live state with
+     `kongctl-query`
+6. Report created files, commands run, and resulting plan or execution
    summary.
 
 ### Execution Style Selection
@@ -162,6 +203,8 @@ Use this quick decision rule:
   ask for a saved plan file.
 - For destructive requests (`sync`, `delete`), prefer `--dry-run` first unless
   the user explicitly requests direct execution.
+- Match the post-change proof step to the preview path: rerun the same `diff`
+  mode or plan-backed check after mutation.
 
 ### Collaboration Mode Selection
 
@@ -380,6 +423,17 @@ Steps:
 
 Load `references/cicd-github-actions.md` for starter workflow templates,
 trigger patterns, auth conventions, and validation workflow examples.
+
+## Validation Checklist
+
+Before answering, verify that you can state:
+
+- why `kongctl` is the right declarative tool for this repository or request
+- which namespace, profile, and file scope the change owns
+- which preview path applies: `plan`, `diff`, or inline `--dry-run`
+- whether the user asked only for declarative authoring or for live mutation
+- how the post-change proof step will confirm the exact resource slice
+- whether `kongctl-query` should provide the final read-only CLI proof
 
 ## Safety and Troubleshooting
 

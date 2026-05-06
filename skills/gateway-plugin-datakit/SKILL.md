@@ -45,6 +45,14 @@ Load only the reference file needed for the current task:
 
 Prefer these references over repeating large product tables inline.
 
+## Script To Run
+
+- `scripts/validate_datakit_flow.py`
+  - Run when a DataKit flow already exists in a local YAML file and you want a
+    deterministic pass over duplicate node names, broken references, branch
+    targets, dependency cycles, reserved names, and missing
+    `resources.cache`/`resources.vault` setup.
+
 ## Workflow
 
 When a user asks for help with DataKit, follow this approach:
@@ -76,6 +84,8 @@ Select node types based on what each step needs to do. When field-level details 
 - Confirm implicit node fields are used correctly (e.g., `request.body` not `request.data`)
 - Ensure exit nodes have appropriate status codes
 - Verify resource blocks exist for cache/vault nodes
+- Run `python skills/gateway-plugin-datakit/scripts/validate_datakit_flow.py <path-to-state.yaml>`
+  when the flow already exists locally and you want deterministic structural checks before deeper debugging
 
 ## Quick Reference: Implicit Nodes
 

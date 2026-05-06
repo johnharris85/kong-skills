@@ -100,14 +100,12 @@ Or with GitHub CLI:
 gh skill update gateway-plugin-datakit
 ```
 
-Claude Code and Gemini CLI both have native update flows. See their install pages for the current recommended approach.
+Claude Code and Cursor both have native plugin update flows. See their install
+pages for the current recommended approach.
 
 ## MCP Config Reference
 
-Use one of these as the source of truth for the `kong-konnect` MCP server:
-
-- [`.mcp.json`](../../.mcp.json)
-- [cursor-mcp.json](../../cursor-mcp.json)
-- [`gemini-extension.json`](../../gemini-extension.json)
+Use [`.mcp.json`](../../.mcp.json) as the checked-in reference shape for the
+`kong-konnect` MCP server.
 
 `KONNECT_TOKEN` is only required if you add and use the MCP server.

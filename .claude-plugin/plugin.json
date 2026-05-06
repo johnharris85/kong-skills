@@ -20,8 +20,9 @@
     "./skills/konnect-event-gateway",
     "./skills/konnect-gateway-triage",
     "./skills/konnect-observability-triage",
+    "./skills/konnect-platform-router",
     "./skills/terraform-kong-gateway",
     "./skills/terraform-konnect"
   ],
-  "mcpServers": "./claude.mcp.json"
+  "mcpServers": "./.mcp.json"
 }

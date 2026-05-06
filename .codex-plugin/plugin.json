@@ -67,6 +67,9 @@
     "observability",
     "analytics",
     "debugger",
+    "konnect-platform-router",
+    "routing",
+    "triage",
     "terraform-kong-gateway",
     "terraform",
     "hcl",
@@ -88,6 +91,7 @@
     "./skills/konnect-event-gateway",
     "./skills/konnect-gateway-triage",
     "./skills/konnect-observability-triage",
+    "./skills/konnect-platform-router",
     "./skills/terraform-kong-gateway",
     "./skills/terraform-konnect"
   ],
@@ -145,6 +149,8 @@
       "observability",
       "analytics",
       "debugger",
+      "routing",
+      "triage",
       "terraform",
       "hcl",
       "declarative-konnect"
