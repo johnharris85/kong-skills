@@ -22,5 +22,5 @@ All routes use the same MCP server:
 For skill-only installs from GitHub, prefer previewing before install:
 
 ```bash
-gh skill preview kong/skills datakit
+gh skill preview kong/skills gateway-plugin-datakit
 ```

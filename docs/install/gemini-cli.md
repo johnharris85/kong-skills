@@ -37,12 +37,12 @@ npx skills add kong/skills
 Install only one skill from this repo:
 
 ```bash
-npx skills add kong/skills --skill datakit
+npx skills add kong/skills --skill gateway-plugin-datakit
 ```
 
 That does not require `KONNECT_TOKEN`.
 
-If you installed via `gh skill`, you can also update one installed skill with `gh skill update datakit`.
+If you installed via `gh skill`, you can also update one installed skill with `gh skill update gateway-plugin-datakit`.
 
 ## Auto-Update
 

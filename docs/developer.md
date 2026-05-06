@@ -36,6 +36,8 @@ mise run deps
 - `gh` for `gh skill publish --dry-run`
 - `node` and `npx` for shared-installer verification
 
+When a task takes arguments, prefer `mise run <task> --help` to see the expected positional arguments and flags.
+
 ## Typical Loops
 
 Use the smallest workflow that matches the change:
@@ -55,10 +57,31 @@ That enables the checked-in `pre-commit` and `pre-push` hooks, both of which run
 
 ## Add A Skill
 
+Contributors will approach skill authoring in different ways:
+
+- some will read this guide and edit files directly
+- some will ask an agent to help immediately
+- some will use the built-in generic skill creator first and then refine the
+  result
+
+All of those paths are fine. For repo-specific authoring guidance:
+
+- use [AGENTS.md](../AGENTS.md) as the canonical policy
+- use the shipped `kong-skill-authoring` skill when you want an agent to walk
+  the overlap, layering, and trigger-boundary decisions progressively
+- use the host tool's built-in generic skill creator only as a helper, then
+  review the result against `AGENTS.md`
+
 Scaffold the boilerplate with one command:
 
 ```bash
 mise run skill:new -- your-skill-name
+```
+
+For task-level help:
+
+```bash
+mise run skill:new --help
 ```
 
 That creates:
@@ -92,6 +115,21 @@ Set `license: MIT` for skills in this repo unless you have an explicit reason to
 
 This repo does not currently allow per-skill MCP dependency declarations. Keep shared MCP wiring at the repo level for v1.
 
+Before you scaffold a new skill, check [docs/skills.md](skills.md) and the
+existing `skills/` directories for overlap. Prefer extending an existing skill
+unless the trigger boundary or ownership boundary is clearly different.
+
+### Description Budget
+
+`description` is the primary trigger surface for implicit skill activation.
+Keep it short, front-loaded, and specific.
+
+- Put the main trigger words and boundary near the start.
+- Keep most descriptions under roughly 260 characters.
+- Prefer one clear trigger phrase over long lists of near-synonyms.
+- If two descriptions start sounding similar, tighten the scope or merge the
+  skills.
+
 ## Sync And Validate
 
 ```bash
@@ -117,6 +155,15 @@ If you have not already enabled the repo hooks, do that once as well:
 mise run hooks:install
 ```
 
+`mise run check` is the main repo guardrail for authoring quality. It now
+checks:
+
+- generated metadata drift
+- scaffold placeholders
+- `SKILL.md` length
+- description budget
+- high-similarity trigger overlap between skills
+
 ## What Sync Updates
 
 - the skill arrays in [`.claude-plugin/plugin.json`](../.claude-plugin/plugin.json)
@@ -135,6 +182,8 @@ mise run hooks:install
 - decisions about whether a skill needs `references/`, `assets/`, or `scripts/`
 - replacing scaffold placeholders with real Kong-specific content
 - any rationale for exceptions to the default `license: MIT`
+- judgment about whether two skills are still meaningfully distinct after an
+  overlap warning
 
 ## Conventions
 
@@ -183,6 +232,12 @@ mise run release:prepare -- 1.0.1
 mise run preflight
 mise run ci
 mise run artifact:check
+```
+
+To inspect the accepted release arguments:
+
+```bash
+mise run release:prepare --help
 ```
 
 Commit the version bump, get it reviewed, and merge it to `main`.

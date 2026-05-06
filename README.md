@@ -57,10 +57,10 @@ Authorization: Bearer ${KONNECT_TOKEN}
 ## Skill Install Notes
 
 - Install the whole repo with `npx skills add kong/skills`.
-- Install one skill with `npx skills add kong/skills --skill datakit`.
-- Update one installed skill with `npx skills update -g -y datakit` or `gh skill update datakit`.
+- Install one skill with `npx skills add kong/skills --skill gateway-plugin-datakit`.
+- Update one installed skill with `npx skills update -g -y gateway-plugin-datakit` or `gh skill update gateway-plugin-datakit`.
 - Prefer native marketplace or extension update flows in Claude Code and Gemini CLI over custom startup hooks.
 - Be careful with any automatic update path: it can pull newer skill instructions automatically and may introduce supply-chain or security risk.
-- For `gh skill`, preview before install with `gh skill preview kong/skills datakit`.
+- For `gh skill`, preview before install with `gh skill preview kong/skills gateway-plugin-datakit`.
 
 Claude Code uses [claude.mcp.json](claude.mcp.json) as its MCP reference shape. Codex-compatible tools use [`.mcp.json`](.mcp.json).

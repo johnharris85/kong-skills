@@ -1,6 +1,6 @@
 ---
 name: kongctl-query
-description: Inspect and query Kong Konnect resources with read-only kongctl commands. Use when the user wants to list, get, or check Konnect resources, verify authentication, discover kongctl commands, or format output as text, json, or yaml.
+description: Inspect Konnect with read-only kongctl commands. Use to list or get resources, verify authentication, discover command syntax, or shape output as text, JSON, or YAML. Do not use for declarative YAML authoring or plan/apply workflows.
 license: MIT
 metadata:
   product: kongctl
@@ -17,6 +17,21 @@ metadata:
 
 Use read-only `kongctl` commands to inspect Konnect resource state and return
 concise, structured results.
+
+## Tool Positioning
+
+- If the session already has the shared `kong-konnect` MCP server and the user
+  needs live Konnect inspection rather than exact CLI syntax, suggest MCP
+  first.
+- Use this skill when the user wants read-only `kongctl` commands, CLI-shaped
+  verification, or filtered output.
+- If live state matters and `kong-konnect` MCP is not connected, say so early
+  and continue with `kongctl` as the fallback inspection path.
+- For mutation requests, preserve the repository's existing toolchain and hand
+  off to `kongctl-declarative`, `deck-gateway`, `terraform-konnect`, or
+  `terraform-kong-gateway` as appropriate.
+- Do not use this skill for manifest authoring, `kongctl` plan/apply/sync`, or
+  CI/CD scaffolding.
 
 ## Preconditions
 
@@ -50,8 +65,9 @@ concise, structured results.
 - Prefer `get`, `list`, and `help` commands.
 - Do not run mutating commands such as `create`, `apply`, `patch`, `delete`,
   or `adopt`.
-- Hand off mutation requests to the `kongctl-declarative` skill for
-  plan/apply/sync/delete/adopt workflows.
+- Hand off mutation requests to the tool skill that matches the repository:
+  `kongctl-declarative`, `deck-gateway`, `terraform-konnect`, or
+  `terraform-kong-gateway`.
 
 ## Workflow
 

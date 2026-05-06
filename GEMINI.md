@@ -4,7 +4,7 @@ This extension adds Kong's remote MCP server plus the shared Kong skills shipped
 
 The current shared skills are:
 
-- `datakit`
+- `gateway-plugin-datakit`
 - `kongctl-declarative`
 - `kongctl-query`
 

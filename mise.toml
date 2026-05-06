@@ -1,21 +1,29 @@
 [tools]
 python = "3.12"
 
+[env]
+UV_CACHE_DIR = ".tmp/uv-cache"
+UV_PYTHON = "3.12"
+UV_PYTHON_INSTALL_DIR = ".tmp/uv-python"
+
 [tasks.preflight]
 description = "Check local prerequisites for contributor workflows"
 run = "python scripts/preflight.py"
 
 [tasks.deps]
 description = "Sync Python dependencies with uv"
-run = "UV_CACHE_DIR=.tmp/uv-cache uv sync"
+run = "uv sync --python 3.12 --cache-dir .tmp/uv-cache"
 
 [tasks."skill:new"]
 description = "Scaffold a new skill"
-run = "UV_CACHE_DIR=.tmp/uv-cache uv run python scripts/scaffold_skill.py skill"
+usage = '''
+arg "<name>" help="Skill name. Lowercase letters, digits, and dashes are recommended."
+'''
+run = "uv run --python 3.12 --cache-dir .tmp/uv-cache python scripts/scaffold_skill.py skill {{ usage.name }}"
 
 [tasks.sync]
 description = "Sync generated repo metadata and skill listings"
-run = "UV_CACHE_DIR=.tmp/uv-cache uv run python scripts/check_repo.py --fix"
+run = "uv run --python 3.12 --cache-dir .tmp/uv-cache python scripts/check_repo.py --fix"
 
 [tasks.generate]
 description = "Alias for sync"
@@ -23,7 +31,7 @@ depends = ["sync"]
 
 [tasks.check]
 description = "Validate manifests, skills, and generated content"
-run = "UV_CACHE_DIR=.tmp/uv-cache uv run python scripts/check_repo.py"
+run = "uv run --python 3.12 --cache-dir .tmp/uv-cache python scripts/check_repo.py"
 
 [tasks.lint]
 description = "Alias for check"
@@ -31,14 +39,18 @@ depends = ["check"]
 
 [tasks.ci]
 description = "Run the same validation used in CI"
-run = """
-UV_CACHE_DIR=.tmp/uv-cache uv run python scripts/check_repo.py
-gh skill publish --dry-run
-"""
+run = [
+  { task = "check" },
+  "gh skill publish --dry-run",
+]
 
 [tasks."release:prepare"]
 description = "Update manifest versions for a release commit"
-run = "UV_CACHE_DIR=.tmp/uv-cache uv run python scripts/release_prepare.py"
+usage = '''
+arg "<version>" help="Semver release version like 1.0.1"
+flag "--check" help="Verify checked-in manifests already match the supplied version"
+'''
+run = "uv run --python 3.12 --cache-dir .tmp/uv-cache python scripts/release_prepare.py {{ usage.version }}{% if usage.check %} --check{% endif %}"
 
 [tasks."artifact:check"]
 description = "Build and validate the local OCI skills artifact image"

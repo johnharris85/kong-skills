@@ -27,6 +27,27 @@ Weak examples:
 
 If the skill would be equally useful in any repo, it probably does not belong here.
 
+## Before You Create A Skill
+
+Before creating a new skill, check whether the repo already has one that should
+be extended instead.
+
+- inspect `docs/skills.md` and `skills/` before adding a new folder
+- extend an existing skill when the new request fits the same trigger class,
+  same layer, and same operating procedure
+- create a new skill only when the workflow, ownership boundary, or trigger
+  surface is meaningfully different
+- avoid near-duplicates with slightly different names or product wording
+
+Useful decision rule:
+
+- if the main difference is product surface, operator workflow, or diagnosis
+  order, extend or create a domain skill
+- if the main difference is config tool, file format, plan/apply workflow, or
+  import/adoption path, extend or create a tool skill
+- if both apply, keep diagnosis in the domain skill and hand off
+  implementation to the tool skill
+
 ## What A Good Skill Does
 
 A strong skill is narrow, operational, and reusable.
@@ -45,6 +66,42 @@ It should not:
 - read like marketing copy
 - duplicate large amounts of reference material inline
 - prescribe steps that are too vague to change model behavior
+
+## Layered Skill Design
+
+Prefer orthogonal Kong skills over repeating the same tool instructions across
+many domain skills.
+
+- use domain or product skills for Kong-specific workflows, inspection order,
+  failure modes, and decision-making
+- use tool skills for Kong-specific config authoring and execution in `decK`,
+  `kongctl`, or Terraform
+- keep only short tool-selection and handoff guidance in domain skills
+- avoid turning every domain skill into a partial `decK`, `kongctl`, or
+  Terraform tutorial
+- do not create generic tool skills with no Kong-specific value
+
+Examples:
+
+- `konnect-gateway-triage` owns diagnosis of Gateway Manager problems;
+  `deck-gateway` or Terraform skills own the declarative implementation
+- `konnect-api-publish` owns publication workflow diagnosis;
+  `terraform-konnect` or `kongctl-declarative` own the resulting config changes
+- `gateway-plugin-datakit` owns DataKit flow design;
+  `deck-gateway` or a Terraform skill own repository integration if the user
+  needs the plugin config encoded in an existing delivery workflow
+
+For declarative workflows, preserve the user's existing toolchain when one is
+already present in the repository.
+
+- if the repo already uses `*.tf`, stay in Terraform unless the user asks to
+  change tools
+- if the repo already uses `kong.yaml`, `_format_version`, or `deck gateway`
+  workflows, stay in `decK`
+- if the repo already uses `konnect/resources`, `_defaults.kongctl`, or
+  `kongctl` plan/apply workflows, stay in `kongctl`
+- do not convert users between `decK`, `kongctl`, and Terraform unless they
+  ask for that migration
 
 ## Scope Before Writing
 
@@ -107,6 +164,24 @@ Use these fields consistently in this repo:
 - `metadata.category`
 - `metadata.tags`
 
+Treat `description` as the primary trigger surface for the skill.
+
+- write it so an agent can recognize when to activate the skill
+- include the main job the skill does and the kinds of requests that should
+  trigger it
+- prefer explicit "Use when..." phrasing
+- front-load the key trigger words and main boundary early in the sentence
+- include important adjacent exclusions when they prevent accidental triggering
+- do not make `description` a short label or marketing summary
+
+Budget the description tightly.
+
+- keep individual descriptions concise enough to survive shortening in large
+  skill sets
+- as a repo default, keep most descriptions under roughly 260 characters
+- avoid long trailing lists of examples when a shorter trigger phrase is enough
+- if a detail is not needed for matching, move it into the skill body
+
 Set `license` to `MIT` unless the skill is intentionally shipped under different terms and that exception has been reviewed.
 
 Optional companion directories are allowed when they support the skill:
@@ -115,7 +190,64 @@ Optional companion directories are allowed when they support the skill:
 - `assets/` for lightweight images or other bundled assets
 - `scripts/` for helper scripts an agent may inspect or run explicitly
 
-This repo does not currently allow per-skill MCP dependency declarations such as `agents/openai.yaml`. For v1, keep MCP configuration shared at the repo level and keep skills portable.
+Use `scripts/` only when a checked-in helper is materially better than restating
+the logic inline.
+
+- prefer scripts for fragile, repetitive, or deterministic transformations
+- keep scripts lightweight and reviewable
+- do not rely on hidden wrappers or special packaging behavior
+- do not add executable files or permission-dependent setup just to make a skill
+  work
+
+### Tool And MCP Boundaries
+
+This repo does not currently allow per-skill MCP dependency declarations such
+as `agents/openai.yaml`. Keep MCP wiring shared at the repo level so skills stay
+portable.
+
+For Konnect-oriented skills:
+
+- treat the shared `kong-konnect` MCP server as the preferred path for live
+  inspection when it is available
+- prefer MCP guidance at the workflow level, not as a hard dependency
+- do not hardcode long or brittle MCP tool inventories in `SKILL.md`
+- mention exact MCP tool names only when they are stable and materially reduce
+  ambiguity
+- tell the agent to suggest connecting `kong-konnect` when the request depends
+  on live Konnect state and MCP is not available
+- preserve a fallback path through `kongctl`, declarative config, logs, or
+  user-provided artifacts
+- keep MCP setup and auth instructions in shared install docs unless a skill
+  truly needs a narrow workflow-specific reminder
+
+For domain skills:
+
+- make the preferred live inspection path clear, usually `kong-konnect` MCP
+  for Konnect work
+- keep tool guidance short
+- hand off implementation to the appropriate declarative tool skill when needed
+- explain how to preserve the user's existing toolchain rather than forcing one
+  preferred format
+
+For tool skills:
+
+- make the covered Kong product or resource surface explicit
+- say when another domain skill should own diagnosis first
+- say which neighboring tools the skill should not replace
+
+For declarative tool selection, use these defaults unless the repo or the user
+already chose another path:
+
+- prefer `decK` for Kong Gateway entity configuration, file-based GitOps,
+  dump/diff/sync workflows, and OpenAPI-driven gateway config generation
+- prefer `kongctl` for Konnect platform YAML workflows and stateless
+  plan-based reconciliation
+- prefer Terraform when the user already uses HCL or Terraform state, or wants
+  Kong and Konnect managed alongside other infrastructure
+- use the official `kong/konnect` provider for Konnect resources
+- use the official `kong/kong-gateway` provider for self-managed Gateway
+  resources reachable through the Admin API
+- use beta providers only when the user explicitly needs beta-only coverage
 
 Keep the package shape simple:
 
@@ -222,6 +354,20 @@ If a detail is likely to drift, either omit it, frame it as version-specific, or
 
 Prefer stable operating patterns in `SKILL.md` and push volatile details into references.
 
+For MCP-backed skills, prefer stable capability language such as "use
+`kong-konnect` MCP for live inspection of current Konnect state" over rapidly
+changing tool catalogs. The skill should describe when MCP is the right choice,
+not try to mirror the full remote tool surface inline.
+
+Also preserve discovery budget across the whole repo.
+
+- Codex initially sees only each skill's name, description, and file path
+- large skill sets may shorten descriptions first
+- prefer compact, front-loaded descriptions so matching still works when the
+  inventory grows
+- when two skills start sounding too similar, tighten the trigger boundary or
+  merge them
+
 ## Progressive Disclosure
 
 Use the skill root for the always-needed instructions and companion files for conditional detail.
@@ -297,6 +443,27 @@ When you add or substantially change a skill, keep the authoring loop simple:
 2. sync the generated repo metadata
 3. run validation
 
+For a new skill, the preferred contributor flow is:
+
+1. check `docs/skills.md` and `skills/` for overlap
+2. decide whether this belongs in an existing skill, a new domain skill, or a
+   new tool skill
+3. scaffold the new skill only if the boundary is clearly justified
+4. write the skill body and only the companion files it really needs
+5. sync generated metadata
+6. run validation
+
 If you have access to a skill-authoring helper in your host tool, use it before step 1 or during revision, then review the result against this file before committing.
+
+When helping a user create or edit skills in this repo, do not ordinarily
+suggest or make changes to the shared scaffolding in the repo root such as task
+wrappers, generated-manifest sync logic, install docs, or other packaging and
+harness-support files. Treat those as stable repo infrastructure and only touch
+them in exceptional circumstances.
+
+If the scaffolding appears repeatedly broken, surprising, or inconsistent with
+the documented workflow, say so plainly and suggest that the user file an issue
+in the repo rather than silently broadening the task into a scaffolding
+refactor.
 
 The exact commands and file map are documented elsewhere in this repo. This file is intentionally focused on writing better skills, not on repeating procedural details.

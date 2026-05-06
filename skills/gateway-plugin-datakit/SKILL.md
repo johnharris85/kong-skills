@@ -1,6 +1,6 @@
 ---
-name: datakit
-description: Build and debug Kong DataKit plugin flows. Use when users want to create, modify, debug, or understand DataKit YAML configurations — including designing node-based API workflows, writing jq transformations, configuring caching or branching, or troubleshooting flow execution. Triggers on mentions of DataKit, Kong API orchestration, or decK plugin config with workflow nodes.
+name: gateway-plugin-datakit
+description: Build and debug Kong DataKit plugin flows. Use for DataKit YAML design, node wiring, jq transforms, caching or branching, flow troubleshooting, or turning API orchestration requests into DataKit plugin config.
 license: MIT
 metadata:
   product: datakit
@@ -8,6 +8,7 @@ metadata:
   tags:
     - kong
     - datakit
+    - gateway-plugin-datakit
     - gateway
 ---
 
@@ -25,6 +26,11 @@ Use this skill when the request is specifically about Kong DataKit flow design, 
 - translating an imperative API orchestration idea into declarative decK config
 
 Do not use this skill for generic decK, Kong Gateway, or Konnect questions unless the user is clearly working with the DataKit plugin itself.
+
+When the user needs to integrate the resulting plugin config into a repository
+or delivery workflow, preserve the repository's chosen declarative toolchain
+and hand off to `deck-gateway`, `terraform-kong-gateway`,
+`terraform-konnect`, or `kongctl-declarative` as appropriate.
 
 ## References To Load
 

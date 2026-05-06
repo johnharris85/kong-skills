@@ -1,6 +1,6 @@
 ---
 name: kongctl-declarative
-description: Set up, initialize, and manage kongctl declarative configuration for Kong Konnect. Use when the user wants to configure a repository with Konnect declarative resources, create kongctl manifests, generate config from OpenAPI specs, run plan/diff/apply/sync/delete/adopt workflows, or scaffold CI/CD pipelines for Konnect APIOps.
+description: Manage Konnect declarative config with kongctl. Use for `kongctl` YAML repos, manifest generation, OpenAPI-driven config, plan/diff/apply/sync/delete/adopt workflows, or Konnect APIOps CI/CD. Do not use for read-only inspection or command discovery.
 license: MIT
 metadata:
   product: kongctl
@@ -17,6 +17,24 @@ metadata:
 
 Generate and maintain `kongctl` declarative configuration in the repository,
 and teach users how to manage Konnect resources declaratively.
+
+## Tool Positioning
+
+- Use the shared `kong-konnect` MCP server first for live read inspection when
+  the requested change depends on current Konnect state and MCP is available.
+- Use `kongctl-query` for CLI-based read-only checks or exact command syntax.
+- Use this skill for declarative generation, review, and execution when the
+  repository already uses `kongctl` YAML or the user explicitly asks for
+  `kongctl`.
+- If live Konnect state matters and `kong-konnect` MCP is not connected, say so
+  early and continue with `kongctl` inspection commands as the fallback path.
+- Preserve the user's current declarative toolchain. Do not convert a
+  Terraform or `decK` repository to `kongctl` unless the user explicitly asks.
+- Hand off to `deck-gateway`, `terraform-konnect`, or `terraform-kong-gateway`
+  when the repository or user intent is centered on those tools instead of
+  `kongctl`.
+- Do not use this skill when the user only wants read-only inspection, exact
+  `get` syntax, or output shaping without declarative authoring.
 
 Choose the execution approach from user intent:
 
@@ -80,6 +98,10 @@ structure from live data using:
   provide a concise command sequence and decision notes.
 - Execute commands directly when the user asks the agent to run them.
 - Before any mutating run, state the intended effect in plain language.
+- Preserve existing repository ownership boundaries instead of broadening a
+  `kongctl` change into a cross-tool migration.
+- Use `kongctl-query` first when the real task is discovery of resources,
+  authentication state, or exact read-only CLI syntax.
 - Choose path from user intent:
   - Preview/review/audit/CI request: use explicit plan artifacts.
   - "Do it now" execution request: use inline commands.

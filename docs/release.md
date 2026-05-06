@@ -19,6 +19,12 @@ Update the checked-in release version:
 mise run release:prepare -- 1.0.1
 ```
 
+You can inspect the accepted arguments with:
+
+```bash
+mise run release:prepare --help
+```
+
 That updates:
 
 - [`.claude-plugin/plugin.json`](../.claude-plugin/plugin.json)

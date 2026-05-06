@@ -6,9 +6,22 @@
     "name": "kong"
   },
   "skills": [
-    "./skills/datakit",
+    "./skills/deck-gateway",
+    "./skills/gateway-plugin-datakit",
+    "./skills/kong-skill-authoring",
     "./skills/kongctl-declarative",
-    "./skills/kongctl-query"
+    "./skills/kongctl-query",
+    "./skills/konnect-access-scope",
+    "./skills/konnect-ai-gateway",
+    "./skills/konnect-api-catalog",
+    "./skills/konnect-api-publish",
+    "./skills/konnect-app-auth",
+    "./skills/konnect-control-plane-bootstrap",
+    "./skills/konnect-event-gateway",
+    "./skills/konnect-gateway-triage",
+    "./skills/konnect-observability-triage",
+    "./skills/terraform-kong-gateway",
+    "./skills/terraform-konnect"
   ],
   "mcpServers": "./claude.mcp.json"
 }

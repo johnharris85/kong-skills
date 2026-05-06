@@ -18,12 +18,12 @@ npx skills add kong/skills
 Install only one skill from this repo:
 
 ```bash
-npx skills add kong/skills --skill datakit
+npx skills add kong/skills --skill gateway-plugin-datakit
 ```
 
 If you only use the skill-only path, you do not need `KONNECT_TOKEN`.
 
-If you installed via `gh skill`, you can also update one installed skill with `gh skill update datakit`.
+If you installed via `gh skill`, you can also update one installed skill with `gh skill update gateway-plugin-datakit`.
 
 Codex does not currently have a documented SessionStart-style startup hook equivalent in the official docs I checked, so this repo does not document automatic `npx skills update` hooks for Codex.
 

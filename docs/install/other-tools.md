@@ -19,7 +19,7 @@ npx skills add kong/skills
 Install a single skill from this repo:
 
 ```bash
-npx skills add kong/skills --skill datakit
+npx skills add kong/skills --skill gateway-plugin-datakit
 ```
 
 Update all globally installed skills:
@@ -31,7 +31,7 @@ npx skills update -g -y
 Update one installed skill:
 
 ```bash
-npx skills update -g -y datakit
+npx skills update -g -y gateway-plugin-datakit
 ```
 
 `--skill` applies to `npx skills add`. The `update` command takes skill names positionally.
@@ -43,7 +43,7 @@ npx skills update -g -y datakit
 Preview a skill before installing it:
 
 ```bash
-gh skill preview kong/skills datakit
+gh skill preview kong/skills gateway-plugin-datakit
 ```
 
 ```bash
@@ -53,7 +53,7 @@ gh skill install kong/skills
 If you want to install the single skill in this repo directly, use:
 
 ```bash
-gh skill install kong/skills datakit
+gh skill install kong/skills gateway-plugin-datakit
 ```
 
 If `gh skill` does not pick the right host automatically, pass `--agent`.
@@ -61,7 +61,7 @@ If `gh skill` does not pick the right host automatically, pass `--agent`.
 Pin an install to a reviewed tag or SHA when you need reproducibility:
 
 ```bash
-gh skill install kong/skills datakit --pin v1.0.0
+gh skill install kong/skills gateway-plugin-datakit --pin v1.0.0
 ```
 
 Update all installed skills:
@@ -73,7 +73,7 @@ gh skill update --all
 Update one installed skill:
 
 ```bash
-gh skill update datakit
+gh skill update gateway-plugin-datakit
 ```
 
 These skill-only installs do not require `KONNECT_TOKEN`.
@@ -91,13 +91,13 @@ Be careful with any automatic update path. It can pull newer skill instructions 
 If you use auto-update, prefer updating one known skill first:
 
 ```bash
-npx skills update -g -y datakit
+npx skills update -g -y gateway-plugin-datakit
 ```
 
 Or with GitHub CLI:
 
 ```bash
-gh skill update datakit
+gh skill update gateway-plugin-datakit
 ```
 
 Claude Code and Gemini CLI both have native update flows. See their install pages for the current recommended approach.

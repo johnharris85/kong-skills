@@ -13,6 +13,7 @@ import re
 import stat
 import sys
 from dataclasses import dataclass
+from difflib import SequenceMatcher
 from pathlib import Path
 
 import yaml
@@ -31,6 +32,9 @@ SKILLS_DOC = REPO_ROOT / "docs" / "skills.md"
 ALLOWED_SKILL_ROOT_FILES = {"SKILL.md"}
 ALLOWED_SKILL_DIRS = {"references", "assets", "scripts"}
 MAX_COMPANION_FILE_BYTES = 1_000_000
+MAX_SKILL_MD_LINES = 500
+MAX_DESCRIPTION_CHARS = 260
+MAX_INITIAL_SKILLS_LIST_CHARS = 6_500
 TEXT_FILE_EXTENSIONS = {
     ".json",
     ".js",
@@ -58,6 +62,79 @@ SCAFFOLD_PLACEHOLDER_SNIPPETS = [
     "Replace this section with the real do/do-not guidance for the workflow.",
     "Remove generic filler before committing the skill.",
 ]
+DESCRIPTION_STOPWORDS = {
+    "a",
+    "an",
+    "and",
+    "any",
+    "are",
+    "as",
+    "asks",
+    "by",
+    "can",
+    "classify",
+    "configuration",
+    "config",
+    "control",
+    "create",
+    "current",
+    "decide",
+    "declarative",
+    "does",
+    "existing",
+    "for",
+    "from",
+    "gateway",
+    "help",
+    "how",
+    "in",
+    "instead",
+    "into",
+    "is",
+    "it",
+    "its",
+    "kong",
+    "konnect",
+    "manage",
+    "managed",
+    "new",
+    "of",
+    "on",
+    "or",
+    "out",
+    "plugin",
+    "repo",
+    "repository",
+    "resource",
+    "resources",
+    "revise",
+    "same",
+    "self",
+    "setup",
+    "skill",
+    "skills",
+    "state",
+    "the",
+    "their",
+    "this",
+    "to",
+    "tool",
+    "tools",
+    "troubleshoot",
+    "update",
+    "use",
+    "user",
+    "users",
+    "using",
+    "wants",
+    "when",
+    "with",
+    "workflow",
+    "workflows",
+}
+SIMILARITY_ALLOWLIST = {
+    frozenset({"terraform-konnect", "terraform-kong-gateway"}),
+}
 
 
 @dataclass
@@ -374,6 +451,19 @@ def validate_skill_contents(skills: list[Skill]) -> list[str]:
     errors: list[str] = []
     for skill in skills:
         skill_dir = SKILLS_DIR / skill.dir_name
+        skill_md = skill_dir / "SKILL.md"
+        skill_md_text = read_text(skill_md)
+        skill_md_lines = skill_md_text.count("\n") + 1
+
+        if skill_md_lines > MAX_SKILL_MD_LINES:
+            errors.append(
+                f"{skill_md.relative_to(REPO_ROOT)}: SKILL.md is too long ({skill_md_lines} lines > {MAX_SKILL_MD_LINES})"
+            )
+
+        if len(skill.description) > MAX_DESCRIPTION_CHARS:
+            errors.append(
+                f"{skill_md.relative_to(REPO_ROOT)}: description is too long ({len(skill.description)} chars > {MAX_DESCRIPTION_CHARS}); front-load trigger words and tighten scope"
+            )
 
         for entry in sorted(skill_dir.iterdir()):
             if entry.name.startswith("."):
@@ -444,6 +534,58 @@ def validate_no_scaffold_placeholders(skills: list[Skill]) -> list[str]:
     return errors
 
 
+def description_terms(skill: Skill) -> set[str]:
+    tokens = re.findall(r"[a-z0-9]+", skill.description.lower())
+    return {
+        token
+        for token in tokens
+        if len(token) >= 4 and token not in DESCRIPTION_STOPWORDS
+    }
+
+
+def similarity_ratio(left: Skill, right: Skill) -> float:
+    left_text = re.sub(r"\s+", " ", left.description.lower()).strip()
+    right_text = re.sub(r"\s+", " ", right.description.lower()).strip()
+    return SequenceMatcher(a=left_text, b=right_text).ratio()
+
+
+def validate_skill_trigger_overlap(skills: list[Skill]) -> list[str]:
+    errors: list[str] = []
+    for index, left in enumerate(skills):
+        left_terms = description_terms(left)
+        for right in skills[index + 1 :]:
+            if frozenset({left.name, right.name}) in SIMILARITY_ALLOWLIST:
+                continue
+            right_terms = description_terms(right)
+            if not left_terms or not right_terms:
+                continue
+            overlap = left_terms & right_terms
+            union = left_terms | right_terms
+            jaccard = len(overlap) / len(union)
+            ratio = similarity_ratio(left, right)
+            if jaccard >= 0.68 and ratio >= 0.72:
+                errors.append(
+                    " / ".join(
+                        [
+                            f"skills/{left.name}",
+                            f"skills/{right.name}",
+                            f"trigger overlap looks too high (term overlap={jaccard:.2f}, text similarity={ratio:.2f}); consider merging or tightening descriptions",
+                        ]
+                    )
+                )
+    return errors
+
+
+def validate_skills_list_budget(skills: list[Skill]) -> list[str]:
+    total = sum(len(skill.name) + len(skill.description) + len(skill.rel_path) + 10 for skill in skills)
+    if total > MAX_INITIAL_SKILLS_LIST_CHARS:
+        return [
+            "skills list budget exceeded "
+            f"({total} chars > {MAX_INITIAL_SKILLS_LIST_CHARS}); shorten descriptions or split shipped skills so the initial discovery list stays compact"
+        ]
+    return []
+
+
 def validate_repo_files() -> list[str]:
     errors: list[str] = []
     required = [
@@ -459,8 +601,8 @@ def validate_repo_files() -> list[str]:
 def validate_text_files() -> list[str]:
     errors: list[str] = []
     checks: dict[Path, list[str]] = {
-        REPO_ROOT / "README.md": ["docs/install/README.md", "npx skills add kong/skills --skill datakit", "supply-chain or security risk", "contributor-facing source of truth", "SECURITY.md"],
-        REPO_ROOT / "GEMINI.md": ["datakit", "kongctl-declarative", "kongctl-query", TOKEN_ENV],
+        REPO_ROOT / "README.md": ["docs/install/README.md", "npx skills add kong/skills --skill gateway-plugin-datakit", "supply-chain or security risk", "contributor-facing source of truth", "SECURITY.md"],
+        REPO_ROOT / "GEMINI.md": ["gateway-plugin-datakit", "kongctl-declarative", "kongctl-query", TOKEN_ENV],
         REPO_ROOT / "docs" / "install" / "README.md": [MCP_NAME, MCP_URL, TOKEN_ENV, "gh skill"],
         REPO_ROOT / "docs" / "install" / "github-copilot.md": [MCP_NAME, MCP_URL, TOKEN_ENV, ".vscode/mcp.json", "npx skills add kong/skills"],
         REPO_ROOT / "docs" / "install" / "cursor.md": [MCP_NAME, MCP_URL, TOKEN_ENV, "npx skills add kong/skills"],
@@ -470,8 +612,8 @@ def validate_text_files() -> list[str]:
         REPO_ROOT / "docs" / "install" / "other-tools.md": ["gh skill install kong/skills", "gh skill preview", "npx skills add kong/skills", MCP_NAME],
         REPO_ROOT / "docs" / "release.md": ["workflow_dispatch", "mise run ci", "mise run artifact:check", "Release OCI Skills Artifact"],
         REPO_ROOT / "docs" / "structure.md": ["reference snippets", "copilot-mcp.json", "cursor-mcp.json", "contributor file map", "CLAUDE.md", "AGENTS.md"],
-        REPO_ROOT / "docs" / "developer.md": ["assets/", "references/", "scripts/", "mise install", "mise run preflight", "mise run sync", "mise run deps", "skill:new", "artifact:check", "gh skill publish --dry-run", "Consumers generally see", "GitHub Actions workflow is the only publishing path"],
-        REPO_ROOT / "docs" / "testing.md": ["mise run preflight", "mise run deps", "mise run check", "mise run artifact:check", "gh skill publish --dry-run", "scratch project", "KONNECT_TOKEN", "docs/install/other-tools.md"],
+        REPO_ROOT / "docs" / "developer.md": ["assets/", "references/", "scripts/", "mise install", "mise run preflight", "mise run sync", "mise run deps", "skill:new", "artifact:check", "gh skill publish --dry-run", "Consumers generally see", "GitHub Actions workflow is the only publishing path", "kong-skill-authoring", "description budget", "overlap"],
+        REPO_ROOT / "docs" / "testing.md": ["mise run preflight", "mise run deps", "mise run check", "mise run artifact:check", "gh skill publish --dry-run", "scratch project", "KONNECT_TOKEN", "docs/install/other-tools.md", "description budget", "overlap"],
         REPO_ROOT / "SECURITY.md": ["vulnerability@konghq.com", "Do not open a public GitHub issue"],
     }
     for path, snippets in checks.items():
@@ -521,6 +663,8 @@ def main() -> int:
     errors.extend(validate_skill_contents(skills))
     errors.extend(validate_no_generic_skills(skills))
     errors.extend(validate_no_scaffold_placeholders(skills))
+    errors.extend(validate_skill_trigger_overlap(skills))
+    errors.extend(validate_skills_list_budget(skills))
     errors.extend(validate_repo_files())
     errors.extend(validate_text_files())
 
