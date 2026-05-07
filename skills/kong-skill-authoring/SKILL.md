@@ -32,6 +32,8 @@ how to scope it, and how to structure the resulting skill.
 - Prefer extending an existing skill over creating a near-duplicate.
 - Prefer narrow operational skills over broad informational umbrellas.
 - Use thin router skills only when broad discovery is genuinely missing.
+- Standardize section semantics across equivalent skill types. Avoid cosmetic
+  heading drift when the section is doing the same job.
 - Preserve the repo's layered model:
   - domain skills own Kong-specific diagnosis, workflow, and judgment
   - tool skills own `decK`, `kongctl`, or Terraform config authoring and
@@ -129,6 +131,50 @@ When using `references/`:
   opened
 - do not put core defaults only in references
 
+### 4a. Apply the repo's section conventions
+
+Use a small set of stable section headings so agents learn one structure per
+skill type.
+
+Preferred templates:
+
+- domain or product skill:
+  - `Goal`
+  - `Tool Selection`
+  - `References To Load`
+  - `Workflow` or `Inspection Order`
+  - `Konnect-Specific Gotchas` or another explicit product-specific gotchas
+    heading
+  - `Validation Checklist`
+  - `Handoffs`
+- tool skill:
+  - `Goal`
+  - `Tool Positioning`
+  - `References To Load`
+  - `Validation Contract`
+  - `Operating Rules`
+  - `Workflow`
+  - `Validation Checklist`
+  - `Handoffs`
+- router skill:
+  - `Goal`
+  - `Shared Operating Defaults`
+  - `Classification Order`
+  - `Routing Rules`
+  - `Validation Checklist`
+  - `Output Style`
+
+Use exact heading names for equivalent concepts:
+
+- `Tool Selection` for domain-skill preferred tools and handoffs
+- `Tool Positioning` for tool-skill ownership boundaries
+- `Shared Operating Defaults` for router-level defaults
+- `Workflow` for a general operating procedure
+- `Inspection Order` when the diagnosis sequence is itself the guardrail
+
+Do not introduce heading synonyms such as `Preferred Tools` when `Tool
+Selection` is the same concept.
+
 ### 5. Make tool and MCP boundaries explicit
 
 For Konnect-oriented skills:
@@ -147,6 +193,7 @@ For domain skills:
 - state which tool skills should take over when config changes are needed
 - preserve the user's existing toolchain
 - keep common defaults in the root skill even if a router also states them
+- assume the specialist may trigger directly without the router
 
 For tool skills:
 
@@ -167,6 +214,13 @@ For tool skills:
   when those branches would otherwise bloat the root skill
 - keep domain skills validating diagnosis and handoff quality rather than
   turning them into full execution playbooks
+
+For router skills:
+
+- classify and hand off
+- do not try to force the router to always trigger before a specialist skill
+- keep shared defaults short and let specialists restate the minimum local
+  version when they can trigger directly
 
 ### 6. Write the smallest skill that changes behavior
 

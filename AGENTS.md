@@ -88,6 +88,9 @@ Use thin router skills only when broad discovery is a real problem.
 - do not build a company-wide umbrella docs tree under a router skill
 - put shared platform defaults in the router only when specialist skills also
   keep a concise local version, because specialists may trigger directly
+- do not try to force the router to trigger before a more specific skill
+- assume specialist skills may trigger directly and repeat the minimum shared
+  defaults locally when they matter
 
 Examples:
 
@@ -98,6 +101,8 @@ Examples:
 - `gateway-plugin-datakit` owns DataKit flow design;
   `deck-gateway` or a Terraform skill own repository integration if the user
   needs the plugin config encoded in an existing delivery workflow
+- `konnect-platform-router` should classify broad or ambiguous Konnect
+  requests, not act as a mandatory first hop before specialist skills
 
 For declarative workflows, preserve the user's existing toolchain when one is
 already present in the repository.
@@ -221,6 +226,54 @@ When you use `references/`, make them progressively discoverable.
   should be loaded
 - avoid placing critical common guidance only in references
 
+### Section Heading Conventions
+
+Standardize equivalent concepts across skills. Do not let headings drift when
+the section is serving the same purpose.
+
+Prefer these section templates by skill type:
+
+- domain or product skill:
+  - `Goal`
+  - `Tool Selection`
+  - `References To Load`
+  - `Workflow` or `Inspection Order`
+  - `Konnect-Specific Gotchas` or another equally explicit product-specific
+    gotchas heading when the skill is not Konnect-focused
+  - `Validation Checklist`
+  - `Handoffs`
+- tool skill:
+  - `Goal`
+  - `Tool Positioning`
+  - `References To Load`
+  - `Validation Contract`
+  - `Operating Rules`
+  - `Workflow`
+  - `Validation Checklist`
+  - `Handoffs`
+- router skill:
+  - `Goal`
+  - `Shared Operating Defaults`
+  - `Classification Order`
+  - `Routing Rules`
+  - `Validation Checklist`
+  - `Output Style`
+
+Use the exact heading names for shared concepts:
+
+- use `Tool Selection` for domain skills that explain preferred live
+  inspection paths and downstream tool handoffs
+- use `Tool Positioning` for tool skills that explain when the tool should or
+  should not own the task
+- use `Shared Operating Defaults` only in router skills for defaults that may
+  also be repeated concisely in specialist skills
+- use `Workflow` when the agent needs a general operating procedure
+- use `Inspection Order` when the diagnosis sequence is itself a guardrail
+
+Variation is acceptable only when it changes agent behavior or keeps the skill
+narrow. Cosmetic synonym drift such as `Preferred Tools` versus `Tool
+Selection` is not useful and should be cleaned up.
+
 ### Tool And MCP Boundaries
 
 This repo does not currently allow per-skill MCP dependency declarations such
@@ -250,6 +303,8 @@ For domain skills:
 - hand off implementation to the appropriate declarative tool skill when needed
 - explain how to preserve the user's existing toolchain rather than forcing one
   preferred format
+- follow the domain section template unless there is a task-specific reason to
+  diverge
 
 For tool skills:
 
@@ -268,6 +323,8 @@ For tool skills:
     resource slice touched, and distinguish command success from intended state
 - keep domain skills focused on diagnosis quality and handoff expectations
   rather than absorbing full mutation playbooks
+- follow the tool section template unless a concrete workflow branch needs an
+  extra section
 
 For declarative tool selection, use these defaults unless the repo or the user
 already chose another path:

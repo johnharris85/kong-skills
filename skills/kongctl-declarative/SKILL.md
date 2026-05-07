@@ -41,6 +41,28 @@ Choose the execution approach from user intent:
 - User-run mode: provide commands and explain what each command does.
 - Agent-run mode: execute commands directly and report outcomes.
 
+## References To Load
+
+Load only the reference file needed for the active task:
+
+- `references/commands.md`
+  - Use for command selection, plan based vs inline execution, and safety flags.
+- `references/resources.md`
+  - Use for resource skeletons, `_defaults`, `!file`, and `!ref` patterns.
+- `references/troubleshooting.md`
+  - Use for common failures and fast remediation steps.
+- `references/cicd-github-actions.md`
+  - Use for GitHub Actions workflow patterns for declarative CI/CD.
+- `references/apiops-openapi.md`
+  - Use for OpenAPI source-of-truth patterns for APIs and API versions.
+
+This skill is designed to be portable across repositories. Do not assume a
+local `docs/` directory exists.
+
+If field-level uncertainty remains after reading `references/`, discover
+structure from live data using:
+`kongctl dump declarative --resources=<resource-type>`.
+
 ## Validation Contract
 
 ### Preflight
@@ -104,28 +126,6 @@ After a requested mutation:
 - Example: `KONGCTL_DEFAULT_OUTPUT=yaml` changes default output format.
 - Pass explicit `-o yaml`, `-o json`, or `-o text` on command lines to avoid
   unexpected output behavior.
-
-## References To Load
-
-Load only the reference file needed for the active task:
-
-- `references/commands.md`
-  - Use for command selection, plan based vs inline execution, and safety flags.
-- `references/resources.md`
-  - Use for resource skeletons, `_defaults`, `!file`, and `!ref` patterns.
-- `references/troubleshooting.md`
-  - Use for common failures and fast remediation steps.
-- `references/cicd-github-actions.md`
-  - Use for GitHub Actions workflow patterns for declarative CI/CD.
-- `references/apiops-openapi.md`
-  - Use for OpenAPI source-of-truth patterns for APIs and API versions.
-
-This skill is designed to be portable across repositories. Do not assume a
-local `docs/` directory exists.
-
-If field-level uncertainty remains after reading `references/`, discover
-structure from live data using:
-`kongctl dump declarative --resources=<resource-type>`.
 
 ## Operating Rules
 

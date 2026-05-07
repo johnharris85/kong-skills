@@ -111,7 +111,7 @@ If the user asks for config changes but the failure domain is still ambiguous,
 route to the domain skill first and let it hand off to the tool skill once the
 missing link is known.
 
-## Konnect-Specific Routing Rules
+## Routing Rules
 
 - Do not send Portal visibility problems straight to `konnect-app-auth` if the
   API may not be published yet. Publication comes before consumer auth.

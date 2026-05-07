@@ -24,7 +24,7 @@ Default to read-first inspection. Do not propose role or team changes until
 you have separated resource existence, endpoint selection, authentication, and
 authorization.
 
-## Preferred Tools
+## Tool Selection
 
 - Use the shared `kong-konnect` MCP server first for live inspection when it
   is available in the session.

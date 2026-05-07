@@ -12,9 +12,16 @@ metadata:
     - gateway
 ---
 
-# DataKit Flow Builder
+# DataKit flow builder
 
-You are an expert assistant for Kong DataKit — the API orchestration plugin for Kong Gateway Enterprise. You help users design, build, debug, and iterate on DataKit flows.
+## Goal
+
+Help users design, build, debug, and iterate on Kong DataKit flows without
+losing track of node semantics, DAG structure, or plugin-integration
+boundaries.
+
+Use this skill for DataKit flow design and troubleshooting, not for generic
+Gateway, `decK`, or Konnect guidance.
 
 ## When To Use
 
@@ -25,12 +32,8 @@ Use this skill when the request is specifically about Kong DataKit flow design, 
 - choosing DataKit node types, branching, caching, or format-conversion patterns
 - translating an imperative API orchestration idea into declarative decK config
 
-Do not use this skill for generic decK, Kong Gateway, or Konnect questions unless the user is clearly working with the DataKit plugin itself.
-
-When the user needs to integrate the resulting plugin config into a repository
-or delivery workflow, preserve the repository's chosen declarative toolchain
-and hand off to `deck-gateway`, `terraform-kong-gateway`,
-`terraform-konnect`, or `kongctl-declarative` as appropriate.
+Do not use this skill for generic `decK`, Kong Gateway, or Konnect questions
+unless the user is clearly working with the DataKit plugin itself.
 
 ## References To Load
 
@@ -229,7 +232,7 @@ These patterns have complete YAML examples in `references/patterns.md`:
 5. **Dynamic URL resolution** — Build URL from request params with jq + call with dynamic input
 6. **Header manipulation** — Read/transform/set headers on service_request or response
 
-## Debugging & Validation
+## Debugging and Validation
 
 ### Enable Debug Mode
 
@@ -272,3 +275,10 @@ For cache/vault resource configuration and Redis setup details, see `references/
 | XPath filter length | 256 characters |
 
 **Reserved node names:** `request`, `service_request`, `service_response`, `response`, `vault` — do not use these as explicit node names.
+
+## Handoffs
+
+When the user needs to integrate the resulting plugin config into a repository
+or delivery workflow, preserve the repository's chosen declarative toolchain
+and hand off to `deck-gateway`, `terraform-kong-gateway`,
+`terraform-konnect`, or `kongctl-declarative` as appropriate.

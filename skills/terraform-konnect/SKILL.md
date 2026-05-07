@@ -41,6 +41,23 @@ Use this skill for Terraform-managed Konnect work. Do not turn a `kongctl` or
 - Hand off to `kongctl-declarative` when the repository already uses `kongctl`
   YAML instead of HCL.
 
+## References To Load
+
+Load only the reference file that matches the active branch:
+
+- `references/provider-selection.md`
+  - Load when deciding whether the official `kong/konnect` provider is enough
+    or whether the user explicitly needs `kong/konnect-beta`.
+- `references/import-moved-and-adoption.md`
+  - Load when existing Konnect resources must be normalized into Terraform
+    state rather than recreated.
+- `references/module-boundaries.md`
+  - Load when the main question is where a new Konnect resource belongs in an
+    existing Terraform layout.
+- `references/gateway-entities-inside-konnect.md`
+  - Load when the task mixes Konnect platform resources with Gateway entities
+    inside a Konnect control plane.
+
 ## Validation Contract
 
 ### Preflight
@@ -86,23 +103,6 @@ After a requested apply:
   `terraform state show <address>`, relevant outputs, or a follow-up
   `terraform plan` that shows no remaining intended changes
 - prove the exact resources touched rather than treating apply success as proof
-
-## References To Load
-
-Load only the reference file that matches the active branch:
-
-- `references/provider-selection.md`
-  - Load when deciding whether the official `kong/konnect` provider is enough
-    or whether the user explicitly needs `kong/konnect-beta`.
-- `references/import-moved-and-adoption.md`
-  - Load when existing Konnect resources must be normalized into Terraform
-    state rather than recreated.
-- `references/module-boundaries.md`
-  - Load when the main question is where a new Konnect resource belongs in an
-    existing Terraform layout.
-- `references/gateway-entities-inside-konnect.md`
-  - Load when the task mixes Konnect platform resources with Gateway entities
-    inside a Konnect control plane.
 
 ## Provider Basics
 
