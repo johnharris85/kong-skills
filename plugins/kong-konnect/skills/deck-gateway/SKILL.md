@@ -103,6 +103,9 @@ Before editing files or proposing a live sync:
 
 - Treat `decK` as the source-controlled representation of Gateway entities, not
   as proof that the live Gateway currently matches it.
+- If a required `deck` command appears blocked by the agent environment rather
+  than the live product or CLI itself, request an unsandboxed retry with
+  approval before assuming auth or command failure.
 - Treat `deck gateway validate` plus a scoped `deck gateway diff` as the
   required preview surface before `sync`.
 - Preserve existing file segmentation and tags when the repository already has

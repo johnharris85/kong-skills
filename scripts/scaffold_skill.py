@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 import textwrap
@@ -9,13 +10,17 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SKILLS_DIR = REPO_ROOT / "skills"
+PLUGINS_DIR = REPO_ROOT / "plugins"
+MCP_NAME = "kong-konnect"
+MCP_URL = "https://us.mcp.konghq.com"
+TOKEN_ENV = "KONNECT_TOKEN"
+REPO_URL = "https://github.com/kong/skills"
 
 
-def normalize_name(value: str) -> str:
+def normalize_name(value: str, label: str) -> str:
     normalized = re.sub(r"[^a-z0-9-]+", "-", value.strip().lower()).strip("-")
     if not normalized:
-        raise ValueError("skill name must contain at least one lowercase letter or digit")
+        raise ValueError(f"{label} must contain at least one lowercase letter or digit")
     return normalized
 
 
@@ -24,9 +29,22 @@ def write_text(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
+def write_json(path: Path, data: object) -> None:
+    write_text(path, json.dumps(data, indent=2, ensure_ascii=True) + "\n")
+
+
 def ensure_missing(path: Path) -> None:
     if path.exists():
         raise FileExistsError(f"{path.relative_to(REPO_ROOT)} already exists")
+
+
+def ensure_plugin_exists(plugin_name: str) -> Path:
+    plugin_dir = PLUGINS_DIR / plugin_name
+    if not plugin_dir.exists():
+        raise ValueError(
+            f"plugin {plugin_name!r} does not exist; create plugins/{plugin_name} first with `plugin {plugin_name}`"
+        )
+    return plugin_dir
 
 
 def skill_template(skill_name: str) -> str:
@@ -69,9 +87,80 @@ def skill_template(skill_name: str) -> str:
     )
 
 
+def plugin_display_name(plugin_name: str) -> str:
+    return " ".join(part.capitalize() for part in plugin_name.split("-"))
+
+
+def codex_manifest_template(plugin_name: str, with_mcp: bool) -> dict[str, object]:
+    data: dict[str, object] = {
+        "name": plugin_name,
+        "version": "0.1.0",
+        "description": f"Portable Kong skills packaged as the {plugin_name} Codex plugin.",
+        "author": "kong",
+        "homepage": REPO_URL,
+        "repository": REPO_URL,
+        "license": "MIT",
+        "keywords": ["kong", plugin_name],
+        "skills": [],
+        "interface": {
+            "displayName": plugin_display_name(plugin_name),
+            "shortDescription": f"Kong skills for {plugin_display_name(plugin_name)}.",
+            "category": "development",
+            "capabilities": ["kong"],
+        },
+    }
+    if with_mcp:
+        data["mcpServers"] = [MCP_NAME]
+    return data
+
+
+def claude_manifest_template(plugin_name: str, with_mcp: bool) -> dict[str, object]:
+    data: dict[str, object] = {
+        "name": plugin_name,
+        "version": "0.1.0",
+        "description": f"Portable Kong skills packaged as the {plugin_name} Claude Code plugin.",
+        "author": {"name": "kong"},
+        "skills": [],
+    }
+    if with_mcp:
+        data["mcpServers"] = "./mcp.json"
+    return data
+
+
+def cursor_manifest_template(plugin_name: str, with_mcp: bool) -> dict[str, object]:
+    data: dict[str, object] = {
+        "name": plugin_name,
+        "skills": "skills",
+        "description": f"Portable Kong skills packaged as the {plugin_name} Cursor plugin.",
+        "version": "0.1.0",
+        "author": {"name": "kong"},
+        "homepage": REPO_URL,
+        "repository": REPO_URL,
+        "license": "MIT",
+        "keywords": ["kong", plugin_name],
+    }
+    if with_mcp:
+        data["mcpServers"] = "mcp.json"
+    return data
+
+
+def mcp_template() -> dict[str, object]:
+    return {
+        "mcpServers": {
+            MCP_NAME: {
+                "type": "http",
+                "url": MCP_URL,
+                "headers": {"Authorization": f"Bearer ${{{TOKEN_ENV}}}"},
+            }
+        }
+    }
+
+
 def scaffold_skill(args: argparse.Namespace) -> int:
-    skill_name = normalize_name(args.name)
-    skill_dir = SKILLS_DIR / skill_name
+    plugin_name = normalize_name(args.plugin, "plugin name")
+    skill_name = normalize_name(args.name, "skill name")
+    plugin_dir = ensure_plugin_exists(plugin_name)
+    skill_dir = plugin_dir / "skills" / skill_name
     skill_md = skill_dir / "SKILL.md"
     ensure_missing(skill_dir)
     write_text(skill_md, skill_template(skill_name))
@@ -79,14 +168,43 @@ def scaffold_skill(args: argparse.Namespace) -> int:
     return 0
 
 
+def scaffold_plugin(args: argparse.Namespace) -> int:
+    plugin_name = normalize_name(args.name, "plugin name")
+    plugin_dir = PLUGINS_DIR / plugin_name
+    ensure_missing(plugin_dir)
+
+    write_json(plugin_dir / ".codex-plugin" / "plugin.json", codex_manifest_template(plugin_name, args.with_mcp))
+    write_json(plugin_dir / ".claude-plugin" / "plugin.json", claude_manifest_template(plugin_name, args.with_mcp))
+    write_json(plugin_dir / ".cursor-plugin" / "plugin.json", cursor_manifest_template(plugin_name, args.with_mcp))
+    (plugin_dir / "skills").mkdir(parents=True, exist_ok=False)
+    if args.with_mcp:
+        write_json(plugin_dir / "mcp.json", mcp_template())
+
+    print(plugin_dir.relative_to(REPO_ROOT))
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Scaffold Kong skill files.")
+    parser = argparse.ArgumentParser(description="Scaffold Kong plugin and skill files.")
     subparsers = parser.add_subparsers(dest="command", required=True)
+
+    plugin_parser = subparsers.add_parser(
+        "plugin",
+        help="Create a new plugin package with host manifests and an empty skills directory.",
+    )
+    plugin_parser.add_argument("name", help="Plugin name. This becomes plugins/<name>/ and the manifest package name.")
+    plugin_parser.add_argument(
+        "--with-mcp",
+        action="store_true",
+        help="Also create plugins/<name>/mcp.json with the shared kong-konnect MCP reference shape.",
+    )
+    plugin_parser.set_defaults(handler=scaffold_plugin)
 
     skill_parser = subparsers.add_parser(
         "skill",
-        help="Create a new skill directory with SKILL.md boilerplate.",
+        help="Create a new skill directory with SKILL.md boilerplate inside an existing plugin.",
     )
+    skill_parser.add_argument("plugin", help="Existing plugin name under plugins/.")
     skill_parser.add_argument("name", help="Skill name. This becomes the directory name and frontmatter name.")
     skill_parser.set_defaults(handler=scaffold_skill)
     return parser

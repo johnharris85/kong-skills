@@ -1,4 +1,6 @@
 *
 !Dockerfile.skills
-!skills/
-!skills/**
+!plugins/
+!plugins/kong-konnect/
+!plugins/kong-konnect/skills/
+!plugins/kong-konnect/skills/**

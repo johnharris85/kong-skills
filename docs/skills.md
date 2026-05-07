@@ -3,6 +3,7 @@
 This is the generated inventory of installable skills in this repo.
 
 <!-- generated:available-skills:start -->
+## `kong-konnect`
 - `deck-gateway`: Manage Kong Gateway entities with decK. Use for `deck gateway` state files, diff/sync/dump workflows, OpenAPI-to-Gateway generation, or GitOps-style Gateway config in self-managed Gateway or Konnect control planes.
 - `gateway-plugin-datakit`: Build and debug Kong DataKit plugin flows. Use for DataKit YAML design, node wiring, jq transforms, caching or branching, flow troubleshooting, or turning API orchestration requests into DataKit plugin config.
 - `kong-skill-authoring`: Create or revise skills for this Kong skills repo. Use when adding a skill, deciding extend-versus-create, classifying domain versus tool skills, tightening trigger descriptions, or structuring Kong-specific authoring guidance for this repo.

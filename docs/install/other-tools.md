@@ -2,11 +2,13 @@
 
 ![Other Tools](https://img.shields.io/badge/Other_Tools-skills-555555?style=for-the-badge&logo=vercel&logoColor=white)
 
-For tools without a first-class plugin or extension wrapper in this repo, use the shared skills plus the MCP config.
+For tools without a first-class plugin or extension wrapper in this repo, use
+the shared skills plus the MCP config.
 
 ## Skills
 
-`npx skills` and `gh skill` are both supported install paths for the shared skills in this repo.
+`npx skills` and `gh skill` are both supported install paths for the shared
+skills in this repo.
 
 ### `npx skills`
 
@@ -34,11 +36,13 @@ Update one installed skill:
 npx skills update -g -y gateway-plugin-datakit
 ```
 
-`--skill` applies to `npx skills add`. The `update` command takes skill names positionally.
+`--skill` applies to `npx skills add`. The `update` command takes skill names
+positionally.
 
 ### `gh skill`
 
-`gh skill` is available in GitHub CLI v2.90.0+ and is currently in public preview.
+`gh skill` is available in GitHub CLI v2.90.0+ and is currently in public
+preview.
 
 Preview a skill before installing it:
 
@@ -78,7 +82,8 @@ gh skill update gateway-plugin-datakit
 
 These skill-only installs do not require `KONNECT_TOKEN`.
 
-If you maintain this skills repo, validate GitHub-side publishability without publishing:
+If you maintain this skills repo, validate GitHub-side publishability without
+publishing:
 
 ```bash
 gh skill publish --dry-run
@@ -86,7 +91,9 @@ gh skill publish --dry-run
 
 ## Auto-Update Caution
 
-Be careful with any automatic update path. It can pull newer skill instructions without review, which may introduce supply-chain or security risk if content changes upstream.
+Be careful with any automatic update path. It can pull newer skill
+instructions without review, which may introduce supply-chain or security risk
+if content changes upstream.
 
 If you use auto-update, prefer updating one known skill first:
 
@@ -105,7 +112,7 @@ pages for the current recommended approach.
 
 ## MCP Config Reference
 
-Use [`mcp.json`](../../mcp.json) as the checked-in reference shape for the
-`kong-konnect` MCP server.
+Use [`plugins/kong-konnect/mcp.json`](../../plugins/kong-konnect/mcp.json) as
+the checked-in reference shape for the `kong-konnect` MCP server.
 
 `KONNECT_TOKEN` is only required if you add and use the MCP server.

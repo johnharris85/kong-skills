@@ -2,19 +2,23 @@
 
 This repo keeps authoring simple:
 
-1. add or update a skill under `skills/`
-2. sync generated metadata
-3. run repo validation
-4. manually spot-check only the install surfaces you changed
-5. prepare release-versioned manifests in git, then publish from GitHub Actions
+1. choose the owning plugin under `plugins/`
+2. add or update a skill under that plugin's `skills/`
+3. sync generated metadata
+4. run repo validation
+5. manually spot-check only the install surfaces you changed
+6. prepare release-versioned manifests in git, then publish from GitHub Actions
 
 This repo is optimized for contributors maintaining the shared source package.
 Consumers generally see the synced plugin manifests or installed skill content
 through their host tool rather than this working tree.
 
-The GitHub Actions workflow is the only publishing path for public releases. Local tooling prepares and validates release content, but it does not tag or publish.
+The GitHub Actions workflow is the only publishing path for public releases.
+Local tooling prepares and validates release content, but it does not tag or
+publish.
 
-For the full release preparation and trigger sequence, see [docs/release.md](release.md).
+For the full release preparation and trigger sequence, see
+[docs/release.md](release.md).
 
 ## Prerequisites
 
@@ -32,13 +36,16 @@ mise run preflight
 mise run deps
 ```
 
-`mise install` provisions the repo-managed Python toolchain from [mise.toml](../mise.toml). `uv` is still required separately. Additional tools are only needed for the flows that use them:
+`mise install` provisions the repo-managed Python toolchain from
+[mise.toml](../mise.toml). `uv` is still required separately. Additional tools
+are only needed for the flows that use them:
 
 - `docker` for `mise run artifact:check`
 - `gh` for `gh skill publish --dry-run`
 - `node` and `npx` for shared-installer verification
 
-When a task takes arguments, prefer `mise run <task> --help` to see the expected positional arguments and flags.
+When a script-backed task takes arguments, prefer `mise run <task> -- --help` to see the
+expected positional arguments and flags.
 
 ## Typical Loops
 
@@ -55,7 +62,36 @@ For local guardrails, install the repo hooks once:
 mise run hooks:install
 ```
 
-That enables the checked-in `pre-commit` and `pre-push` hooks, both of which run `mise run lint`.
+That enables the checked-in `pre-commit` and `pre-push` hooks, both of which
+run `mise run lint`.
+
+## Add A Plugin
+
+Use a separate plugin package when the product surface, ownership boundary, or
+install identity is meaningfully different.
+
+Scaffold a new plugin package with:
+
+```bash
+mise run plugin:new -- kong-mesh
+```
+
+If the plugin also needs the shared `kong-konnect` MCP reference shape:
+
+```bash
+mise run plugin:new -- kong-mesh --with-mcp
+```
+
+That creates:
+
+- `plugins/<plugin-name>/skills/`
+- `plugins/<plugin-name>/.codex-plugin/plugin.json`
+- `plugins/<plugin-name>/.claude-plugin/plugin.json`
+- `plugins/<plugin-name>/.cursor-plugin/plugin.json`
+- optional `plugins/<plugin-name>/mcp.json`
+
+Root marketplace manifests are generated from plugin discovery, so you do not
+hand-edit marketplace entries when adding a new package.
 
 ## Add A Skill
 
@@ -77,18 +113,18 @@ All of those paths are fine. For repo-specific authoring guidance:
 Scaffold the boilerplate with one command:
 
 ```bash
-mise run skill:new -- your-skill-name
+mise run skill:new -- kong-konnect your-skill-name
 ```
 
 For task-level help:
 
 ```bash
-mise run skill:new --help
+mise run skill:new -- --help
 ```
 
 That creates:
 
-- `skills/<skill-name>/SKILL.md`
+- `plugins/<plugin-name>/skills/<skill-name>/SKILL.md`
 
 Start with:
 
@@ -108,18 +144,22 @@ metadata:
 
 Optional companion directories are supported:
 
-- `skills/<skill-name>/references/`
-- `skills/<skill-name>/assets/`
-- `skills/<skill-name>/scripts/`
+- `plugins/<plugin-name>/skills/<skill-name>/references/`
+- `plugins/<plugin-name>/skills/<skill-name>/assets/`
+- `plugins/<plugin-name>/skills/<skill-name>/scripts/`
 
-Keep `SKILL.md` as the only file at the skill root. Companion content should stay lightweight, non-hidden, non-executable, and easy to review.
-Set `license: MIT` for skills in this repo unless you have an explicit reason to ship different terms.
+Keep `SKILL.md` as the only file at the skill root. Companion content should
+stay lightweight, non-hidden, non-executable, and easy to review. Set
+`license: MIT` for skills in this repo unless you have an explicit reason to
+ship different terms.
 
-This repo does not currently allow per-skill MCP dependency declarations. Keep shared MCP wiring at the repo level for v1.
+This repo does not currently allow per-skill MCP dependency declarations. Keep
+shared MCP wiring at the plugin level for v1.
 
 Before you scaffold a new skill, check [docs/skills.md](skills.md) and the
-existing `skills/` directories for overlap. Prefer extending an existing skill
-unless the trigger boundary or ownership boundary is clearly different.
+existing plugin-local `skills/` directories for overlap. Prefer extending an
+existing skill unless the trigger boundary or ownership boundary is clearly
+different.
 
 ### Description Budget
 
@@ -138,7 +178,7 @@ Keep it short, front-loaded, and specific.
 mise install
 mise run preflight
 mise run deps
-mise run skill:new -- your-skill-name
+mise run skill:new -- kong-konnect your-skill-name
 mise run gen
 mise run lint
 mise run artifact:check
@@ -168,15 +208,15 @@ checks:
 
 ## What Generate Updates
 
-- the skill arrays in [`.claude-plugin/plugin.json`](../.claude-plugin/plugin.json)
+- the skill arrays in [`plugins/kong-konnect/.claude-plugin/plugin.json`](../plugins/kong-konnect/.claude-plugin/plugin.json)
 - the Claude marketplace keywords in [`.claude-plugin/marketplace.json`](../.claude-plugin/marketplace.json)
-- the skill arrays in [`.codex-plugin/plugin.json`](../.codex-plugin/plugin.json)
+- the skill arrays in [`plugins/kong-konnect/.codex-plugin/plugin.json`](../plugins/kong-konnect/.codex-plugin/plugin.json)
 - the Codex marketplace listing in [`.agents/plugins/marketplace.json`](../.agents/plugins/marketplace.json)
-- the Cursor plugin manifest in [`.cursor-plugin/plugin.json`](../.cursor-plugin/plugin.json)
+- the Cursor plugin manifest in [`plugins/kong-konnect/.cursor-plugin/plugin.json`](../plugins/kong-konnect/.cursor-plugin/plugin.json)
 - the Cursor marketplace listing in [`.cursor-plugin/marketplace.json`](../.cursor-plugin/marketplace.json)
 - the generated Codex plugin keywords and capabilities
 - the generated skill inventory in [docs/skills.md](skills.md)
-- the shared MCP config in [`mcp.json`](../mcp.json)
+- the plugin-local MCP config in [`plugins/kong-konnect/mcp.json`](../plugins/kong-konnect/mcp.json)
 
 ## What Stays Manual
 
@@ -192,6 +232,8 @@ checks:
 ## Conventions
 
 - canonical public repo: `https://github.com/kong/skills`
+- canonical marketplace repo name: `kong-skills`
+- first shipped plugin package: `kong-konnect`
 - canonical MCP server name: `kong-konnect`
 - auth variable: `KONNECT_TOKEN`
 - keep shared behavior in `SKILL.md`
@@ -212,18 +254,29 @@ For authoring guidance on what makes a good skill, see [AGENTS.md](../AGENTS.md)
 This repo intentionally keeps automated testing narrow.
 
 - Keep CI on `mise run ci` plus the OCI packaging check.
-- Use manual verification when you change install docs, plugin manifests, or MCP config surfaces.
-- Prefer scratch projects and disposable user profiles over repo-managed install automation.
-- Run `gh skill publish --dry-run` before release-oriented changes to catch Agent Skills spec drift and GitHub-side publishability issues.
+- Use manual verification when you change install docs, plugin manifests, or
+  MCP config surfaces.
+- Prefer scratch projects and disposable user profiles over repo-managed
+  install automation.
+- Run `gh skill publish --dry-run` before release-oriented changes to catch
+  Agent Skills spec drift and GitHub-side publishability issues.
 
 ## Security Notes
 
-- Prefer `gh skill preview` before `gh skill install` when you are validating the public GitHub install path.
-- Keep Konnect credentials in host-managed secure settings or environment variables, not in checked-in files.
-- Treat startup or auto-update features as opt-in convenience, not the default recommendation.
-- The OCI artifact is a `scratch` image that only copies the checked-in `skills/` payload. The release workflow currently disables SBOM and CIS actions for that artifact because there is no package manager or base OS layer to inventory, and the repo relies on checked-in skill review plus explicit packaging validation instead.
+- Prefer `gh skill preview` before `gh skill install` when you are validating
+  the public GitHub install path.
+- Keep Konnect credentials in host-managed secure settings or environment
+  variables, not in checked-in files.
+- Treat startup or auto-update features as opt-in convenience, not the default
+  recommendation.
+- The OCI artifact is a `scratch` image that only copies the checked-in
+  `plugins/kong-konnect/skills/` payload. The release workflow currently
+  disables SBOM and CIS actions for that artifact because there is no package
+  manager or base OS layer to inventory, and the repo relies on checked-in
+  skill review plus explicit packaging validation instead.
 
-See [docs/testing.md](testing.md) for the lightweight verification checklist per supported tool.
+See [docs/testing.md](testing.md) for the lightweight verification checklist
+per supported tool.
 
 ## Release Preparation
 
@@ -239,9 +292,10 @@ mise run artifact:check
 To inspect the accepted release arguments:
 
 ```bash
-mise run release:prepare --help
+mise run release:prepare -- --help
 ```
 
 Commit the version bump, get it reviewed, and merge it to `main`.
 
-For how the GitHub Actions release is triggered and what it does, see [docs/release.md](release.md).
+For how the GitHub Actions release is triggered and what it does, see
+[docs/release.md](release.md).

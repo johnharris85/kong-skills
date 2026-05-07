@@ -10,11 +10,22 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 VERSION_RE = re.compile(r"^\d+\.\d+\.\d+$")
-VERSION_TARGETS = [
-    REPO_ROOT / ".claude-plugin" / "plugin.json",
-    REPO_ROOT / ".codex-plugin" / "plugin.json",
-    REPO_ROOT / ".cursor-plugin" / "plugin.json",
-]
+
+
+def version_targets() -> list[Path]:
+    targets: list[Path] = []
+    plugins_dir = REPO_ROOT / "plugins"
+    for plugin_dir in sorted(plugins_dir.iterdir()):
+        if not plugin_dir.is_dir() or plugin_dir.name.startswith("."):
+            continue
+        targets.extend(
+            [
+                plugin_dir / ".claude-plugin" / "plugin.json",
+                plugin_dir / ".codex-plugin" / "plugin.json",
+                plugin_dir / ".cursor-plugin" / "plugin.json",
+            ]
+        )
+    return targets
 
 
 def load_json(path: Path) -> object:
@@ -54,7 +65,7 @@ def main() -> int:
 
     if args.check:
         mismatches: list[str] = []
-        for target in VERSION_TARGETS:
+        for target in version_targets():
             actual = manifest_version(target)
             if actual != version:
                 mismatches.append(f"{target.relative_to(REPO_ROOT)}={actual!r}")
@@ -68,7 +79,7 @@ def main() -> int:
         print(f"release manifests already match {version}")
         return 0
 
-    for target in VERSION_TARGETS:
+    for target in version_targets():
         update_version(target, version)
 
     print(f"prepared release {version}")

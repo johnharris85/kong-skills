@@ -9,10 +9,9 @@
   },
   "plugins": [
     {
-      "name": "kong-skills",
-      "source": "./",
-      "skills": "skills",
-      "description": "Portable Kong skills plus remote MCP configuration for Cursor."
+      "name": "kong-konnect",
+      "source": "./plugins/kong-konnect",
+      "description": "Portable Kong Konnect skills plus remote MCP configuration for Cursor."
     }
   ]
 }

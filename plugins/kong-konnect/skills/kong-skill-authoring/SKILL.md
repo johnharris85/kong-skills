@@ -4,6 +4,7 @@ description: Create or revise skills for this Kong skills repo. Use when adding 
 license: MIT
 metadata:
   product: repo
+  internal: true
   category: skill-authoring
   tags:
     - kong
@@ -214,6 +215,12 @@ For tool skills:
   when those branches would otherwise bloat the root skill
 - keep domain skills validating diagnosis and handoff quality rather than
   turning them into full execution playbooks
+- when workflows depend on external CLIs or providers that may behave
+  differently inside the agent environment, include a short local sandbox or
+  escalation rule that says when to retry outside the sandbox with approval
+  before assuming product or tool failure
+- keep the shared execution policy in `AGENTS.md` and steering docs; restate
+  only the minimal local trigger inside the tool skill
 
 For router skills:
 
@@ -275,6 +282,8 @@ Before finishing authoring work, verify:
 - any script has a narrow deterministic job and a clear run condition
 - the new or revised skill does not overlap too heavily with another skill's
   trigger surface
+- if the skill runs external tools, it says when to retry outside the sandbox
+  with approval before assuming product or tool failure
 - the repo loop is complete: update the skill, run `mise run gen`, run
   `mise run lint`
 

@@ -57,6 +57,10 @@ Load only the reference file that matches the active branch:
 - `references/gateway-entities-inside-konnect.md`
   - Load when the task mixes Konnect platform resources with Gateway entities
     inside a Konnect control plane.
+- `references/provider-schema-debugging.md`
+  - Load when nested resource shape is unclear, validation reports
+    object-vs-string or similar type mismatches, or provider behavior does not
+    line up cleanly with docs or example HCL.
 
 ## Validation Contract
 
@@ -73,6 +77,8 @@ Before writing HCL or proposing a plan:
 - Confirm which module, workspace, and resource addresses own the target
   Konnect slice
 - Confirm whether existing live resources must be imported before planning
+- Use `terraform providers schema -json` as the default source of truth when
+  nested resource shape is unclear before guessing from docs or examples
 
 ### Preview
 
@@ -122,8 +128,14 @@ Never hardcode tokens into committed `.tf` files.
 
 - Preserve the repo's existing Terraform style: root-module layout, child
   modules, variable files, naming, and output shape.
+- Use `terraform providers schema -json` as the default source of truth for
+  unknown nested resource shape before guessing HCL from docs or examples.
 - Prefer `terraform plan` before `terraform apply` unless the user explicitly
   requests direct execution.
+- If `terraform providers schema -json`, provider startup, `terraform validate`,
+  or `terraform plan` fails in a way that suggests sandbox interference,
+  retry outside the sandbox with approval before treating it as a provider,
+  auth, or schema problem.
 - Treat Terraform state as authoritative for what it manages. Do not recreate
   resources that should be imported or adopted.
 - Keep Gateway entities and surrounding Konnect platform resources in the same
@@ -165,6 +177,8 @@ Do not assume every requested resource belongs in the same module.
 
 Load `references/module-boundaries.md` if ownership between modules,
 environments, or product slices is unclear.
+Load `references/provider-schema-debugging.md` when resource shape is the main
+uncertainty.
 
 ### 3. Preview the intended change
 
@@ -179,6 +193,8 @@ Default paths:
 
 Use `references/provider-selection.md` for provider choice and
 `references/import-moved-and-adoption.md` for state-normalization work.
+When HCL shape is unclear, inspect `terraform providers schema -json` before
+guessing block or attribute structure.
 
 Preview expectations:
 
@@ -296,6 +312,7 @@ Before answering, verify that you can state:
 - which module or file owns the target resources
 - whether import or adoption is required
 - which preview commands prove the intended change before mutation
+- whether provider schema inspection is needed before guessing nested HCL shape
 - whether the change should stop at HCL authoring or continue to `plan/apply`
 - how the exact resource addresses will be proved after apply
 - whether another tool skill should own the implementation instead

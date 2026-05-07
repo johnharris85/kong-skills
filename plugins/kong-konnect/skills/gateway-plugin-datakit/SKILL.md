@@ -282,3 +282,6 @@ When the user needs to integrate the resulting plugin config into a repository
 or delivery workflow, preserve the repository's chosen declarative toolchain
 and hand off to `deck-gateway`, `terraform-kong-gateway`,
 `terraform-konnect`, or `kongctl-declarative` as appropriate.
+For Terraform-managed DataKit plugin resources, use `terraform-konnect` for
+provider-HCL shape and schema debugging because Terraform provider structure
+may differ from product or YAML docs.

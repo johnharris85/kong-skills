@@ -3,52 +3,57 @@
 This file maps the install and config surfaces generated or maintained in this
 repo.
 
-This is a contributor file map, not an end-user guide. The goal is to keep the
-repo minimal and self-contained: shared skill content lives once under
-`skills/`, generated install metadata stays near repo root, and tool-specific
-docs point back to the same checked-in reference shapes.
+This is a contributor file map, not an end-user guide. The repo now uses a
+plugin-first marketplace layout: root marketplace manifests enumerate plugins,
+and each shipped plugin package owns its local skills, manifests, and optional
+MCP config.
 
-## Shared Skills
+## Root Marketplace Manifests
 
-- `skills/`
-  - Canonical shared skills used by `npx skills` and plugin installs that bundle shared skills.
-- `docs/skills.md`
-  - Generated inventory of the currently shipped skills.
-
-## Claude Code
-
-- `.claude-plugin/plugin.json`
-- `.claude-plugin/marketplace.json`
-
-## Codex
-
-- `.codex-plugin/plugin.json`
 - `.agents/plugins/marketplace.json`
-
-## Cursor
-
-- `.cursor-plugin/plugin.json`
+  - Codex marketplace registry for all plugin packages in this repo.
+- `.claude-plugin/marketplace.json`
+  - Claude Code marketplace registry for all plugin packages in this repo.
 - `.cursor-plugin/marketplace.json`
+  - Cursor marketplace registry for all plugin packages in this repo.
 
-## Shared MCP Example
+## Plugin Packages
 
-- `mcp.json`
-  - Shared checked-in MCP reference shape for `kong-konnect`
+- `plugins/kong-konnect/`
+  - First shipped plugin package. Future product packages should follow the
+    same shape.
+- `plugins/kong-konnect/skills/`
+  - Canonical shared skills shipped by the `kong-konnect` plugin and by
+    shared-skill installers.
+- `plugins/kong-konnect/.codex-plugin/plugin.json`
+  - Codex plugin manifest local to the `kong-konnect` package.
+- `plugins/kong-konnect/.claude-plugin/plugin.json`
+  - Claude Code plugin manifest local to the `kong-konnect` package.
+- `plugins/kong-konnect/.cursor-plugin/plugin.json`
+  - Cursor plugin manifest local to the `kong-konnect` package.
+- `plugins/kong-konnect/mcp.json`
+  - Shared checked-in MCP reference shape for the `kong-konnect` plugin.
+
+## Generated Inventory
+
+- `docs/skills.md`
+  - Generated inventory of the currently shipped skills, grouped by plugin.
 
 ## Contributor Helpers
 
 - `AGENTS.md`
   - Contributor-facing skill authoring guide used in this repo.
-- `CLAUDE.md`
-  - Symlink to `AGENTS.md` for Claude-friendly local discovery. This is a helper, not part of the OCI artifact payload.
 
 ## Release And Validation
 
 - `.github/workflows/validate.yml`
-  - Validates generated metadata and the OCI artifact packaging path on pull requests and `main`.
+  - Validates generated metadata and the OCI artifact packaging path on pull
+    requests and `main`.
 - `.github/workflows/release-oci.yml`
-  - Canonical publishing workflow for tags, GitHub releases, and the OCI artifact.
+  - Canonical publishing workflow for tags, GitHub releases, and the OCI
+    artifact.
 - `docs/release.md`
   - Contributor-facing release preparation and trigger process.
 - `.dockerignore`
-  - Narrows the OCI build context to the shipped skill payload.
+  - Narrows the OCI build context to the shipped `plugins/kong-konnect/skills/`
+    payload.

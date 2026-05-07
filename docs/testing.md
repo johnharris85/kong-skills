@@ -19,7 +19,8 @@ Baseline local tools:
 - `uv`
 - `git`
 
-`mise run preflight` checks the repo's baseline tools and can also check optional flows:
+`mise run preflight` checks the repo's baseline tools and can also check
+optional flows:
 
 - `mise run preflight -- artifact` for Docker-backed packaging checks
 - `mise run preflight -- publish` for `gh skill publish --dry-run`
@@ -36,7 +37,8 @@ Baseline local tools:
 6. If you changed install docs, plugin manifests, or MCP config surfaces, manually verify only the affected tools.
 7. Use a scratch project or disposable user profile when a tool writes local state.
 
-Use the smallest path that covers the change. Most edits do not require every check.
+Use the smallest path that covers the change. Most edits do not require every
+check.
 
 `mise run lint` covers more than generated-file drift. It is also the repo's
 default authoring guardrail for:
@@ -46,7 +48,8 @@ default authoring guardrail for:
 - description budget
 - high-similarity trigger overlap between skills
 
-If a spot check exercises the shared MCP configuration, export `KONNECT_TOKEN` or use the host tool's secure settings flow before you test it.
+If a spot check exercises the shared MCP configuration, export `KONNECT_TOKEN`
+or use the host tool's secure settings flow before you test it.
 
 Run the repo tasks through `mise run ...`, not bare `uv ...`, when you want the
 checked-in repo defaults. The `mise` config pins `uv` to Python `3.12` and
@@ -80,7 +83,7 @@ back to user-profile locations.
 
 - Command: `mise run artifact:check`
 - Use when: `Dockerfile.skills`, `.dockerignore`, release metadata, or the shipped file layout changes
-- Expected result: the scratch image builds, label values match, and the extracted payload matches `skills/`
+- Expected result: the scratch image builds, label values match, and the extracted payload matches `plugins/kong-konnect/skills/`
 
 ## GitHub Skill Publish Dry Run
 
@@ -100,7 +103,7 @@ back to user-profile locations.
 ### Claude Code
 
 - Install path: [docs/install/claude-code.md](./install/claude-code.md)
-- Verify after install: `kong-skills` appears as installed and `gateway-plugin-datakit` is available in a fresh session
+- Verify after install: `kong-konnect` appears as installed and `gateway-plugin-datakit` is available in a fresh session
 - MCP check when using the plugin path: confirm `kong-konnect` is configured
 - Quick prompt: `What Kong-specific skills are available in this environment?`
 - Cleanup: uninstall the plugin or discard the scratch profile

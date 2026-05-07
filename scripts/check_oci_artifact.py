@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Build and verify the OCI artifact used to ship repo skills.
+"""Build and verify the OCI artifact used to ship the kong-konnect plugin skills.
 
 The artifact is intentionally minimal: a scratch image whose payload is just the
-contents of `skills/`. Validation checks labels, extracted layout, and byte-for-
-byte file parity with the checked-in skill tree.
+contents of `plugins/kong-konnect/skills/`. Validation checks labels, extracted
+layout, and byte-for-byte file parity with the checked-in plugin skill tree.
 """
 from __future__ import annotations
 
@@ -18,9 +18,10 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SKILLS_DIR = REPO_ROOT / "skills"
+PLUGIN_NAME = "kong-konnect"
+SKILLS_DIR = REPO_ROOT / "plugins" / PLUGIN_NAME / "skills"
 DOCKERFILE = REPO_ROOT / "Dockerfile.skills"
-DEFAULT_IMAGE_TAG = "kong-skills:local-check"
+DEFAULT_IMAGE_TAG = "kong-konnect:local-check"
 
 
 def run(*args: str, capture_output: bool = False) -> subprocess.CompletedProcess[str]:
@@ -134,7 +135,7 @@ def image_skill_files(extracted_root: Path) -> list[Path]:
 
 def assert_expected_layout(extracted_root: Path) -> None:
     if (extracted_root / "skills").exists():
-        raise ValueError("artifact should contain skill directories at the root, not a top-level skills/ directory")
+        raise ValueError("artifact should contain plugin skill directories at the root, not a top-level skills/ directory")
 
     expected_dirs = sorted(path.name for path in SKILLS_DIR.iterdir() if path.is_dir())
     actual_dirs = sorted(path.name for path in extracted_root.iterdir() if path.is_dir())
@@ -150,7 +151,7 @@ def compare_file_contents(extracted_root: Path) -> None:
     actual_rel = sorted(path.relative_to(extracted_root) for path in actual_files)
     if actual_rel != expected_rel:
         raise ValueError(
-            f"artifact file set differs from repo skills directory:\nexpected={expected_rel}\nactual={actual_rel}"
+            f"artifact file set differs from the checked-in {PLUGIN_NAME} plugin skills:\nexpected={expected_rel}\nactual={actual_rel}"
         )
 
     for rel_path in expected_rel:
@@ -165,7 +166,7 @@ def validate_labels(labels: dict[str, str], version: str, revision: str, repo_ur
         "org.opencontainers.image.version": version,
         "org.opencontainers.image.revision": revision,
         "org.opencontainers.image.source": repo_url,
-        "org.opencontainers.image.title": "kong-skills OCI volume",
+        "org.opencontainers.image.title": f"{PLUGIN_NAME} OCI volume",
     }
     for key, value in expected.items():
         actual = labels.get(key)
@@ -174,7 +175,7 @@ def validate_labels(labels: dict[str, str], version: str, revision: str, repo_ur
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Build and validate the local OCI skills artifact image.")
+    parser = argparse.ArgumentParser(description="Build and validate the local OCI plugin skills artifact image.")
     parser.add_argument("--version", default="dev", help="Artifact version label to embed. Default: dev")
     parser.add_argument(
         "--image-tag",

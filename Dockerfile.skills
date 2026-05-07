@@ -9,7 +9,7 @@ LABEL org.opencontainers.image.created="$BUILD_DATETIME" \
       org.opencontainers.image.source="$REPO_URL" \
       org.opencontainers.image.version="$APP_VERSION" \
       org.opencontainers.image.revision="$GIT_COMMIT" \
-      org.opencontainers.image.title="kong-skills OCI volume" \
-      org.opencontainers.image.description="Portable Kong skills packaged for Kubernetes image volumes"
+      org.opencontainers.image.title="kong-konnect OCI volume" \
+      org.opencontainers.image.description="Portable kong-konnect plugin skills packaged for Kubernetes image volumes"
 
-COPY skills/ /
+COPY plugins/kong-konnect/skills/ /

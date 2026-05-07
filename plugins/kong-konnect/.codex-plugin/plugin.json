@@ -1,7 +1,7 @@
 {
-  "name": "kong-skills",
+  "name": "kong-konnect",
   "version": "1.0.0",
-  "description": "Portable Kong skills plus remote MCP configuration for Codex.",
+  "description": "Portable Kong Konnect skills plus remote MCP configuration for Codex.",
   "author": "kong",
   "homepage": "https://github.com/kong/skills",
   "repository": "https://github.com/kong/skills",
@@ -99,8 +99,8 @@
     "kong-konnect"
   ],
   "interface": {
-    "displayName": "Kong Skills",
-    "shortDescription": "Portable Kong skills and remote MCP wiring.",
+    "displayName": "Kong Konnect",
+    "shortDescription": "Portable Kong Konnect skills and remote MCP wiring.",
     "category": "development",
     "capabilities": [
       "kong",

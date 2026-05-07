@@ -50,6 +50,10 @@ Load only the reference file that matches the active branch:
 - `references/plan-safety-and-state.md`
   - Load when the main issue is how to inspect plan impact safely before
     applying to a live Admin API surface.
+- `references/provider-schema-debugging.md`
+  - Load when nested resource shape is unclear, validation reports
+    object-vs-string or similar type mismatches, or provider behavior does not
+    line up cleanly with docs or example HCL.
 
 ## Validation Contract
 
@@ -64,6 +68,8 @@ Before writing HCL or proposing a plan:
 - Confirm the repo's backend, workspace, and provider-alias expectations
 - Confirm whether existing live Gateway entities must be imported before
   planning
+- Use `terraform providers schema -json` as the default source of truth when
+  nested resource shape is unclear before guessing from docs or examples
 
 ### Preview
 
@@ -109,8 +115,14 @@ existing provider alias and workspace model.
 ## Operating Rules
 
 - Preserve existing HCL layout, resource grouping, and variable usage.
+- Use `terraform providers schema -json` as the default source of truth for
+  unknown nested resource shape before guessing HCL from docs or examples.
 - Prefer `terraform plan` before `terraform apply` unless the user explicitly
   asks for direct execution.
+- If `terraform providers schema -json`, provider startup, `terraform validate`,
+  or `terraform plan` fails in a way that suggests sandbox interference,
+  retry outside the sandbox with approval before treating it as a provider,
+  auth, or schema problem.
 - Prefer importing existing Gateway resources over recreating them.
 - Keep the scope limited to the Gateway entities requested by the user.
 - Do not mix self-managed Gateway assumptions into Konnect tasks.
@@ -152,12 +164,16 @@ Default paths:
 Load `references/provider-and-import.md` when import or provider inputs are the
 real boundary, and `references/entity-patterns.md` when repo ownership shape is
 the harder question.
+Load `references/provider-schema-debugging.md` when resource shape is the main
+uncertainty.
 
 Preview expectations:
 
 - use `terraform fmt -check` only when the repo expects it
 - run `terraform validate`
 - run `terraform plan`
+- inspect `terraform providers schema -json` before guessing nested block or
+  attribute structure
 - import first if the plan would recreate an entity that already exists live
 - inspect whether the plan touches only the intended addresses and workspace
 
@@ -223,6 +239,7 @@ Before answering, verify that you can state:
 - which module or file owns the resources
 - whether import is required
 - which preview commands prove the intended change before mutation
+- whether provider schema inspection is needed before guessing nested HCL shape
 - whether the task stops at HCL authoring or continues to `plan/apply`
 - how the touched resource addresses will be proved after apply
 - whether `deck-gateway` would be a better fit for the user's intent

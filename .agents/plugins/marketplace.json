@@ -5,10 +5,10 @@
   },
   "plugins": [
     {
-      "name": "kong-skills",
+      "name": "kong-konnect",
       "source": {
         "source": "local",
-        "path": "./"
+        "path": "./plugins/kong-konnect"
       },
       "policy": {
         "installation": "AVAILABLE",

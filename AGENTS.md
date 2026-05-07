@@ -32,7 +32,7 @@ If the skill would be equally useful in any repo, it probably does not belong he
 Before creating a new skill, check whether the repo already has one that should
 be extended instead.
 
-- inspect `docs/skills.md` and `skills/` before adding a new folder
+- inspect `docs/skills.md` and the existing `plugins/<plugin>/skills/` trees before adding a new folder
 - extend an existing skill when the new request fits the same trigger class,
   same layer, and same operating procedure
 - create a new skill only when the workflow, ownership boundary, or trigger
@@ -80,6 +80,13 @@ many domain skills.
 - avoid turning every domain skill into a partial `decK`, `kongctl`, or
   Terraform tutorial
 - do not create generic tool skills with no Kong-specific value
+- keep shared execution-policy defaults in steering docs so the repo has one
+  canonical source of truth
+- when a specialist tool skill runs external CLIs or providers and can trigger
+  directly, restate only the minimum local sandbox or escalation rule there
+- do not duplicate the full shared sandbox policy in every skill
+- when recommending CLI execution, name concrete escalation triggers instead of
+  vague "check permissions" language
 
 Use thin router skills only when broad discovery is a real problem.
 
@@ -500,10 +507,11 @@ That means:
 - avoid writing the skill as if it belongs only to one client
 
 The repo tooling will sync the shared skill inventory into the relevant plugin manifests and generated documentation.
+Keep that workflow plugin-aware: choose the owning plugin package first, then place the skill under that plugin's `skills/` tree.
 
 Treat this repo as the contributor-facing source package, not the end-user product surface.
 
-- keep reusable skill behavior in `skills/`
+- keep reusable skill behavior in `plugins/<plugin>/skills/`
 - keep checked-in install metadata and context files aligned with the skills that actually ship
 - prefer pointing docs at checked-in reference files over duplicating large inline config snippets that can drift
 
@@ -544,7 +552,7 @@ When you add or substantially change a skill, keep the authoring loop simple:
 
 For a new skill, the preferred contributor flow is:
 
-1. check `docs/skills.md` and `skills/` for overlap
+1. check `docs/skills.md` and `plugins/<plugin>/skills/` for overlap
 2. decide whether this belongs in an existing skill, a new domain skill, or a
    new tool skill
 3. scaffold the new skill only if the boundary is clearly justified

@@ -32,6 +32,9 @@ product guide or a second copy of specialist workflows.
   user between `decK`, `kongctl`, and Terraform unless they ask.
 - Prefer current live state and current product docs over stale assumptions
   when behavior, product coverage, or limits may have changed.
+- When a downstream CLI appears blocked by the agent environment, let the
+  specialist tool skill handle sandbox retry guidance instead of classifying it
+  as a product failure here.
 
 These defaults are intentionally short. Specialist skills may restate the same
 guidance because they can trigger directly without this router.

@@ -5,8 +5,8 @@
   },
   "plugins": [
     {
-      "name": "kong-skills",
-      "source": "./",
+      "name": "kong-konnect",
+      "source": "./plugins/kong-konnect",
       "author": {
         "name": "kong"
       },

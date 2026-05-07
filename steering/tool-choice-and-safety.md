@@ -21,3 +21,14 @@ change live state.
 - Require explicit confirmation before production-impacting or mutating steps.
 - Restate the target org, region, control plane, workspace, or environment
   before a mutating step when scope might be ambiguous.
+- If a command important to the task fails in a way that suggests the
+  agent environment is blocking execution rather than the product, provider, or
+  config itself, retry outside the sandbox with approval before concluding the
+  tool is broken.
+- Use the host's approval or escalation path directly after a likely
+  sandbox-related failure instead of repeatedly asking free-text permission
+  questions.
+- Common sandbox-like signals include provider or plugin startup and handshake
+  failures, local socket or filesystem restrictions, and mismatches where the
+  user can run the same command outside the agent environment but it fails
+  inside the agent.

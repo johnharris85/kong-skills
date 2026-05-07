@@ -133,6 +133,9 @@ After a requested mutation:
   - Explicit path: `plan` -> `diff --plan` -> `apply/sync --plan`
   - Inline path: `apply -f`, `sync -f`, or `delete -f` (plan+execute
     happens in single shot)
+- If a required `kongctl` command appears blocked by the agent environment
+  rather than live Konnect or the CLI itself, request an unsandboxed retry
+  with approval before assuming auth or command failure.
 - Prefer instructional guidance when the user asks how to do a task:
   provide a concise command sequence and decision notes.
 - Execute commands directly when the user asks the agent to run them.
