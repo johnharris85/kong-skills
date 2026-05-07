@@ -67,5 +67,5 @@ it.
 - Be careful with any automatic update path: it can pull newer skill instructions automatically and may introduce supply-chain or security risk.
 - For `gh skill`, preview before install with `gh skill preview kong/skills gateway-plugin-datakit`.
 
-Use [`.mcp.json`](.mcp.json) as the shared checked-in reference shape for the
+Use [`mcp.json`](mcp.json) as the shared checked-in reference shape for the
 `kong-konnect` MCP server.

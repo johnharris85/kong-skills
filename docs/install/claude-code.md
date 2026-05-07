@@ -54,5 +54,5 @@ If plugins were updated during a session, run `/reload-plugins`.
 Be careful with auto-update. It can pull newer skill instructions automatically, which may introduce supply-chain or security risk if content changes upstream without review.
 
 If you want the MCP server without the full plugin wrapper, add
-`kong-konnect` manually using [`.mcp.json`](../../.mcp.json) as the reference
+`kong-konnect` manually using [`mcp.json`](../../mcp.json) as the reference
 shape. That is when `KONNECT_TOKEN` is required.

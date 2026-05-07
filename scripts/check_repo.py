@@ -295,7 +295,7 @@ def sync_claude_plugin(skills: list[Skill]) -> object:
     path = REPO_ROOT / ".claude-plugin" / "plugin.json"
     data = load_json(path)
     data["skills"] = [skill.rel_path for skill in skills]
-    data["mcpServers"] = "./.mcp.json"
+    data["mcpServers"] = "./mcp.json"
     return data
 
 
@@ -361,7 +361,7 @@ def sync_cursor_plugin(skills: list[Skill]) -> object:
     path = REPO_ROOT / ".cursor-plugin" / "plugin.json"
     data = load_json(path)
     data["skills"] = "skills"
-    data["mcpServers"] = ".mcp.json"
+    data["mcpServers"] = "mcp.json"
     data["keywords"] = derived_keywords(skills)
     return data
 
@@ -588,7 +588,7 @@ def validate_text_files() -> list[str]:
         REPO_ROOT / "docs" / "install" / "codex.md": ["Codex", "npx skills add kong/skills", MCP_NAME],
         REPO_ROOT / "docs" / "install" / "other-tools.md": ["gh skill install kong/skills", "gh skill preview", "npx skills add kong/skills", MCP_NAME],
         REPO_ROOT / "docs" / "release.md": ["workflow_dispatch", "mise run ci", "mise run artifact:check", "Release OCI Skills Artifact"],
-        REPO_ROOT / "docs" / "structure.md": [".cursor-plugin/plugin.json", ".mcp.json", "contributor file map", "CLAUDE.md", "AGENTS.md"],
+        REPO_ROOT / "docs" / "structure.md": [".cursor-plugin/plugin.json", "mcp.json", "contributor file map", "CLAUDE.md", "AGENTS.md"],
         REPO_ROOT / "docs" / "developer.md": ["assets/", "references/", "scripts/", "mise install", "mise run preflight", "mise run gen", "mise run deps", "skill:new", "artifact:check", "gh skill publish --dry-run", "Consumers generally see", "GitHub Actions workflow is the only publishing path", "kong-skill-authoring", "description budget", "overlap", ".cursor-plugin/plugin.json"],
         REPO_ROOT / "docs" / "testing.md": ["mise run preflight", "mise run deps", "mise run lint", "mise run artifact:check", "gh skill publish --dry-run", "scratch project", "KONNECT_TOKEN", "docs/install/other-tools.md", "description budget", "overlap", "docs/install/cursor.md"],
         REPO_ROOT / "SECURITY.md": ["vulnerability@konghq.com", "Do not open a public GitHub issue"],
@@ -630,7 +630,7 @@ def main() -> int:
     compare_or_write(REPO_ROOT / ".claude-plugin" / "marketplace.json", dump_json(sync_claude_marketplace(skills)), args.fix, errors)
     compare_or_write(REPO_ROOT / ".claude-plugin" / "plugin.json", dump_json(sync_claude_plugin(skills)), args.fix, errors)
     compare_or_write(REPO_ROOT / ".codex-plugin" / "plugin.json", dump_json(sync_codex_plugin(skills)), args.fix, errors)
-    compare_or_write(REPO_ROOT / ".mcp.json", dump_json(sync_root_mcp()), args.fix, errors)
+    compare_or_write(REPO_ROOT / "mcp.json", dump_json(sync_root_mcp()), args.fix, errors)
     compare_or_write(REPO_ROOT / ".cursor-plugin" / "plugin.json", dump_json(sync_cursor_plugin(skills)), args.fix, errors)
     compare_or_write(REPO_ROOT / ".cursor-plugin" / "marketplace.json", dump_json(sync_cursor_marketplace()), args.fix, errors)
 

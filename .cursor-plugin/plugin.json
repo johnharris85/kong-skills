@@ -1,7 +1,7 @@
 {
   "name": "kong-skills",
   "skills": "skills",
-  "mcpServers": ".mcp.json",
+  "mcpServers": "mcp.json",
   "description": "Portable Kong skills plus remote MCP configuration for Cursor.",
   "version": "1.0.0",
   "author": {

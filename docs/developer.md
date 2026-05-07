@@ -176,7 +176,7 @@ checks:
 - the Cursor marketplace listing in [`.cursor-plugin/marketplace.json`](../.cursor-plugin/marketplace.json)
 - the generated Codex plugin keywords and capabilities
 - the generated skill inventory in [docs/skills.md](skills.md)
-- the shared MCP config in [`.mcp.json`](../.mcp.json)
+- the shared MCP config in [`mcp.json`](../mcp.json)
 
 ## What Stays Manual
 

@@ -32,7 +32,7 @@ docs point back to the same checked-in reference shapes.
 
 ## Shared MCP Example
 
-- `.mcp.json`
+- `mcp.json`
   - Shared checked-in MCP reference shape for `kong-konnect`
 
 ## Contributor Helpers

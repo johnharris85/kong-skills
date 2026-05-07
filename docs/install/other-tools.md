@@ -105,7 +105,7 @@ pages for the current recommended approach.
 
 ## MCP Config Reference
 
-Use [`.mcp.json`](../../.mcp.json) as the checked-in reference shape for the
+Use [`mcp.json`](../../mcp.json) as the checked-in reference shape for the
 `kong-konnect` MCP server.
 
 `KONNECT_TOKEN` is only required if you add and use the MCP server.

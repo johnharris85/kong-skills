@@ -20,7 +20,7 @@ All routes use the same MCP server:
 `KONNECT_TOKEN` is only required for MCP-backed installs. If you only install
 the shared skills with `npx skills` or `gh skill`, you do not need the token.
 
-Use [`.mcp.json`](../../.mcp.json) as the shared checked-in MCP example.
+Use [`mcp.json`](../../mcp.json) as the shared checked-in MCP example.
 
 For skill-only installs from GitHub, prefer previewing before install:
 

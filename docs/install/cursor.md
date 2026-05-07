@@ -33,7 +33,7 @@ npx skills add kong/skills
 ```
 
 If you also want the MCP server outside the plugin wrapper, use
-[`.mcp.json`](../../.mcp.json) as the checked-in reference shape.
+[`mcp.json`](../../mcp.json) as the checked-in reference shape.
 
 `KONNECT_TOKEN` is only used by the MCP server config. If you only install the
 shared skills, it is not needed.

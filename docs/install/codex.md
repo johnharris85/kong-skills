@@ -28,7 +28,7 @@ If you installed via `gh skill`, you can also update one installed skill with `g
 Codex does not currently have a documented SessionStart-style startup hook equivalent in the official docs I checked, so this repo does not document automatic `npx skills update` hooks for Codex.
 
 If you also want the `kong-konnect` MCP server, add the MCP config from
-[`.mcp.json`](../../.mcp.json). That is when `KONNECT_TOKEN` is required.
+[`mcp.json`](../../mcp.json). That is when `KONNECT_TOKEN` is required.
 
 ## Personal Marketplace Path
 
