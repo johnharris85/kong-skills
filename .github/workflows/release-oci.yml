@@ -26,6 +26,7 @@ jobs:
           fetch-depth: 0
 
       - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
+      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
 
       - name: Validate workflow runs from main
         run: |
