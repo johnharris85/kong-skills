@@ -1,6 +1,6 @@
 ---
 name: deck-gateway
-description: Manage Kong Gateway entities with decK. Use for `deck gateway` state files, diff/sync/dump workflows, OpenAPI-to-Gateway generation, or GitOps-style Gateway config in self-managed Gateway or Konnect control planes.
+description: Manage Kong Gateway entities with decK. Use for `deck gateway` state files, validate/diff/sync/dump workflows, OpenAPI-derived Gateway config, or GitOps-style Gateway entity repos. Do not use for Konnect platform resources or HCL/kongctl repos.
 license: MIT
 metadata:
   product: deck
@@ -30,6 +30,9 @@ Terraform.
   when the target Gateway entities live in Konnect and MCP is available.
 - Use this skill when the repository already uses `decK`, `_format_version`,
   or `deck gateway` commands, or when the user explicitly asks for `decK`.
+- Use a domain skill or `kongctl-query` first when the real task is incident
+  diagnosis, live-state discovery, or Konnect inspection before a repo-owned
+  `decK` slice is identified.
 - Preserve the existing `decK` layout, file split, tags, and CI patterns in
   the repository.
 - Do not convert a Terraform or `kongctl` repository to `decK` unless the user
@@ -62,7 +65,7 @@ Load only the reference file that matches the active branch:
 Before editing files or proposing a live sync:
 
 - Confirm `deck` is installed and runnable: `deck version`
-- Confirm the target deployment model:
+- Confirm the target deployment model and live target:
   - self-managed Gateway via Admin API
   - Konnect-managed control plane via the appropriate Konnect auth flags
 - Confirm credentials are already available through environment variables,
@@ -72,14 +75,14 @@ Before editing files or proposing a live sync:
   - which state file, directory, include path, or wrapper script is in scope
   - whether tags are used to scope ownership
   - which environment or control plane the commands should touch
+- Confirm whether the task is declarative authoring, preview, export, or live
+  mutation before choosing a `decK` path.
 
 ### Preview
 
-- Run `deck gateway validate` against the exact file, directory, or include
-  path being edited.
-- Run the smallest scoped `deck gateway diff` that shows only the intended
-  entity slice.
-- Use scoped `deck gateway dump` only when live inspection is required.
+- Validate the exact file, directory, or include path being edited.
+- Run the smallest scoped diff that shows only the intended entity slice.
+- Use scoped dump only when live inspection is required.
 - Check file scope, include boundaries, tag scope, and unintended deletes
   before any `sync`.
 
@@ -112,6 +115,8 @@ Before editing files or proposing a live sync:
   them.
 - Prefer additive or scoped changes over broad re-dumps of an entire control
   plane unless the user asks for a full export.
+- Prefer repository-owned state files as the source of intended config. Use
+  live dumps to inspect or recover, not as the default authoring format.
 - Keep Konnect platform resources out of `decK` files. `decK` is for Gateway
   entities, not the full Konnect product surface.
 - Use OpenAPI-driven generation when the user is starting from an API spec and
@@ -146,27 +151,13 @@ Gateway entities.
 
 ### 3. Preview with `decK`'s native safety surface
 
-Default paths:
+Pick the smallest `decK` path that answers the request:
 
-- validate structure or command shape: `deck file` or `deck gateway validate`
-- inspect drift before mutation: `deck gateway diff`
-- export live Gateway config only when inspection needs it: scoped
-  `deck gateway dump`
-- apply intended state only when requested: `deck gateway sync`
-- generate Gateway config from OpenAPI: the relevant `deck file` workflow
-
-Preview expectations:
-
-- run `deck gateway validate` against the exact file, directory, or include
-  path being edited
-- run the smallest scoped `deck gateway diff` that shows only the intended
-  entity slice
-- use `deck gateway dump` only when live inspection is required and keep the
-  dump scoped to the target slice when possible
-- check for unintended deletes, tag-scope mistakes, include-boundary mistakes,
-  or environment mismatches before any `sync`
-
-Prefer the smallest preview path that answers the user request.
+- validate structure or file shape before drift review
+- diff the owned slice before proposing mutation
+- dump live state only when inspection or recovery requires it
+- sync only when the user requested live mutation
+- use the OpenAPI generation path only when the source of truth is a spec
 
 Load `references/command-paths.md` when several `decK` paths could fit and you
 need a sharper decision rule.
@@ -217,49 +208,6 @@ State:
   sync
 - what the next user-visible verification step is
 
-## Common Patterns
-
-### Add or update Gateway entities
-
-Use for:
-
-- add a service, route, or plugin
-- update consumer auth or upstream configuration
-- introduce tags or ownership boundaries
-
-Preferred sequence:
-
-1. inspect existing `decK` files
-2. update only the relevant entities
-3. run `deck gateway validate`
-4. run scoped `deck gateway diff`
-5. run `deck gateway sync` only when the user asks to execute
-6. rerun scoped `deck gateway diff` to prove the live slice is clean
-
-### Export or review drift
-
-Use for:
-
-- compare repo state with live Gateway state
-- capture a control plane baseline
-- understand what changed outside Git
-
-Preferred sequence:
-
-1. dump or diff the relevant Gateway slice
-2. compare the live result with the checked-in files
-3. call out drift before proposing further edits
-
-### Generate config from OpenAPI
-
-Use for:
-
-- initial service and route scaffolding from a spec
-- API onboarding into a Gateway config repo
-
-Prefer generated scaffolding as a starting point, then normalize it to the
-repo's conventions before finalizing.
-
 ## Kong-Specific Gotchas
 
 - `decK` is strongest for Gateway entities, not the broader Konnect platform.
@@ -276,6 +224,7 @@ repo's conventions before finalizing.
 Before answering, verify that you can state:
 
 - why `decK` is the right tool for this repository or request
+- which repo-owned file, include boundary, or tag boundary is authoritative
 - which Gateway entities are in scope
 - which `deck` preview commands prove the intended change safely
 - whether the task is authoring, diffing, dumping, or syncing

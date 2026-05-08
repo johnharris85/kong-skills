@@ -1,73 +1,64 @@
-# DataKit Common Flow Patterns
+# DataKit Flow Patterns
 
-Complete YAML examples for frequently needed DataKit configurations. Each pattern shows the `config.nodes` array (and `resources` when needed). Wrap in the standard plugin config structure:
+Load this file when the user already knows the orchestration intent and needs a
+starter DAG shape to adapt, not when they only need node semantics.
 
-```yaml
-plugins:
-  - name: datakit
-    service: YOUR_SERVICE    # or route: YOUR_ROUTE
-    config:
-      nodes: [...]           # patterns below
-      resources: {}          # when needed
-```
+Each example shows only `config.nodes` plus `resources` when required. Wrap the
+snippet in the repo's existing plugin config shape.
 
----
+## Fan-Out Merge
 
-## 1. Combine Multiple APIs
-
-Fetch data from two APIs concurrently, merge results with jq, and return a combined response.
+Use when two or more APIs can be called independently and combined before
+returning.
 
 ```yaml
 nodes:
-  - name: USERS
+  - name: AUTHORS
     type: call
-    url: https://api.example.com/users
+    url: https://api.example.com/authors
 
-  - name: ORDERS
+  - name: UUIDS
     type: call
-    url: https://api.example.com/orders
+    url: https://api.example.com/uuids
 
   - name: MERGE
     type: jq
     inputs:
-      users: USERS.body
-      orders: ORDERS.body
+      authors: AUTHORS.body
+      ids: UUIDS.body
     jq: |
       {
-        users: .users,
-        orders: .orders,
-        summary: {
-          total_users: (.users | length),
-          total_orders: (.orders | length)
-        }
+        author: .authors.author,
+        uuid: .ids.uuid
       }
 
-  - name: EXIT
+  - name: RESPOND
     type: exit
     inputs:
       body: MERGE
     status: 200
 ```
 
-**How it works:** USERS and ORDERS execute concurrently (no dependency between them). MERGE waits for both, combines their bodies, and EXIT returns the result to the client.
+Adaptation rule: keep the fan-out layer free of dependencies so the `call`
+nodes can run concurrently.
 
----
+## Token Fetch Then Upstream Call
 
-## 2. Third-Party Authentication (Token Injection)
-
-Fetch an auth token from an identity provider and inject it as a header on the upstream request.
+Use when the flow must fetch credentials first and inject them into a later
+request.
 
 ```yaml
-nodes:
-  - name: CREDENTIALS
-    type: static
-    values:
-      client_id: "my-client-id"
-      client_secret: "my-client-secret"
+resources:
+  vault:
+    client_id: "{vault://env/CLIENT_ID}"
+    client_secret: "{vault://env/CLIENT_SECRET}"
 
-  - name: BUILD_AUTH_BODY
+nodes:
+  - name: TOKEN_REQUEST
     type: jq
-    input: CREDENTIALS
+    inputs:
+      client_id: vault.client_id
+      client_secret: vault.client_secret
     jq: |
       {
         grant_type: "client_credentials",
@@ -80,49 +71,31 @@ nodes:
     method: POST
     url: https://auth.example.com/oauth/token
     inputs:
-      body: BUILD_AUTH_BODY
+      body: TOKEN_REQUEST
 
-  - name: BUILD_HEADER
+  - name: AUTH_HEADERS
     type: jq
     input: GET_TOKEN.body
     jq: |
-      { "Authorization": ("Bearer " + .access_token) }
-
-  - name: SET_AUTH_HEADER
-    type: property
-    property: kong.ctx.shared.auth_headers
-    input: BUILD_HEADER
-```
-
-**How it works:** Static credentials feed into a jq node that builds the OAuth request body. The call node fetches a token. Another jq node formats the Authorization header. Finally, a property node sets it on the shared context (or connect to `service_request.headers` to set directly).
-
-**Variant — using vault for secrets:**
-```yaml
-resources:
-  vault:
-    client_id: "{vault://env/my-client-id}"
-    client_secret: "{vault://env/my-client-secret}"
-
-nodes:
-  - name: BUILD_AUTH_BODY
-    type: jq
-    inputs:
-      cid: vault.client_id
-      csecret: vault.client_secret
-    jq: |
       {
-        grant_type: "client_credentials",
-        client_id: .cid,
-        client_secret: .csecret
+        Authorization: ("Bearer " + .access_token)
       }
-  # ... rest of flow same as above
+
+  - name: CALL_API
+    type: call
+    url: https://api.example.com/data
+    inputs:
+      headers: AUTH_HEADERS
+      query: request.query
 ```
 
----
+Adaptation rule: inject the computed header into the consuming `call` or into a
+later request-mutation path. Do not park it in `kong.ctx.shared` unless another
+plugin step explicitly reads it.
 
-## 3. Conditional Caching
+## Cache Lookup With Miss Path
 
-Check cache before making an expensive API call. On miss, call the API and store the result.
+Use when you need read-through caching around an expensive call.
 
 ```yaml
 resources:
@@ -141,16 +114,16 @@ nodes:
     inputs:
       key: CACHE_KEY
 
-  - name: CHECK_MISS
+  - name: CACHE_BRANCH
     type: branch
     input: CACHE_GET.miss
     outputs:
       then:
-        - FETCH_DATA
+        - FETCH_PRODUCT
         - CACHE_SET
       else: []
 
-  - name: FETCH_DATA
+  - name: FETCH_PRODUCT
     type: call
     url: https://api.example.com/products
     inputs:
@@ -161,38 +134,31 @@ nodes:
     ttl: 300
     inputs:
       key: CACHE_KEY
-      data: FETCH_DATA.body
+      data: FETCH_PRODUCT.body
 
   - name: PICK_RESULT
     type: jq
     inputs:
       cached: CACHE_GET.data
-      fresh: FETCH_DATA.body
-      was_hit: CACHE_GET.hit
+      fresh: FETCH_PRODUCT.body
+      hit: CACHE_GET.hit
     jq: |
-      if .was_hit then .cached else .fresh end
-
-  - name: EXIT
-    type: exit
-    inputs:
-      body: PICK_RESULT
-    status: 200
+      if .hit then .cached else .fresh end
 ```
 
-**How it works:** A jq node builds the cache key from query params. CACHE_GET does a lookup. The branch node checks `.miss` — on miss, it schedules FETCH_DATA and CACHE_SET. PICK_RESULT selects either cached or fresh data. EXIT returns the result.
+Adaptation rule: keep lookup and store as separate cache nodes. The branch
+chooses the miss path, while `PICK_RESULT` reunifies the hit and miss outputs.
 
----
+## XML In, JSON Out
 
-## 4. XML/JSON Conversion
-
-Call an XML API, convert to JSON, transform, and return.
+Use when an upstream or side-call speaks XML but the client contract should stay
+JSON.
 
 ```yaml
 nodes:
   - name: FETCH_XML
     type: call
-    url: https://api.example.com/data.xml
-    method: GET
+    url: https://api.example.com/catalog.xml
 
   - name: PARSE_XML
     type: xml_to_json
@@ -205,52 +171,23 @@ nodes:
       {
         items: [.catalog.products[].product | {
           name: .name,
-          price: .price | tonumber,
-          in_stock: (.quantity | tonumber) > 0
+          price: (.price | tonumber)
         }]
       }
 
-  - name: EXIT
+  - name: RESPOND
     type: exit
     inputs:
       body: TRANSFORM
     status: 200
 ```
 
-**Reverse direction (JSON to XML):**
-```yaml
-nodes:
-  - name: BUILD_PAYLOAD
-    type: jq
-    input: request.body
-    jq: |
-      {
-        order: {
-          id: .order_id,
-          items: [.items[] | {item: {name: .name, qty: .quantity}}]
-        }
-      }
+Adaptation rule: do format conversion before deep field selection so the `jq`
+step sees consistent structure.
 
-  - name: TO_XML
-    type: json_to_xml
-    input: BUILD_PAYLOAD
-    root_element_name: "OrderRequest"
+## Dynamic URL From Request Inputs
 
-  - name: SEND_XML
-    type: call
-    method: POST
-    url: https://legacy.example.com/orders
-    inputs:
-      body: TO_XML
-      headers:
-        content_type: "application/xml"
-```
-
----
-
-## 5. Dynamic URL Resolution
-
-Build a URL dynamically from request parameters and call it.
+Use when the destination URL depends on request parameters or headers.
 
 ```yaml
 nodes:
@@ -264,99 +201,36 @@ nodes:
       + .query.resource_type
       + "/"
       + .query.resource_id
-      + "?format=json&locale="
+      + "?locale="
       + (.headers["Accept-Language"] // "en")
 
-  - name: FETCH
+  - name: FETCH_RESOURCE
     type: call
-    method: GET
     url: https://api.example.com/fallback
     inputs:
       url: BUILD_URL
-
-  - name: EXIT
-    type: exit
-    inputs:
-      body: FETCH.body
-      headers: FETCH.headers
-    status: 200
 ```
 
-**How it works:** The jq node constructs a URL from query parameters and headers. The call node uses `inputs.url` to override its static `url` field (the static URL serves as a fallback if the dynamic input is nil, v3.13+).
+Adaptation rule: keep a static fallback `url` when the target environment may
+not support or always provide a dynamic override.
 
----
+## Header Shaping For A Later Write
 
-## 6. Header Manipulation
+Use when the flow must compute a header map before a later `call` node or a
+confirmed request or response mutation step.
 
-Read incoming request headers, transform them, and set on the upstream service request.
-
-**Add/modify headers before proxying:**
 ```yaml
 nodes:
-  - name: TRANSFORM_HEADERS
+  - name: BUILD_HEADERS
     type: jq
     input: request.headers
     jq: |
       . + {
-        "X-Request-Source": "datakit",
-        "X-Forwarded-Client-Ip": .["X-Real-Ip"],
-        "Authorization": ("Basic " + (.["X-Api-Key"] | @base64))
-      }
-      | del(.["X-Api-Key"])
-```
-
-Connect the output to `service_request.headers`:
-```yaml
-  # In the same nodes array, service_request is implicit:
-  # TRANSFORM_HEADERS output → service_request.headers
-```
-
-The connection is made by referencing `TRANSFORM_HEADERS` as the input to `service_request.headers`. Since `service_request` is an implicit node, you wire it like:
-
-```yaml
-nodes:
-  - name: TRANSFORM_HEADERS
-    type: jq
-    input: request.headers
-    jq: |
-      . + {
-        "X-Request-Source": "datakit",
-        "X-Correlation-Id": (now | tostring)
+        "X-Gateway": "datakit"
       }
 ```
 
-Then in the top-level flow, `service_request.headers` receives from `TRANSFORM_HEADERS`:
-
-```yaml
-# Full example: modify upstream headers
-nodes:
-  - name: ADD_HEADERS
-    type: jq
-    input: request.headers
-    jq: |
-      . + {
-        "X-Gateway": "kong-datakit",
-        "X-Timestamp": (now | tostring)
-      }
-
-  - name: SET_UPSTREAM_HEADERS
-    type: property
-    property: kong.ctx.shared.modified_headers
-    input: ADD_HEADERS
-```
-
-**Strip sensitive headers from response:**
-```yaml
-nodes:
-  - name: CLEAN_RESPONSE_HEADERS
-    type: jq
-    input: service_response.headers
-    jq: |
-      del(
-        .["X-Powered-By"],
-        .["Server"],
-        .["X-Debug-Info"]
-      )
-```
-
-Wire `CLEAN_RESPONSE_HEADERS` → `response.headers` to apply the cleaned headers to the client response.
+Adaptation rule: feed the computed map into a downstream `call` node's
+`headers` input, or wire it into a confirmed implicit request or response write
+path only after verifying the target gateway version supports that mutation
+pattern.

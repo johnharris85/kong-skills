@@ -17,6 +17,15 @@ Hand off when the real blocker is:
 - OIDC or auth-strategy choice
 - developer onboarding after the API is already visible
 
+## Proof Required Before Handoff
+
+Before handing off, confirm as much of this chain as the available evidence
+allows:
+
+- the managed API and intended version exist
+- the API is published to the intended portal or audience
+- the remaining blocker starts after discovery or visibility
+
 ## Quick Signals
 
 | Signal | Primary owner |
@@ -33,3 +42,4 @@ When handing off, say:
 - publication state is complete or sufficiently proven
 - the next missing step is consumer auth or registration
 - `konnect-app-auth` now owns the next action
+- any unresolved visibility or portal-target ambiguity that still needs proof

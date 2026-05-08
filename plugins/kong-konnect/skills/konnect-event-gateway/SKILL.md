@@ -1,6 +1,6 @@
 ---
 name: konnect-event-gateway
-description: Operate and troubleshoot Konnect Event Gateway. Use for Event Gateway control planes, listeners, virtual or backend clusters, policies, auth setup, hostname mapping, or listener paths that connect but still fail routing, auth, or policy checks.
+description: Use when diagnosing Konnect Event Gateway request flow across listeners, hostname mapping, virtual/backend clusters, auth, and policy evaluation. Exclude generic gateway health, org access control, and declarative implementation after the failing hop is known.
 license: MIT
 metadata:
   product: konnect
@@ -23,6 +23,9 @@ into standard gateway assumptions.
 Default to following the request path end to end:
 client -> listener -> virtual cluster -> backend cluster -> policy and auth
 
+Own the diagnosis of the failing Event Gateway hop. Hand off implementation or
+non-Event-Gateway platform problems once that hop is clear.
+
 ## Tool Selection
 
 - Use the shared `kong-konnect` MCP server first for live Event Gateway
@@ -33,6 +36,9 @@ client -> listener -> virtual cluster -> backend cluster -> policy and auth
   resources need to change. Prefer `kongctl-declarative` for `kongctl` YAML
   and `terraform-konnect` when the required Event Gateway resources are already
   managed in HCL.
+- Hand off early to `konnect-gateway-triage` when the blocker is generic
+  control-plane, data-plane, or rollout health rather than Event Gateway path
+  semantics.
 - If live Konnect state matters and `kong-konnect` MCP is not connected, say
   so early and continue with CLI or user-provided artifacts.
 
@@ -67,6 +73,7 @@ Clarify:
 - which hostname or endpoint the client uses
 - which virtual cluster and backend cluster should receive the traffic
 - whether the failure is connection, routing, auth, or policy related
+- what exact observed symptom proves the failure
 
 Keep the path concrete before inspecting objects.
 
@@ -131,7 +138,7 @@ This is the default path for "connects but gets denied" reports.
 Load `references/auth-and-policy-order.md` when reachability is proven and the
 remaining issue is auth or policy evaluation.
 
-### 6. Return a single failure domain
+### 6. Return a single failure domain with proof
 
 Diagnose one primary operator break:
 
@@ -141,6 +148,9 @@ Diagnose one primary operator break:
 - backend or virtual cluster routing problem
 - auth mismatch
 - policy attachment or evaluation problem
+
+State the evidence that ruled out the neighboring hops. Avoid reporting
+multiple equally-weighted guesses.
 
 ## Konnect-Specific Gotchas
 
@@ -162,13 +172,17 @@ Before answering, verify that you can state:
 - which Event Gateway objects are present
 - whether the listener mapping is correct
 - whether the failure is routing, auth, or policy related
+- what evidence rules out the adjacent hops
 - whether the next action belongs in `kongctl-declarative`,
-  `terraform-konnect`, or `konnect-access-scope`
+  `terraform-konnect`, `konnect-access-scope`, or
+  `konnect-gateway-triage`
 
 ## Handoffs
 
 - Use `konnect-access-scope` when the issue is who can view or administer Event
   Gateway resources.
+- Use `konnect-gateway-triage` when the real problem is generic Konnect Gateway
+  health, rollout, or connectivity outside Event Gateway object relationships.
 - Use `kongctl-declarative` or `terraform-konnect` when the operator wants to
   encode or apply the Event Gateway fix declaratively. Match the repository's
   current toolchain.

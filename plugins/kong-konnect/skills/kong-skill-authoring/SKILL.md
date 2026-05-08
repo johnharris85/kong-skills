@@ -1,6 +1,6 @@
 ---
 name: kong-skill-authoring
-description: Create or revise skills for this Kong skills repo. Use when adding a skill, deciding extend-versus-create, classifying domain versus tool skills, tightening trigger descriptions, or structuring Kong-specific authoring guidance for this repo.
+description: Create or refactor a skill in this repo. Use when deciding extend-versus-create, classifying domain/tool/router ownership, tightening a description, or reviewing a skill package against repo policy. Not for the product workflow itself.
 license: MIT
 metadata:
   product: repo
@@ -10,7 +10,7 @@ metadata:
     - kong
     - skills
     - authoring
-    - konnect
+    - review
     - workflow
 ---
 
@@ -19,278 +19,148 @@ metadata:
 ## Goal
 
 Help contributors create or revise high-signal skills for this repository
-without creating overlap, generic filler, or tool-boundary confusion.
+without creating overlap, generic filler, root bloat, or tool-boundary
+confusion.
 
-Use this skill to drive the authoring process progressively. Keep repo policy in
-`AGENTS.md` as the source of truth, but use this skill to decide what to build,
-how to scope it, and how to structure the resulting skill.
+Treat `AGENTS.md` as the canonical authoring policy. Use this skill as the
+decision layer for what the skill should own, how it should be structured, and
+what should stay out of it.
 
-## First Principles
+## Tool Selection
 
-- Treat `AGENTS.md` as the canonical repo policy.
-- Use this skill for authoring workflow and decision-making, not as a
-  replacement for repo rules.
-- Prefer extending an existing skill over creating a near-duplicate.
-- Prefer narrow operational skills over broad informational umbrellas.
-- Use thin router skills only when broad discovery is genuinely missing.
-- Standardize section semantics across equivalent skill types. Avoid cosmetic
-  heading drift when the section is doing the same job.
-- Preserve the repo's layered model:
-  - domain skills own Kong-specific diagnosis, workflow, and judgment
-  - tool skills own `decK`, `kongctl`, or Terraform config authoring and
-    execution
+- Use the host environment's built-in generic skill-authoring helper first when
+  it materially improves structure, then apply this repo's rules as the final
+  authority.
+- Use this skill for authoring decisions and review workflow, not for the
+  Konnect or Gateway task that the target skill will later handle.
+- When the user is asking for product execution, diagnosis, or declarative
+  implementation rather than skill authoring, hand off to the relevant domain,
+  router, or tool skill instead of keeping the work here.
 
-## Authoring Workflow
+## References To Load
 
-### 1. Check for overlap first
+- Load `AGENTS.md` first for authoring policy, section conventions, layered
+  skill design, and plugin-aware repo boundaries.
+- Load `docs/skills.md` and inspect `plugins/*/skills/*/SKILL.md` when checking
+  for overlap, adjacent trigger surfaces, or handoff targets.
 
-Before creating a new skill:
+## Workflow
 
-- inspect `docs/skills.md`
-- inspect `skills/`
-- look for an existing skill with the same trigger class, same layer, or same
-  operator workflow
-
-Default decision:
-
-- extend an existing skill if the new request fits the same trigger surface and
-  operating procedure
-- create a new skill only if the boundary is materially different
-
-Call out overlap plainly. Do not create a second skill with only naming or
-wording differences.
-
-### 2. Classify the skill boundary
-
-Decide which kind of skill this is:
-
-- domain skill: product surface, troubleshooting flow, operator workflow,
-  publication flow, observability flow, access flow, Event Gateway flow
-- tool skill: `decK`, `kongctl`, Terraform, import/adopt/plan/apply workflow,
-  HCL/YAML/file-shape ownership
-- existing-skill revision: same trigger class, same workflow, same owner
-
-Decision rule:
-
-- if the main difference is diagnosis order or product reasoning, use a domain
-  skill
-- if the main difference is file format, plan/apply behavior, or config tool,
-  use a tool skill
-- if the main need is broad request classification across existing skills, use
-  a thin router skill
-- if both apply, keep diagnosis in the domain skill and hand off
-  implementation to the tool skill
-
-### 3. Define the trigger surface
-
-Write down:
-
-- what a user would actually ask
-- what terms should activate the skill
-- which nearby requests should not activate it
-- whether the request is Konnect-specific, Gateway-specific, or generic enough
-  to stay out of this repo
-
-Treat the `description` field as the primary trigger surface. Write it so an
-agent can decide to use the skill without reading the full body first.
-
-Description defaults:
-
-- front-load the key trigger words and main boundary
-- keep most descriptions under roughly 260 characters
-- prefer concise trigger phrases over long lists of examples
-- if another skill already sounds similar, tighten the boundary before adding
-  more wording
-
-### 4. Decide what belongs in the skill body
-
-Keep only always-needed operational guidance in `SKILL.md`:
-
-- inspection order
-- decision rules
-- defaults and constraints
-- common mistakes
-- validation checklist
-- handoffs to neighboring skills
-
-Move conditional bulk detail out of the root body:
-
-- `references/` for large command references, schemas, or troubleshooting
-- `scripts/` only when a checked-in helper is materially better than inline
-  logic
-- prefer a validator or inspector script when the repeated failure modes are
-  mostly static structure problems that can be checked deterministically
-- `assets/` only when the skill needs output-side templates or lightweight
-  bundled files
-
-When using `references/`:
-
-- keep the root skill as the stable workflow and decision layer
-- split references by branch, failure domain, or execution mode
-- avoid generic buckets like `overview.md`
-- add a `References To Load` section that says exactly when each file should be
-  opened
-- do not put core defaults only in references
-
-### 4a. Apply the repo's section conventions
-
-Use a small set of stable section headings so agents learn one structure per
-skill type.
-
-Preferred templates:
-
-- domain or product skill:
-  - `Goal`
-  - `Tool Selection`
-  - `References To Load`
-  - `Workflow` or `Inspection Order`
-  - `Konnect-Specific Gotchas` or another explicit product-specific gotchas
-    heading
-  - `Validation Checklist`
-  - `Handoffs`
-- tool skill:
-  - `Goal`
-  - `Tool Positioning`
-  - `References To Load`
-  - `Validation Contract`
-  - `Operating Rules`
-  - `Workflow`
-  - `Validation Checklist`
-  - `Handoffs`
-- router skill:
-  - `Goal`
-  - `Shared Operating Defaults`
-  - `Classification Order`
-  - `Routing Rules`
-  - `Validation Checklist`
-  - `Output Style`
-
-Use exact heading names for equivalent concepts:
-
-- `Tool Selection` for domain-skill preferred tools and handoffs
-- `Tool Positioning` for tool-skill ownership boundaries
-- `Shared Operating Defaults` for router-level defaults
-- `Workflow` for a general operating procedure
-- `Inspection Order` when the diagnosis sequence is itself the guardrail
-
-Do not introduce heading synonyms such as `Preferred Tools` when `Tool
-Selection` is the same concept.
-
-### 5. Make tool and MCP boundaries explicit
-
-For Konnect-oriented skills:
-
-- prefer the shared `kong-konnect` MCP server for live inspection when
-  available
-- do not make MCP a hard dependency for the skill to remain useful
-- preserve fallback paths through `kongctl`, declarative config, logs, or
-  user-provided artifacts
-- prefer current live state and current product docs over stale assumptions
-  when behavior may have changed
-
-For domain skills:
-
-- keep tool guidance short
-- state which tool skills should take over when config changes are needed
-- preserve the user's existing toolchain
-- keep common defaults in the root skill even if a router also states them
-- assume the specialist may trigger directly without the router
-
-For tool skills:
-
-- state which Kong product or resource surface they cover
-- state which neighboring tools they do not replace
-- preserve the repository's current toolchain instead of forcing migration
-- require an explicit validation contract with four gates:
-  - `Preflight`: tool install, auth, repo ownership, and target
-    environment/workspace/profile are confirmed
-  - `Preview`: the smallest safe inspect-only command is named, the expected
-    preview artifact or output shape is stated, and pre-mutation checks are
-    explicit
-  - `Execute`: mutating commands appear only when the user requested mutation,
-    after the intended effect is described plainly
-  - `Prove`: tool-native post-change verification confirms the exact resource
-    slice and does not treat command success as proof by itself
-- use references for command-path, import/adoption, or module-boundary depth
-  when those branches would otherwise bloat the root skill
-- keep domain skills validating diagnosis and handoff quality rather than
-  turning them into full execution playbooks
-- when workflows depend on external CLIs or providers that may behave
-  differently inside the agent environment, include a short local sandbox or
-  escalation rule that says when to retry outside the sandbox with approval
-  before assuming product or tool failure
-- keep the shared execution policy in `AGENTS.md` and steering docs; restate
-  only the minimal local trigger inside the tool skill
-
-For router skills:
-
-- classify and hand off
-- do not try to force the router to always trigger before a specialist skill
-- keep shared defaults short and let specialists restate the minimum local
-  version when they can trigger directly
-
-### 6. Write the smallest skill that changes behavior
-
-Prefer:
-
-- direct instructions
-- short checklists
-- explicit defaults
-- narrow gotchas
-- validation loops
-
-Avoid:
-
-- long product summaries
-- generic best practices
-- repeated policy text that already lives in `AGENTS.md`
-- bloated examples that do not change agent behavior
-
-## Output Shape
-
-When creating or revising a skill, produce:
-
-1. a clear decision: extend existing skill, create new domain skill, or create
-   new tool skill
-2. the proposed skill name
-3. the exact trigger surface for the `description`
-4. the minimum sections the `SKILL.md` body needs
-5. any justified companion files
-   - for `references/`, list each file and the exact load condition
-   - for `scripts/`, say exactly when the agent should run the script and what
-     it validates
-6. the repo validation steps to run afterward
-
-If the task does not justify a new skill, say so and propose the narrow update
-to the existing skill instead.
+1. State the target skill's job in one sentence.
+   - If the request is really about doing Konnect or Gateway work rather than
+     authoring the skill, stop and hand off.
+2. Check overlap before drafting.
+   - Inspect `docs/skills.md` and the existing `plugins/<plugin>/skills/`
+     trees.
+   - Extend an existing skill when the trigger class, ownership boundary, and
+     operating procedure are substantially the same.
+   - Create a new skill only when the workflow, owner, or trigger surface is
+     materially different.
+3. Classify the skill boundary.
+   - Use a domain skill when the hard part is Kong-specific diagnosis,
+     inspection order, or operator workflow.
+   - Use a tool skill when the hard part is `decK`, `kongctl`, Terraform,
+     import/adopt behavior, or file-shape ownership.
+   - Use a router skill only when the main problem is broad classification
+     across existing specialist skills.
+   - If both domain and tool concerns appear, keep diagnosis in the domain
+     skill and hand off implementation to the tool skill.
+4. Define the trigger surface before writing body text.
+   - Write down what a user would actually ask.
+   - Name the nearby requests that should not activate the skill.
+   - Keep the `description` activation-grade: front-loaded, explicit, and
+     usually under roughly 260 characters.
+   - Tighten the boundary instead of adding long example lists.
+5. Keep `SKILL.md` as the decision layer.
+   - Root content should cover ownership, workflow or inspection order,
+     defaults, validation, and handoffs.
+   - Do not turn the root into a command catalog, product guide, schema dump,
+     or copy of repo policy that already lives in `AGENTS.md`.
+   - Prefer subtraction before rewriting. Delete detail that does not change
+     agent behavior.
+6. Place detail in the cheapest useful layer.
+   - Keep branch-specific depth in `references/` with an explicit load
+     condition.
+   - Make each reference file support one branch, failure domain, or execution
+     mode. Split files that carry multiple unrelated jobs.
+   - Add a `scripts/` helper only when deterministic validation or
+     transformation is materially safer than prompt text.
+   - Do not create companion files just to relocate generic filler.
+7. Run the review tests before you finalize structure.
+   - Overfitting test: remove assumptions about one repo layout, starter
+     bundle, exact command path, exact auth check, current UI behavior, or one
+     canonical naming scheme unless that specificity is safety-critical.
+   - Minutiae test: trim long field lists, dense flag catalogs, or examples
+     that the model would copy more readily than reason from.
+   - Progressive-disclosure test: move detail down a layer when metadata, root,
+     references, or scripts can hold it more cheaply without harming behavior.
+   - If the root still reads like a condensed runbook or partial manual, cut or
+     relocate content before polishing wording.
+8. Apply the repo's section conventions.
+   - Domain skills should use `Goal`, `Tool Selection`, `References To Load`,
+     `Workflow` or `Inspection Order`, an explicit gotchas section,
+     `Validation Checklist`, and `Handoffs`.
+   - Tool skills should use `Goal`, `Tool Positioning`, `References To Load`,
+     `Validation Contract`, `Operating Rules`, `Workflow`,
+     `Validation Checklist`, and `Handoffs`.
+   - Router skills should use `Goal`, `Shared Operating Defaults`,
+     `Classification Order`, `Routing Rules`, `Validation Checklist`, and
+     `Output Style`.
+   - Do not introduce cosmetic heading drift for equivalent concepts.
+9. Preserve Kong-specific boundaries.
+   - For Konnect work, prefer the shared `kong-konnect` MCP server for live
+     inspection when available, but keep fallback paths through `kongctl`,
+     declarative config, logs, or user-provided artifacts.
+   - Preserve the repository's existing toolchain instead of forcing migration
+     between `decK`, `kongctl`, and Terraform.
+   - Keep domain skills focused on reasoning quality and handoffs instead of
+     absorbing full tool-execution playbooks.
+10. Produce the smallest useful authoring output.
+   - State whether to extend an existing skill or create a new one.
+   - Name the owning plugin path.
+   - Provide the exact `description` trigger surface.
+   - List the minimum root sections and any justified companion files with
+     exact load conditions.
+   - When reviewing an existing skill, lead with the highest-risk finding and
+     the smallest corrective move.
+   - Before stopping, name the main pass/fail call for trigger quality,
+     boundary discipline, reasoning quality, root bloat, reference discipline,
+     and reference bloat.
 
 ## Validation Checklist
 
-Before finishing authoring work, verify:
-
-- there is no existing skill that should have been extended instead
-- the skill boundary is clearly domain, tool, or existing-skill revision
-- the `description` is activation-grade, not just a label
-- the `description` stays within the repo's budget and front-loads trigger
-  words
-- the body gives a real Kong-specific workflow
-- the skill preserves MCP and toolchain boundaries correctly
-- if it is a tool skill, the body exposes `Preflight`, `Preview`, `Execute`,
-  and `Prove` gates with tool-native validation
-- the skill avoids generic filler
-- companion files are justified
-- any script has a narrow deterministic job and a clear run condition
-- the new or revised skill does not overlap too heavily with another skill's
-  trigger surface
-- if the skill runs external tools, it says when to retry outside the sandbox
-  with approval before assuming product or tool failure
-- the repo loop is complete: update the skill, run `mise run gen`, run
-  `mise run lint`
+- The edit stays within the owning skill directory unless the task explicitly
+  broadens scope.
+- Overlap was checked against `docs/skills.md` and the existing
+  `plugins/<plugin>/skills/` trees.
+- The skill boundary is explicit: existing-skill revision, domain, tool, or
+  router.
+- The `description` activates on the right requests and excludes nearby ones.
+- `SKILL.md` stays focused on trigger boundary, ownership boundary, workflow or
+  inspection order, defaults, validation, and handoffs.
+- The root teaches workflow, defaults, validation, and handoffs rather than
+  reciting commands or product facts.
+- Any reference file has a narrow load condition and does not carry core
+  defaults that the root needs.
+- Any reference file supports one branch, failure domain, or execution mode
+  instead of acting like a second root skill.
+- Any script has a deterministic job and a clear run condition.
+- Konnect MCP guidance is a preferred live-inspection path, not a hard
+  dependency.
+- The skill preserves the user's existing declarative toolchain unless the user
+  asked to change it.
+- The revision does not silently pull in shared scaffolding, generated
+  manifests, or unrelated skills.
+- If the task is a review, the main issue is identified before line editing:
+  boundary drift, root bloat, reference bloat, drift risk, weak validation, or
+  poor handoffs.
+- The overfitting, minutiae, and progressive-disclosure tests were run before
+  calling the skill done.
 
 ## Handoffs
 
-- Use the host environment's built-in generic skill-authoring helper first when
-  it materially improves structure, then apply this repo's `AGENTS.md` rules as
-  the final authority.
-- Use domain or tool skills in `skills/` as examples of good boundaries, not as
-  templates to copy blindly.
+- Hand off broad Konnect request classification to `konnect-platform-router`
+  when the authoring question is really "which existing skill should own this?"
+- Hand off product diagnosis or implementation details to the relevant domain
+  or tool skill once the authoring boundary is settled.
+- Use existing skills as boundary examples, not as templates to copy verbatim.

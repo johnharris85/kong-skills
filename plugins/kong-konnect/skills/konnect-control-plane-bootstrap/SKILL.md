@@ -1,6 +1,6 @@
 ---
 name: konnect-control-plane-bootstrap
-description: Bootstrap Konnect Gateway control planes and first-run topology choices. Use when creating a new control plane, choosing hosted or self-hosted data planes, setting initial naming and ownership boundaries, or turning a quickstart into a durable setup.
+description: Bootstrap new Konnect Gateway control planes. Use for first-run topology, hosted versus self-hosted data planes, region/name/ownership choices, or moving from quickstart setup to durable management. Not for runtime triage or post-bootstrap Gateway config.
 license: MIT
 metadata:
   product: konnect
@@ -22,13 +22,18 @@ bootstrap assumptions before the problem becomes Gateway drift or runtime
 troubleshooting.
 
 Use this skill for initial setup, first-run topology choices, naming, labels,
-ownership boundaries, and “what should we create first?” decisions. Do not use
-it for ongoing incident triage.
+ownership boundaries, and "what should we create first?" decisions. Do not use
+it for ongoing incident triage, retrofitting generic Gateway config, or fixing
+an already unhealthy existing control plane unless the missing piece is still
+bootstrap scope.
 
 ## Tool Selection
 
 - Use the shared `kong-konnect` MCP server first for live inspection of
   existing control planes, groups, and adjacent Konnect Gateway resources.
+- If the control plane already exists and the operator is mainly debugging
+  attachment, health, rollout, or config-application symptoms, hand off to
+  `konnect-gateway-triage` instead of treating the problem as bootstrap.
 - Preserve the repository's chosen declarative toolchain when bootstrap should
   be codified: use `terraform-konnect` for HCL-managed control planes,
   `kongctl-declarative` for `kongctl` YAML, and `deck-gateway` only after the
@@ -55,7 +60,18 @@ Load only the reference file that matches the active branch:
 
 ## Workflow
 
-### 1. Identify the intended deployment shape
+### 1. Classify whether the task is bootstrap or repair
+
+First determine whether the user is:
+
+- creating a net-new control plane
+- converting a quickstart into a durable managed environment
+- or debugging an existing control plane that should already be operational
+
+If the real problem is health, rollout, connectivity, or config application on
+an existing control plane, hand off early to `konnect-gateway-triage`.
+
+### 2. Identify the intended deployment shape
 
 Clarify:
 
@@ -70,7 +86,7 @@ Do not treat a tutorial quickstart as the final production shape by default.
 Load `references/topology-choice.md` when the deployment shape itself is still
 the hard part.
 
-### 2. Confirm region, naming, and ownership boundaries
+### 3. Confirm region, naming, and ownership boundaries
 
 Decide:
 
@@ -85,7 +101,7 @@ control planes look similar.
 Load `references/ownership-boundaries.md` when region, labels, names, or team
 ownership are the main source of ambiguity.
 
-### 3. Separate platform bootstrap from Gateway config
+### 4. Separate platform bootstrap from Gateway config
 
 For a new control plane, keep these concerns distinct:
 
@@ -99,7 +115,7 @@ The control plane is not “done” just because it exists in Konnect.
 Load `references/bootstrap-artifacts.md` when the operator needs the bootstrap
 milestones spelled out more explicitly.
 
-### 4. Choose the first durable management path
+### 5. Choose the first durable management path
 
 Default decision rule:
 
@@ -113,7 +129,7 @@ Default decision rule:
 Do not force migration between tools during bootstrap unless the user asked for
 it.
 
-### 5. Validate the first-post-bootstrap state
+### 6. Validate the first post-bootstrap state
 
 Before calling the bootstrap complete, verify:
 
@@ -124,7 +140,7 @@ Before calling the bootstrap complete, verify:
 - the user knows whether the next step is Gateway entity config, Portal work,
   or runtime verification
 
-### 6. Hand off to the next operational surface
+### 7. Hand off to the next operational surface
 
 Common next steps:
 
@@ -139,6 +155,8 @@ Common next steps:
 - Quickstart success does not mean the durable environment model is decided.
 - Control plane creation, data plane hosting, and Gateway config are separate
   milestones.
+- A bootstrap request often hides a repair request; classify that early before
+  recommending creation steps.
 - Region mistakes are expensive because many later symptoms look like auth or
   drift failures.
 - A healthy control plane object does not prove the data plane is attached or

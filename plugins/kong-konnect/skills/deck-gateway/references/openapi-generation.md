@@ -19,6 +19,9 @@ boundaries without cleanup.
 
 - If the repo already has an established file split, fold generated entities
   into that shape rather than dropping in a monolith.
+- If the spec is only a starting point, generate into a temporary file or
+  isolated slice first, then merge only the owned entities into the curated
+  state files.
 - If the spec is incomplete for runtime behavior, call out what still needs
   explicit Gateway authoring.
 - Do not treat OpenAPI-driven generation as a substitute for Konnect platform

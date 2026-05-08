@@ -1,6 +1,6 @@
 ---
 name: terraform-kong-gateway
-description: Manage self-managed Kong Gateway with Terraform and the official `kong/kong-gateway` provider. Use for HCL-managed Admin API entities such as Services, Routes, Consumers, plugins, upstreams, targets, or certificates.
+description: Use when editing or reviewing Terraform that manages self-managed Kong Gateway Admin API entities with the official `kong/kong-gateway` provider; not for Konnect resources, decK-native Gateway GitOps, or gateway troubleshooting before tool choice.
 license: MIT
 metadata:
   product: terraform
@@ -17,17 +17,21 @@ metadata:
 
 ## Goal
 
-Manage self-managed Kong Gateway entities in HCL through the official Gateway
-provider while preserving the repository's current Terraform structure and
-state ownership.
+Author or revise Terraform-managed self-managed Kong Gateway entities while
+preserving the repository's current module layout, provider model, and state
+ownership.
 
-Use this skill for Admin API-backed self-managed Gateway work. Do not use it as
-the default for Konnect platform resources.
+Use this skill once Terraform is already the right tool for Admin API-backed
+self-managed Gateway work. Do not use it as the default for Konnect platform
+resources or for design and troubleshooting work that should happen before
+tool-specific HCL changes.
 
 ## Tool Positioning
 
 - Use this skill when the repository already uses Terraform for self-managed
   Gateway resources or the user explicitly asks for Terraform.
+- This skill owns HCL authoring, import-first adoption, plan review, and
+  Terraform-native proof after the Terraform path is chosen.
 - Preserve existing Terraform modules, variables, backend settings, and
   workspaces.
 - Use the official `kong/kong-gateway` provider for self-managed Gateway
@@ -36,6 +40,9 @@ the default for Konnect platform resources.
   dump/diff workflows, or a `decK`-native repository.
 - Hand off to `terraform-konnect` when the target resources actually belong to
   Konnect rather than a self-managed Admin API surface.
+- Hand off to Gateway or product-specific diagnosis skills when the harder
+  problem is gateway health, plugin behavior, or design intent rather than HCL
+  ownership.
 
 ## References To Load
 
@@ -61,13 +68,13 @@ Load only the reference file that matches the active branch:
 
 Before writing HCL or proposing a plan:
 
-- Confirm Terraform is installed and runnable: `terraform version`
-- Confirm the target Admin API endpoint and auth method already exist
-- Inspect provider blocks and module conventions before adding HCL
-- Keep Admin API tokens and secrets out of committed files
-- Confirm the repo's backend, workspace, and provider-alias expectations
+- Confirm Terraform is installed and runnable.
+- Confirm the target Admin API endpoint and auth method already exist.
+- Inspect provider blocks, backend settings, workspace selection, and module
+  conventions before adding HCL.
+- Keep Admin API tokens and secrets out of committed files.
 - Confirm whether existing live Gateway entities must be imported before
-  planning
+  planning.
 - Use `terraform providers schema -json` as the default source of truth when
   nested resource shape is unclear before guessing from docs or examples
 
@@ -75,7 +82,7 @@ Before writing HCL or proposing a plan:
 
 Use Terraform's native preview surface before apply:
 
-- run `terraform fmt -check` only when the repository uses that convention
+- run the repo's normal format and validation checks when they exist
 - run `terraform validate`
 - run `terraform plan`
 - import first when a live Service, Route, plugin, or other entity already
@@ -102,16 +109,6 @@ After a requested apply:
 - do not treat apply success by itself as proof that the live Gateway matches
   intent
 
-## Provider Basics
-
-Expected provider inputs usually include:
-
-- `server_url`
-- `admin_token` when the Admin API requires token auth
-
-Do not assume one cluster, workspace, or environment. Follow the repository's
-existing provider alias and workspace model.
-
 ## Operating Rules
 
 - Preserve existing HCL layout, resource grouping, and variable usage.
@@ -133,7 +130,19 @@ existing provider alias and workspace model.
 
 ## Workflow
 
-### 1. Inspect the Terraform shape
+### 1. Classify the ownership boundary
+
+Establish whether the task is actually:
+
+- self-managed Gateway Admin API configuration that this skill should own
+- Konnect platform configuration that belongs to `terraform-konnect`
+- a `decK`-native Gateway workflow that belongs to `deck-gateway`
+- gateway behavior or design diagnosis that should be resolved before
+  Terraform-specific implementation
+
+Do not write HCL until that split is clear.
+
+### 2. Inspect the Terraform shape
 
 Identify:
 
@@ -144,7 +153,7 @@ Identify:
 - existing ownership boundaries for services, routes, plugins, consumers, or
   certificates
 
-### 2. Confirm the target Gateway surface
+### 3. Confirm the target Gateway surface
 
 Pin down:
 
@@ -152,7 +161,10 @@ Pin down:
 - which Gateway entities are being managed
 - whether the task is create, update, import, or drift correction
 
-### 3. Preview the intended change
+Load `references/provider-and-import.md` when provider inputs, import-first
+adoption, or Admin API targeting is the real uncertainty.
+
+### 4. Choose the narrow implementation path
 
 Default paths:
 
@@ -161,32 +173,31 @@ Default paths:
 - large-scale file-based Gateway GitOps: consider `deck-gateway` instead of
   forcing Terraform if that matches the user's intent better
 
-Load `references/provider-and-import.md` when import or provider inputs are the
-real boundary, and `references/entity-patterns.md` when repo ownership shape is
-the harder question.
-Load `references/provider-schema-debugging.md` when resource shape is the main
-uncertainty.
+Load `references/entity-patterns.md` when repo ownership shape is the harder
+question. Load `references/provider-schema-debugging.md` when resource shape is
+the main uncertainty.
 
-Preview expectations:
-
-- use `terraform fmt -check` only when the repo expects it
-- run `terraform validate`
-- run `terraform plan`
-- inspect `terraform providers schema -json` before guessing nested block or
-  attribute structure
-- import first if the plan would recreate an entity that already exists live
-- inspect whether the plan touches only the intended addresses and workspace
-
-### 4. Author HCL with minimal churn
-
-When writing HCL:
+### 5. Author HCL with minimal churn
 
 - reuse existing variables and locals
 - keep names and identifiers stable
 - avoid broad refactors while making a narrow Gateway change
 - add outputs only when another module or pipeline consumes them
+- inspect `terraform providers schema -json` before guessing nested block or
+  attribute structure
 
-### 5. Execute only when requested
+### 6. Preview before any apply path
+
+- run the repo's normal format and validation checks when they exist
+- run `terraform validate`
+- run `terraform plan`
+- import first if the plan would recreate an entity that already exists live
+- inspect whether the plan touches only the intended addresses and workspace
+
+Load `references/plan-safety-and-state.md` when the operator needs a safer
+inspection-first path before touching a live Gateway.
+
+### 7. Execute only when requested
 
 - Describe the intended live effect before presenting or running
   `terraform apply`.
@@ -195,10 +206,7 @@ When writing HCL:
 - Run `terraform apply` only when the user explicitly asked to mutate live
   Gateway state.
 
-Load `references/plan-safety-and-state.md` when the operator needs a safer
-inspection-first path before touching a live Gateway.
-
-### 6. Prove the result with Terraform-native checks
+### 8. Prove the result with Terraform-native checks
 
 After any requested `terraform apply`:
 
@@ -210,7 +218,7 @@ After any requested `terraform apply`:
 - call out remaining drift or ownership surprises instead of hiding them behind
   apply success
 
-### 7. Report config and state impact
+### 9. Report config and state impact
 
 State:
 
@@ -225,6 +233,8 @@ State:
   already has; import matters.
 - Recreating existing plugins, services, or routes can cause avoidable
   identifier churn.
+- Provider docs and Gateway examples can describe intent, but the Terraform
+  provider schema is the authoritative shape for nested HCL.
 - Some teams use Terraform for infrastructure but `decK` for Gateway entities;
   preserve the established split if it already exists.
 - A self-managed Admin API workflow is not the same as a Konnect control plane

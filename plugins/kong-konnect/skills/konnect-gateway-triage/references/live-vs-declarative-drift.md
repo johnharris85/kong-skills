@@ -20,6 +20,15 @@ Ask:
 - whether the data plane is actually receiving the control-plane state
 - whether the repo diff is narrow drift or evidence of the wrong environment
 
+## Proving Order
+
+1. Identify the one resource slice the symptom depends on.
+2. Compare the live control-plane state for that slice with the intended source
+   of truth.
+3. Confirm whether the data plane behavior matches the live slice or lags it.
+4. Only then decide whether the mismatch is apply drift, manual drift, or a
+   wrong-environment inspection.
+
 ## Common Mismatch Patterns
 
 | Pattern | Likely interpretation |
@@ -38,6 +47,15 @@ Ask:
   diagnosis rather than repeating diff logic.
 - If a manual change fixed the symptom but broke the repo contract, call that
   hidden drift explicitly.
+
+## What Proves The Branch
+
+Anchor the diagnosis with:
+
+- one intended-state artifact such as the owning repo file, Terraform state, or
+  `kongctl` resource definition
+- one live-state artifact showing the same resource missing, changed, or placed
+  in the wrong environment
 
 ## What To Return
 

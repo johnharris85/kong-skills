@@ -14,6 +14,8 @@ Do not let `sync` become the first diagnostic move.
 - prefer checking environment, includes, and tag boundaries before any mutate
 - treat a full `dump` as evidence-gathering, not an automatic replacement for
   curated repo state
+- when recovery needs a `dump`, merge only the owned entity slice back into the
+  repository instead of replacing established file layout wholesale
 
 ## Common Risk Patterns
 
@@ -29,4 +31,5 @@ Return:
 
 - the safest next command path
 - the main boundary to verify before mutation
+- the specific delete or overwrite risk that the preview step is meant to catch
 - whether the user should stop at inspection or proceed to apply

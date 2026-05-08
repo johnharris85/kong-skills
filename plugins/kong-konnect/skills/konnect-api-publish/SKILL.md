@@ -1,6 +1,6 @@
 ---
 name: konnect-api-publish
-description: Operate Konnect API publication from managed API through Catalog and Dev Portal. Use when an API is missing from Catalog or Portal, publication is mis-scoped, or developer registration and access do not match the intended publishing flow.
+description: Operate Konnect API publication from managed API through Catalog and Dev Portal. Use when an API should be visible but the missing link is Catalog readiness, portal publication, or audience scoping. Not for Catalog modeling or post-publication app auth.
 license: MIT
 metadata:
   product: konnect
@@ -17,11 +17,14 @@ metadata:
 
 ## Goal
 
-Help an operator trace an API from runtime and managed-API presence through
-cataloging, portal publication, and consumer-facing access.
+Help an operator trace why an API is not reaching the intended developer
+audience, from managed API presence through catalog readiness and portal
+publication.
 
 Use workflow language: inspect, trace, publish, validate, and approve.
 Do not turn this into generic Portal documentation.
+This skill owns publication-chain diagnosis, not generic Catalog authoring or
+developer application auth design.
 
 ## Tool Selection
 
@@ -34,6 +37,12 @@ Do not turn this into generic Portal documentation.
   `terraform-konnect` for HCL-managed Konnect resources, and `deck-gateway`
   only when the missing link is in Gateway-entity config within the target
   control plane.
+- Hand off to `konnect-api-catalog` when the real problem is API object
+  modeling, versioning, specification quality, or package readiness rather
+  than publication.
+- Hand off to `konnect-app-auth` once publication is proven and the remaining
+  issue is developer registration, approval, credential issuance, or auth
+  strategy selection.
 - If live Konnect state matters and `kong-konnect` MCP is not connected, say
   so early and continue with CLI or user-provided artifacts.
 
@@ -57,7 +66,7 @@ Load only the reference file that matches the active branch:
 
 ## Inspection Order
 
-### 1. Identify the missing outcome
+### 1. Identify the claimed missing outcome and viewer
 
 Clarify what "not published" means:
 
@@ -69,11 +78,13 @@ Clarify what "not published" means:
 - API exists internally but is not ready for developer consumption
 
 Do not use one answer path for all of these.
+Capture which portal, audience, or viewer is expected to see or use the API
+before you inspect publication state.
 
 If the operator uses "publish" loosely, load `references/publication-chain.md`
 and classify the missing stage before proposing any fix.
 
-### 2. Confirm the managed API and version exist
+### 2. Prove the managed API and version are publication-ready
 
 Start with the operator source objects:
 
@@ -85,22 +96,7 @@ Start with the operator source objects:
 If the API object or version does not exist, do not continue to portal
 debugging yet.
 
-### 3. Check catalog and governance readiness
-
-Inspect whether the API is actually ready for cataloging:
-
-- the expected API asset is present
-- the spec or version information is usable
-- the intended metadata is attached
-- the API is in the right lifecycle stage for publication
-
-If the managed asset is incomplete, explain that publication is blocked
-upstream rather than treating Portal as the problem.
-
-Use `references/publication-chain.md` when the managed-API-to-catalog boundary
-is still unclear.
-
-### 4. Trace publication into the developer-facing surface
+### 3. Trace the portal publication target
 
 Verify:
 
@@ -109,27 +105,30 @@ Verify:
 - expected visibility aligns with the audience
 - the API should appear in the specific portal view the user is checking
 
-Separate "API is published" from "viewer can currently find it."
+Separate "API is published somewhere" from "API is published to the portal and
+audience the operator means."
+
+Use `references/publication-chain.md` when the managed-API-to-catalog boundary
+is still unclear.
+
+### 4. Separate visibility from consumer access
+
+Do not collapse these into one failure:
+
+- publication missing
+- publication present but pointed at the wrong portal or audience
+- publication present and visible, but developer registration or access fails
 
 Load `references/portal-visibility-vs-access.md` when the main question is
 whether the intended audience should actually see or discover the API.
 
-### 5. Check registration and access workflow
-
-If the API is visible but unusable, inspect the consumer path:
-
-- developer app or registration prerequisites
-- auth or credential expectations
-- visibility or audience gates
-- any portal-specific access constraints that explain why discovery succeeds
-  but use fails
+### 5. Hand off cleanly when publication is not the blocker
 
 This is where many "publish" issues become access or onboarding issues.
-
 Load `references/downstream-auth-handoffs.md` when registration, approvals,
 credentials, or auth strategy become the real blocker.
 
-### 6. Return the missing link in the chain
+### 6. Return the first broken link in the chain
 
 Diagnose one primary break:
 
@@ -156,14 +155,21 @@ Diagnose one primary break:
 Before answering, verify that you can state:
 
 - which publication-stage outcome is missing
+- which portal and audience the operator actually means
 - whether the managed API and version exist
-- whether catalog readiness is complete
+- whether Catalog readiness is complete or owned by `konnect-api-catalog`
 - whether portal publication exists for the intended audience
 - whether the issue is publication, visibility, or consumer access
-- which declarative tool skill owns the required change
+- which neighboring skill owns the next step if publication is not the blocker
+- which declarative tool skill owns the required change if mutation is needed
 
 ## Handoffs
 
+- Use `konnect-api-catalog` when the missing step is API creation, versioning,
+  spec quality, implementation/package modeling, or other upstream Catalog
+  readiness work.
+- Use `konnect-app-auth` when publication is present but developer
+  registration, approvals, credentials, or auth strategy still block use.
 - Use `kongctl-declarative` or `terraform-konnect` when the user wants to
   create or update APIs, portals, or related publication resources as code.
 - Use `deck-gateway` when the publication issue is downstream of missing or

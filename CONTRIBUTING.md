@@ -32,7 +32,7 @@ only needed for the corresponding optional verification flows.
 - Testing guide: [docs/testing.md](docs/testing.md)
 - Release process: [docs/release.md](docs/release.md)
 - Repo structure: [docs/structure.md](docs/structure.md)
-- Skill authoring policy: [AGENTS.md](AGENTS.md)
+- Skill authoring and review policy: [AGENTS.md](AGENTS.md)
 - Security policy: [SECURITY.md](SECURITY.md)
 
 For release gating and recommended GitHub repository protections, see

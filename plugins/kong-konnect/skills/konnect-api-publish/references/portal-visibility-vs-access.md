@@ -11,6 +11,8 @@ Separate three questions:
 - should this viewer be able to see it
 - can this consumer actually use it after discovery
 
+Treat these as separate evidence checks, not a single Portal-state question.
+
 ## Fast Split
 
 | Symptom | Likely branch |
@@ -19,6 +21,15 @@ Separate three questions:
 | Page exists but signup/use fails | downstream app auth or registration issue |
 | API shows in one portal but not another | wrong portal target or publication scope |
 | Search/discovery misses it but direct link works | portal visibility/presentation issue, not publication absence |
+
+## Evidence Order
+
+Check in this order:
+
+1. publication exists for the intended portal
+2. the complaint is about the same portal and audience the publication targets
+3. direct access and discovery both fail, or only one of them fails
+4. registration and app-auth requirements begin only after visibility is proven
 
 ## Decision Rules
 
@@ -37,3 +48,5 @@ Return whether the problem is:
 - wrong portal target or scope
 - viewer visibility boundary
 - consumer access after successful discovery
+
+Include which viewer or audience boundary produced that conclusion.

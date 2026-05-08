@@ -40,6 +40,15 @@ Common mistake:
 - the plane is healthy, but the operator is checking the wrong control plane
   slice or wrong environment boundary
 
+## Decision Rules
+
+- No registration record usually means bootstrap target, auth material, or
+  network reachability is wrong before any rollout question matters.
+- A plane that registers and then drops points more strongly to network, TLS,
+  DNS, or proxy instability than to missing Gateway entities.
+- A healthy-looking plane in the wrong control plane is a selection problem,
+  not evidence that Konnect ignored the right plane.
+
 ## Network and Trust Separation
 
 When bootstrap config looks plausible, isolate:
@@ -52,6 +61,16 @@ When bootstrap config looks plausible, isolate:
 
 Do not describe this as "gateway config drift." It is still a connectivity
 problem until attachment stabilizes.
+
+## What Proves The Branch
+
+Before concluding bootstrap failure, identify at least one concrete artifact
+from each side:
+
+- one control-plane-side signal such as missing registration, stale attachment,
+  or wrong control-plane placement
+- one environment-side signal such as unreachable endpoint, trust failure, DNS
+  mismatch, or proxy/firewall behavior
 
 ## What To Return
 

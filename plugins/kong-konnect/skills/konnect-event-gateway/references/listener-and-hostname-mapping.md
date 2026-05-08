@@ -15,6 +15,17 @@ routing correctness.
 - whether protocol/port/TLS expectations match the listener configuration
 - whether the listener is attached to the intended virtual cluster path
 
+## Decision Rules
+
+Use these splits:
+
+- no connection or TLS negotiation failure: stay on listener and hostname
+  mapping first
+- successful connect with wrong downstream behavior: prove the listener path,
+  then move to cluster routing
+- successful connect with denial: prove the listener path before treating it as
+  an auth or policy problem
+
 ## Common Misreads
 
 | Symptom | Better interpretation |
@@ -29,4 +40,5 @@ Return:
 
 - whether the listener mapping is correct
 - whether hostname/protocol/TLS is the blocker
+- what evidence shows the request reached the intended listener
 - whether the next branch is routing or auth/policy

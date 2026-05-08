@@ -1,6 +1,6 @@
 ---
 name: kongctl-declarative
-description: Manage Konnect declarative config with kongctl. Use for `kongctl` YAML repos, manifest generation, OpenAPI-driven config, plan/diff/apply/sync/delete/adopt workflows, or Konnect APIOps CI/CD. Do not use for read-only inspection or command discovery.
+description: "Use for `kongctl`-managed Konnect declarative repos: author YAML, model APIs from OpenAPI, and run plan/diff/apply/sync/delete/adopt workflows or CI/CD. Do not use for read-only inspection, exact `get` syntax, or non-`kongctl` toolchains."
 license: MIT
 metadata:
   product: kongctl
@@ -15,442 +15,143 @@ metadata:
 
 ## Goal
 
-Generate and maintain `kongctl` declarative configuration in the repository,
-and teach users how to manage Konnect resources declaratively.
+Author, update, review, and execute `kongctl` declarative configuration for
+Konnect without drifting into read-only query work or a different declarative
+toolchain.
 
 ## Tool Positioning
 
-- Use the shared `kong-konnect` MCP server first for live read inspection when
-  the requested change depends on current Konnect state and MCP is available.
-- Use `kongctl-query` for CLI-based read-only checks or exact command syntax.
-- Use this skill for declarative generation, review, and execution when the
-  repository already uses `kongctl` YAML or the user explicitly asks for
-  `kongctl`.
-- If live Konnect state matters and `kong-konnect` MCP is not connected, say so
-  early and continue with `kongctl` inspection commands as the fallback path.
-- Preserve the user's current declarative toolchain. Do not convert a
-  Terraform or `decK` repository to `kongctl` unless the user explicitly asks.
-- Hand off to `deck-gateway`, `terraform-konnect`, or `terraform-kong-gateway`
-  when the repository or user intent is centered on those tools instead of
-  `kongctl`.
-- Do not use this skill when the user only wants read-only inspection, exact
-  `get` syntax, or output shaping without declarative authoring.
-
-Choose the execution approach from user intent:
-
-- User-run mode: provide commands and explain what each command does.
-- Agent-run mode: execute commands directly and report outcomes.
+- Use this skill when the repository already manages Konnect resources through
+  `kongctl` YAML, `_defaults.kongctl`, or `kongctl` plan/apply workflows, or
+  when the user explicitly asks for `kongctl`.
+- Use the shared `kong-konnect` MCP server first when the task depends on live
+  Konnect state and MCP is available.
+- Use `kongctl-query` for read-only inspection, exact `get` syntax, output
+  shaping, or CLI-shaped proof that should not mutate state.
+- Preserve the repository's existing declarative toolchain. Do not convert
+  `decK` or Terraform repositories to `kongctl` unless the user explicitly asks.
+- Choose execution style from user intent:
+  - User-run mode: explain the path and give commands.
+  - Agent-run mode: execute the commands and report results.
 
 ## References To Load
 
-Load only the reference file needed for the active task:
+Load only the branch that matches the task:
 
 - `references/commands.md`
-  - Use for command selection, plan based vs inline execution, and safety flags.
+  - Load for command selection, saved-plan versus inline execution, adopt/dump
+    command shape, output mode behavior, and guardrail flags.
 - `references/resources.md`
-  - Use for resource skeletons, `_defaults`, `!file`, and `!ref` patterns.
-- `references/troubleshooting.md`
-  - Use for common failures and fast remediation steps.
-- `references/cicd-github-actions.md`
-  - Use for GitHub Actions workflow patterns for declarative CI/CD.
+  - Load for ownership layout, `_defaults`, parent versus child metadata,
+    `!file`, `!ref`, and schema discovery.
 - `references/apiops-openapi.md`
-  - Use for OpenAPI source-of-truth patterns for APIs and API versions.
+  - Load when the task generates or updates `apis` resources from OpenAPI.
+- `references/cicd-github-actions.md`
+  - Load for GitHub Actions validation or deployment workflows.
+- `references/troubleshooting.md`
+  - Load when preview or execution fails, or when drift and namespace behavior
+    are unclear.
 
-This skill is designed to be portable across repositories. Do not assume a
-local `docs/` directory exists.
-
-If field-level uncertainty remains after reading `references/`, discover
-structure from live data using:
-`kongctl dump declarative --resources=<resource-type>`.
+This skill must stay portable across repositories. Do not assume the upstream
+`kongctl` repo layout or a local `docs/` tree.
 
 ## Validation Contract
 
 ### Preflight
 
-Before editing manifests or proposing any declarative execution:
+Before editing manifests or proposing execution:
 
-- Confirm CLI is installed and runnable: `kongctl version`
-- Authenticate with one of:
-  - `kongctl login` — preferred for interactive use (browser-based OAuth)
-  - `export KONGCTL_DEFAULT_KONNECT_PAT=<token>` — for non-interactive or CI
-- PAT tokens are sensitive credentials. Never echo, log, or commit them.
-  Prefer `kongctl login` for interactive sessions.
-- Verify authentication works: `kongctl get organization -o json`
-  This works with all token types (PAT, SPAT, browser login). If it
-  returns organization info, auth is confirmed. Do not guess or try other
-  commands to check auth.
-- Confirm namespace, profile, output mode, and `--base-dir` assumptions before
-  previewing or mutating.
 - Confirm the repository already owns the target Konnect slice through
-  `kongctl` YAML instead of `decK` or Terraform.
-- Verify command syntax when unsure:
-  - `kongctl plan --help`
-  - `kongctl dump declarative --help`
-  - `kongctl adopt --help`
+  `kongctl` rather than `decK` or Terraform.
+- Confirm the CLI is available and authentication works with a small read
+  command such as `kongctl get organization -o json`.
+- Confirm namespace, profile, file scope, and whether `!file` usage will
+  require `--base-dir`.
+- If exact syntax is uncertain, check local help instead of guessing.
 
 ### Preview
 
-Use `kongctl`'s native preview surface before mutation:
+Use the smallest preview surface that matches intent:
 
-- use `kongctl plan` when a reviewable plan artifact is useful
-- use `kongctl diff --mode apply` or `kongctl diff --mode sync` to show the
-  exact change surface
-- use `--dry-run` as the default before inline `apply`, `sync`, or `delete`
-- check namespace ownership, `!file` resolution, referenced resource IDs, and
-  unexpected deletes before moving forward
+- review or CI path: generate a saved plan or a scoped diff artifact
+- immediate execution path: run a scoped `diff` or inline `--dry-run`
+- inspect unexpected deletes, wrong namespace ownership, unresolved `!ref`
+  values, and `!file` boundary issues before mutation
 
 ### Execute
 
-- Describe the intended effect in plain language before any mutating command.
-- Run `apply`, `sync`, or `delete` only when the user explicitly asked for live
-  mutation.
-- Keep execution aligned with the previewed path:
-  - explicit plan path: `plan` -> `diff --plan` -> `apply/sync --plan`
-  - inline path: `apply -f`, `sync -f`, or `delete -f`
+- Mutate live state only when the user explicitly asked for it.
+- State the intended effect in plain language before any mutating command.
+- Keep execution aligned with the previewed path instead of switching tools or
+  widening scope mid-task.
 
 ### Prove
 
 After a requested mutation:
 
-- rerun the matching `kongctl diff` and expect no remaining intended changes
-- confirm the namespace and resource slice now reflects the intended state
-- for adopt or dump workflows, prove zero drift after integration instead of
-  stopping at a successful `adopt` or `dump`
-- use `kongctl-query` when a separate read-only CLI proof of the resulting live
-  object is useful
-
-## Config and Environment Overrides
-
-- `kongctl` flags can be defaulted via profile config or environment.
-- Environment variable pattern: `KONGCTL_<PROFILE>_<PATH>`.
-- Example: `KONGCTL_DEFAULT_OUTPUT=yaml` changes default output format.
-- Pass explicit `-o yaml`, `-o json`, or `-o text` on command lines to avoid
-  unexpected output behavior.
+- rerun the matching preview path and expect no remaining intended drift
+- confirm the exact namespace and resource slice now reflect the intended state
+- for adopt or dump workflows, prove the integrated declarative config is clean
+  instead of stopping at a successful command
 
 ## Operating Rules
 
-- Declarative execution is always plan-based in kongctl:
-  - Explicit path: `plan` -> `diff --plan` -> `apply/sync --plan`
-  - Inline path: `apply -f`, `sync -f`, or `delete -f` (plan+execute
-    happens in single shot)
-- If a required `kongctl` command appears blocked by the agent environment
-  rather than live Konnect or the CLI itself, request an unsandboxed retry
-  with approval before assuming auth or command failure.
-- Prefer instructional guidance when the user asks how to do a task:
-  provide a concise command sequence and decision notes.
-- Execute commands directly when the user asks the agent to run them.
-- Before any mutating run, state the intended effect in plain language.
-- Preserve existing repository ownership boundaries instead of broadening a
-  `kongctl` change into a cross-tool migration.
-- Use `kongctl-query` first when the real task is discovery of resources,
-  authentication state, or exact read-only CLI syntax.
-- Use `kongctl-query` after a mutation when the user wants exact read-only CLI
-  proof of the resulting live object.
-- Choose path from user intent:
-  - Preview/review/audit/CI request: use explicit plan artifacts.
-  - "Do it now" execution request: use inline commands.
-- Treat `sync` as destructive because it can delete missing resources.
-- Treat `delete` as destructive because it deletes input configuration
-  resources.
-- Use `apply` for create/update workflows when the user asks to execute.
-- Use `-o text` for interactive mutating commands. `-o json` and `-o yaml`
-  require `--auto-approve` or `--dry-run` on `apply`, `sync`, and `delete`.
-- Use `adopt` only to bring unmanaged resources into namespace management.
-- `adopt` only adds the `KONGCTL-namespace` label to the target resource.
-- Prefer `!ref` for cross-resource IDs and `!file` for large spec or
-  doc content.
-- For `apis` and `apis.versions`, treat OpenAPI files as source of truth:
-  derive fields from `!file` extraction and avoid stale duplicated literals.
-- Use existing OpenAPI file paths from the user repository. Do not require a
-  `konnect/resources/specs` layout.
-- Only place kongctl declarative resource files in the resources directory.
-  Do not put OpenAPI specs, documentation, or other non-resource YAML there.
-  `--recursive` loads all YAML files in the directory tree and will fail on
-  files that are not valid kongctl declarative resources.
-- When non-resource YAML files coexist in a directory, use multiple `-f`
-  flags pointing to individual resource files instead of `--recursive`:
-  `kongctl diff -f resources/apis.yaml -f resources/portals.yaml --mode apply`
-- `!file` paths resolve relative to the YAML file they appear in, not the
-  project root. Calculate the relative path from the config file to the
-  target file (e.g. `../../openapi.yaml` from `konnect/resources/apis.yaml`).
-- `--base-dir` sets the allowed boundary for `!file` resolution but does
-  not change the resolution base. Keep `!file` targets within the boundary.
-- Put `kongctl` metadata only on parent resources.
-- Use `_defaults.kongctl.namespace` for consistent file-level ownership.
-- Do not require `docs/declarative*.md` to complete tasks.
+- If live Konnect state matters and MCP is unavailable, say so early and
+  continue with `kongctl`-based inspection as the fallback.
+- Prefer explicit namespace, profile, and output flags when environment or
+  profile defaults could obscure behavior.
+- Treat `sync` and `delete` as destructive. Preview them first unless the user
+  explicitly asks for direct execution.
+- Use `adopt` only for existing unmanaged parent resources. `adopt` labels the
+  resource for namespace ownership; it does not rewrite the resource fields.
+- Keep OpenAPI files in their existing repository locations. Prefer `!file`
+  extraction and `!ref` links over copied literals or hard-coded UUIDs.
+- Do not place non-resource YAML inside a `--recursive` declarative tree. If a
+  directory mixes resource YAML with specs or docs, target specific files
+  instead of the whole tree.
+- When scope is unclear, inspect existing manifests or live state. Do not
+  invent a default starter bundle of Konnect resources.
+- If a required `kongctl` command appears blocked by the agent sandbox rather
+  than by Konnect or the CLI, request an unsandboxed retry before diagnosing
+  the command itself as broken.
 
 ## Workflow
 
-1. Locate the Konnect declarative configuration directory and existing files.
-2. Generate or update YAML manifests and related files.
-3. Choose collaboration mode based on intent:
-   - User-run mode (teach + provide commands)
-   - Agent-run mode (execute commands directly)
-4. Load the relevant `references/*.md` file for the task.
-5. Run the validation gates in order:
-   - Preflight: auth, profile, namespace, output, and repo ownership
-   - Preview: `plan`, `diff`, or inline `--dry-run`
-   - Execute: only if the user requested mutation
-   - Prove: rerun the matching `diff` and, when useful, confirm live state with
-     `kongctl-query`
-6. Report created files, commands run, and resulting plan or execution
-   summary.
-
-### Execution Style Selection
-
-Use this quick decision rule:
-
-- Use explicit plan artifacts when the user asks to preview, review, export a
-  plan file, or run a CI/CD style workflow.
-- Use inline commands when the user asks to execute immediately and does not
-  ask for a saved plan file.
-- For destructive requests (`sync`, `delete`), prefer `--dry-run` first unless
-  the user explicitly requests direct execution.
-- Match the post-change proof step to the preview path: rerun the same `diff`
-  mode or plan-backed check after mutation.
-
-### Collaboration Mode Selection
-
-Use this quick decision rule:
-
-- Use User-run mode when the user asks "how do I do this" or asks for commands.
-- Use Agent-run mode when the user asks to set up, create, or apply.
-- If intent is ambiguous, provide a safe preview command first and state that
-  you can execute the mutating command on request.
-- Do not ask clarifying questions when sensible defaults can be inferred
-  from context (e.g. derive namespace from project name, include standard
-  resources like control plane + portal + API). Proceed with defaults and
-  let the user adjust afterward.
-
-### Konnect Configuration Directory Discovery
-
-Prefer a user-provided path. If none is provided, discover likely roots:
-
-```bash
-rg -n --glob '*.y*ml' '^(_defaults|apis|portals|control_planes):' .
-rg -n --glob '*.y*ml' \
-  '^(application_auth_strategies|event_gateways|organization):' .
-```
-
-If creating new structure, prefer:
-
-```text
-konnect/resources/
-  control-planes.yaml
-  portals.yaml
-  apis.yaml
-```
-
-For APIOps API modeling, load `references/apiops-openapi.md`.
-
-## Pattern: Bootstrap control plane, portal, and APIs
-
-Use for prompts like:
-
-- Generate declarative configs for a new control plane, portal, and API set.
-
-Steps:
-
-1. Create or update resource files under the selected resources path.
-2. Add `_defaults.kongctl.namespace` and stable `ref` values.
-3. Use `!file` tags to load OpenAPI metadata and version content.
-4. Link API publications to portal using `!ref <portal-ref>#id`.
-5. Validate and execute based on requested style.
-6. In User-run mode, explain each command's purpose before listing it.
-
-Starter manifest pattern:
-
-```yaml
-_defaults:
-  kongctl:
-    namespace: platform-dev
-    protected: false
-
-control_planes:
-  - ref: cp-main
-    name: "my-control-plane"
-    cluster_type: "CLUSTER_TYPE_CONTROL_PLANE"
-
-portals:
-  - ref: dev-portal
-    name: "my-dev-portal"
-    display_name: "My Dev Portal"
-    default_api_visibility: "private"
-    default_page_visibility: "private"
-
-apis:
-  - ref: payments-api
-    name: !file <existing-openapi-path>#info.title
-    description: !file <existing-openapi-path>#info.description
-    versions:
-      - ref: payments-v1
-        version: !file <existing-openapi-path>#info.version
-        spec: !file <existing-openapi-path>
-    publications:
-      - ref: payments-publication
-        portal_id: !ref dev-portal#id
-        visibility: public
-```
-
-When OpenAPI `!file` paths point outside the resources directory, set
-`--base-dir` to the absolute project root so paths resolve correctly.
-Relative `--base-dir` values resolve from the config file directory, not
-cwd, so always use an absolute path:
-
-```bash
-kongctl diff -f konnect/resources --recursive --base-dir "$(pwd)" --mode apply -o text
-```
-
-Use `--recursive` when the `-f` target is a directory.
-
-Use `references/commands.md` for validation and execution command patterns.
-
-## Pattern: Generate API config from an OpenAPI spec
-
-Use for prompts like:
-
-- Generate an API declarative config from `@path-to/openapi-spec.yaml` and
-  write it to `@path-to-existing/konnect/resources`.
-
-Steps:
-
-1. Choose target files under the existing resources tree, such as:
-   - `<resources>/apis/<api-name>.yaml`
-2. Reference existing OpenAPI spec paths in the repository. Do not require
-   copying specs under the declarative resources directory.
-3. Preserve existing repo conventions when a layout already exists.
-4. Reference spec fields with `!file` extraction.
-5. If spec files are outside the resources directory, add `--base-dir` to
-   all `plan`/`diff`/`apply`/`sync` commands so `!file` paths resolve.
-6. Validate and execute based on requested style.
-7. In User-run mode, include where files were written and why.
-
-Load `references/apiops-openapi.md` for the canonical API YAML template and
-`references/commands.md` for validation and execution commands.
-
-## Pattern: Adopt existing resources into declarative management
-
-Use for prompts like:
-
-- Adopt portal `My Dev Portal` and start managing it declaratively.
-- I have resources in Konnect that I created in the UI. How do I bring them
-  under kongctl?
-- Dump my existing control plane into declarative config.
-
-This pattern applies to any parent resource type (portal, api, control_plane,
-etc.), not just portals.
-
-### Background
-
-Resources created outside kongctl (e.g. via the Konnect UI) do not have a
-`KONGCTL-namespace` label. The declarative engine uses this label to track
-which resources it manages and which namespace they belong to. To bring an
-existing resource under declarative management:
-
-1. **Adopt** adds the `KONGCTL-namespace` label to the live resource.
-2. **Dump** exports the live resource state as declarative YAML.
-3. **Integrate** the dumped config into the repository's declarative files.
-4. **Verify** with `diff` to confirm zero drift.
-
-Adopt must come before dump so the resource is labeled as managed before
-generating config.
-
-### Steps
-
-1. Identify the target resource name (or ID) and choose a namespace.
-2. Adopt the resource into the namespace:
-   ```bash
-   kongctl adopt <resource-type> <name-or-id> \
-     --namespace <namespace> -o json
-   ```
-   This only adds the `KONGCTL-namespace` label — it does not modify the
-   resource configuration.
-3. Dump the resource to declarative YAML:
-   ```bash
-   kongctl dump declarative \
-     --resources=<type> \
-     --filter-name "<name>" \
-     --include-child-resources \
-     --default-namespace <namespace> \
-     -o yaml \
-     --output-file <output-path>
-   ```
-4. Integrate the dumped output into existing declarative files:
-   - Replace the UUID-based `ref` values with human-friendly names.
-   - Replace hard-coded UUIDs with `!ref` where the referenced resource is
-     also managed declaratively (e.g. `portal_id: !ref dev-portal#id`).
-   - Merge into existing resource files or create new ones following the
-     repository layout conventions.
-   - Ensure `_defaults.kongctl.namespace` matches the adopt namespace.
-5. Verify zero drift:
-   ```bash
-   kongctl diff -f <resources-path> --mode apply -o text
-   ```
-   A clean diff confirms the dumped config matches live state.
-6. In User-run mode, explain that `adopt` only labels — it does not change
-   any resource fields.
-
-### Dump output behavior
-
-- `dump` sets `ref` to the resource UUID. Replace with meaningful names.
-- `dump` filters out `KONGCTL-namespace` labels from output by design.
-- `--default-namespace` adds a `_defaults.kongctl` block to the output.
-- `--include-child-resources` includes nested resources (pages, snippets,
-  versions, etc.).
-- Use `--filter-name` or `--filter-id` to scope to a specific resource.
-
-If names are ambiguous, use `--filter-id` for both adopt and dump.
-
-## Pattern: Build GitHub Actions workflow for declarative CI/CD
-
-Use for prompts like:
-
-- Create a GitHub Actions workflow that validates and syncs Konnect
-  declarative resources.
-- Add CI/CD automation that installs `kongctl` and `deck` and runs the
-  repository sync script.
-
-Steps:
-
-1. Decide trigger model from user intent:
-   - Pull request validation: run plan/diff only (no mutations).
-   - Branch deploy workflow: run apply/sync or a repo wrapper script.
-2. Use standard setup actions:
-   - `actions/checkout@v4`
-   - `kong/setup-kongctl@v1`
-   - `kong/setup-deck@v1` (when deck is required)
-3. Configure authentication using repository secrets and workflow env.
-4. Restrict execution with path filters, for example `konnect/**`.
-5. Upload execution artifacts with `if: always()` for debugging and audits.
-6. In User-run mode, explain required secrets and expected script behavior.
-
-Load `references/cicd-github-actions.md` for starter workflow templates,
-trigger patterns, auth conventions, and validation workflow examples.
+1. Identify the owned declarative root and target file scope.
+   If the path is not provided, search for existing `_defaults.kongctl`,
+   `apis`, `portals`, `control_planes`, or related `kongctl` resource keys
+   instead of assuming `konnect/resources/`.
+2. Classify the branch before editing:
+   - general manifest authoring or repair: load `references/resources.md`
+   - OpenAPI-driven API modeling: also load `references/apiops-openapi.md`
+   - adopt or dump integration: also load `references/commands.md`
+   - CI/CD workflow work: also load `references/cicd-github-actions.md`
+3. Update manifests in place, preserving the repository's file layout,
+   ownership boundaries, and existing reference patterns.
+4. Run the validation gates in order: Preflight, Preview, Execute if requested,
+   then Prove.
+5. Report the files changed, the exact command path used, and the proof of the
+   resulting state or remaining drift.
 
 ## Validation Checklist
 
 Before answering, verify that you can state:
 
-- why `kongctl` is the right declarative tool for this repository or request
+- why `kongctl` is the correct implementation owner for this request
 - which namespace, profile, and file scope the change owns
-- which preview path applies: `plan`, `diff`, or inline `--dry-run`
-- whether the user asked only for declarative authoring or for live mutation
-- how the post-change proof step will confirm the exact resource slice
-- whether `kongctl-query` should provide the final read-only CLI proof
+- which preview path proves the change safely
+- whether the user asked only for authoring or for live mutation
+- how post-change proof will confirm the exact resource slice
+- whether `kongctl-query` should provide read-only follow-up proof
 
-## Safety and Troubleshooting
+## Handoffs
 
-- Use `--dry-run` for `apply`, `sync`, and `delete` before executing changes.
-- If `!file` fails with boundary errors, set `--base-dir` to include spec
-  paths rather than moving files.
-- If `plan` includes unexpected deletes, use `--mode apply` or tighten scope
-  with `--require-namespace`.
-- Load `references/troubleshooting.md` for detailed remediation steps.
-
-## Online Documentation
-
-If this skill's references are not sufficient, consult or direct users to:
-
-- kongctl docs: https://developer.konghq.com/kongctl/
-- Declarative guide: https://github.com/Kong/kongctl/blob/main/docs/declarative.md
-- Resource reference: https://github.com/Kong/kongctl/blob/main/docs/declarative-resource-reference.md
+- Hand off to `kongctl-query` when the real task is read-only inspection, auth
+  checking, exact `get` syntax, or output formatting.
+- Hand off to `deck-gateway`, `terraform-konnect`, or
+  `terraform-kong-gateway` when the repository already uses those tools for the
+  target resources.
+- Hand off to the relevant Konnect domain skill, or to
+  `konnect-platform-router` when the workflow owner is unclear, if the user
+  first needs diagnosis or classification rather than declarative
+  implementation.

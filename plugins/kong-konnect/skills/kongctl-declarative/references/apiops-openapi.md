@@ -1,11 +1,11 @@
 # APIOps OpenAPI Source of Truth
 
-Use this file when generating or updating declarative `apis` resources from
+Load this file when generating or revising declarative `apis` resources from
 OpenAPI documents.
 
 ## Core Rule
 
-Treat OpenAPI files as the source of truth for:
+Treat OpenAPI as the source of truth for:
 
 - `apis[].name`
 - `apis[].description`
@@ -13,52 +13,50 @@ Treat OpenAPI files as the source of truth for:
 - `apis[].versions[].version`
 - `apis[].versions[].spec`
 
-Prefer `!file` extraction over duplicated literal values so API metadata stays
-aligned with spec changes.
+Prefer `!file` extraction over copied literals so API metadata stays aligned
+with spec changes.
 
 ## Modeling Pattern
 
 1. Keep OpenAPI files in their existing repository locations.
-2. Do not require moving specs under `konnect/resources/` unless the user asks.
-3. Store one or more specs per API (one per version when versioned specs are
-   separate).
-4. Populate API metadata from `info.*` in each OpenAPI file.
-5. Keep `versions[].spec` pointing to the full OpenAPI document file.
+2. Do not move specs under the declarative resources tree unless the user asks.
+3. Model one `apis[]` parent per API, then add one `versions[]` entry per spec
+   version you intend to publish.
+4. Populate metadata from `info.*` fields in each spec.
+5. Keep `versions[].spec` pointing at the full OpenAPI file.
 
-## Canonical Example
+## Minimal Example
 
 ```yaml
 apis:
   - ref: sms
-    name: !file <path-to-existing-openapi-spec-v1>#info.title
-    description: !file <path-to-existing-openapi-spec-v1>#info.description
-    version: !file <path-to-existing-openapi-spec-v1>#info.version
+    name: !file ../../openapi/sms-v1.yaml#info.title
+    description: !file ../../openapi/sms-v1.yaml#info.description
+    version: !file ../../openapi/sms-v1.yaml#info.version
     versions:
       - ref: sms-v1
-        version: !file <path-to-existing-openapi-spec-v1>#info.version
-        spec: !file <path-to-existing-openapi-spec-v1>
+        version: !file ../../openapi/sms-v1.yaml#info.version
+        spec: !file ../../openapi/sms-v1.yaml
       - ref: sms-v2
-        version: !file <path-to-existing-openapi-spec-v2>#info.version
-        spec: !file <path-to-existing-openapi-spec-v2>
+        version: !file ../../openapi/sms-v2.yaml#info.version
+        spec: !file ../../openapi/sms-v2.yaml
 ```
 
-## Repository Example
+## Publication and Linking Rules
 
-When working in the `kongctl` repository, use this concrete example:
-
-- `docs/examples/declarative/portal/apis.yaml`
+- When the API is published to a portal, link the publication with
+  `portal_id: !ref <portal-ref>#id`.
+- Prefer `!ref` to connect auth strategies or other related Konnect resources.
+- If the request is only about raw API metadata and not publication, do not
+  invent portal or auth resources.
 
 ## Validation Loop
 
-After generating or updating API config:
+After updating API config, diff the exact files you changed:
 
 ```bash
-kongctl diff -f <resources-path> --recursive --mode apply -o text
+kongctl diff -f <path-or-file> --mode apply -o text
 ```
 
-When OpenAPI specs are outside the resources directory, add `--base-dir`
-with the absolute project root:
-
-```bash
-kongctl diff -f <resources-path> --recursive --base-dir "$(pwd)" --mode apply -o text
-```
+If the specs live outside the loaded directory, add an absolute `--base-dir`
+that includes them.

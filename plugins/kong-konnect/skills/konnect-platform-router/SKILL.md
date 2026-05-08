@@ -1,6 +1,6 @@
 ---
 name: konnect-platform-router
-description: Route broad Konnect requests to the right Kong domain or tool skill. Use when a request is generally about Konnect and the right skill is unclear, not when the user already named a specific workflow like gateway triage or Terraform.
+description: Route broad or ambiguous Konnect requests to the first owning specialist skill. Use when multiple Konnect surfaces are involved or the right owner is unclear, not when the user already named a specific workflow, toolchain, or non-Konnect task.
 license: MIT
 metadata:
   product: konnect
@@ -17,7 +17,7 @@ metadata:
 ## Goal
 
 Turn broad Konnect requests into one primary downstream skill with a clear next
-step.
+step and one concrete thing that skill should prove next.
 
 Use this skill as a classifier and handoff layer. Do not turn it into a
 product guide or a second copy of specialist workflows.
@@ -41,18 +41,34 @@ guidance because they can trigger directly without this router.
 
 ## Classification Order
 
-### 1. Decide whether this is diagnosis or implementation
+### 1. Decide whether routing is needed at all
+
+Bypass this router when the request already has one obvious owner.
+
+Hand off directly when the user already named:
+
+- a specialist workflow such as gateway triage, API publication, Event Gateway,
+  or AI Gateway
+- a declarative toolchain such as `kongctl`, Terraform, or `decK`
+- a repo-authoring task that belongs to `kong-skill-authoring` rather than a
+  Konnect product workflow
+
+Use this router only when the request is broad, cross-surface, or still
+ambiguous after the first read.
+
+### 2. Decide whether this is diagnosis, inspection, or implementation
 
 Classify the user's immediate need first:
 
 - diagnosing current Konnect behavior
+- asking for exact read-only inspection
 - planning or authoring declarative changes
 - asking which domain owns the problem
 
 If the request is already a direct declarative-tool request, hand off to the
 tool skill after checking whether a domain skill should diagnose first.
 
-### 2. Route broad Konnect domain requests
+### 3. Route broad Konnect domain requests
 
 Use one primary destination:
 
@@ -85,7 +101,7 @@ Use one primary destination:
   - listeners, clusters, auth setup, hostname mapping, routing or policy
     issues in Event Gateway
 
-### 3. Route direct read-only inspection
+### 4. Route direct read-only inspection
 
 Use `kongctl-query` when the user mainly needs:
 
@@ -94,7 +110,7 @@ Use `kongctl-query` when the user mainly needs:
 - formatted CLI output
 - auth verification without declarative changes
 
-### 4. Route declarative implementation
+### 5. Route declarative implementation
 
 After domain classification, preserve the toolchain already present in the repo:
 
@@ -126,16 +142,23 @@ missing link is known.
   plane, data plane, and traffic presence are reasonably confirmed.
 - Do not assume access problems are product-state problems when the caller may
   simply be in the wrong org, region, or team scope.
+- Do not keep repo skill-review or skill-authoring work in this router just
+  because the word "Konnect" appears in the skill package path.
 
 ## Validation Checklist
 
 Before handing off, verify that you can state:
 
-- whether the request is diagnosis, implementation, or broad triage
-- which Konnect domain owns the problem first
-- whether live state inspection is required
+- whether the request is broad enough to need routing at all
+- whether the request is diagnosis, read-only inspection, implementation, or
+  broad triage
+- which Konnect domain or tool owns the problem first, and which nearest
+  adjacent skill you ruled out
+- whether live state inspection or repository state is the first source of
+  truth
 - whether an existing repo toolchain should be preserved
-- which one downstream skill should own the next step
+- which one downstream skill should own the next step and what fact it should
+  prove first
 
 ## Output Style
 
@@ -144,5 +167,7 @@ When responding from this router:
 - name the primary downstream skill explicitly
 - explain the routing reason in one short paragraph
 - mention `kong-konnect` MCP only when live state matters
+- if routing confidence is low, name the missing fact that would separate the
+  top two candidates instead of guessing
 - avoid giving long step-by-step instructions that belong in the downstream
   skill

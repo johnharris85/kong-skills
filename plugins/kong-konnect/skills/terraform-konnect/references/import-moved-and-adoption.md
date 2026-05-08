@@ -8,6 +8,16 @@ under Terraform without unnecessary churn.
 Prefer importing or preserving existing addresses over recreating resources.
 State continuity matters more than fast greenfield-looking HCL.
 
+## Inspection Order
+
+1. Prove the resource already exists live or under another Terraform address.
+2. Check whether the repo already owns that Konnect slice in a different module
+   or state path.
+3. Choose import, `moved`, or generated HCL based on ownership continuity, not
+   convenience.
+4. Verify the next `terraform plan` shows adoption of the intended resource
+   rather than a destroy-and-recreate path.
+
 ## Common Cases
 
 | Situation | Preferred default |
@@ -24,6 +34,14 @@ State continuity matters more than fast greenfield-looking HCL.
 - whether references to that resource would break if recreated
 - whether a generated HCL starting point still needs cleanup to match repo
   conventions
+
+## Proof Targets
+
+Before treating adoption as complete, prove:
+
+- the chosen Terraform address matches the intended owner
+- imported or moved resources appear under the expected address in state
+- the follow-up `terraform plan` no longer proposes unintended replacement
 
 ## Return Shape
 

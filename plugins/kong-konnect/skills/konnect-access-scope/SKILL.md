@@ -1,6 +1,6 @@
 ---
 name: konnect-access-scope
-description: Troubleshoot Konnect auth, authorization, and visibility. Use when a user cannot authenticate, cannot see or edit a resource, may be in the wrong region or org, or needs help with roles, scope, teams, or IdP-managed access.
+description: Troubleshoot Konnect operator access and visibility. Use when a user cannot authenticate, cannot see or edit a Konnect resource, may be in the wrong region, org, or team, or needs help with scoped roles or IdP-managed access. Not for Dev Portal app auth.
 license: MIT
 metadata:
   product: konnect
@@ -23,6 +23,10 @@ resource, or mutate it, then identify the narrowest next step.
 Default to read-first inspection. Do not propose role or team changes until
 you have separated resource existence, endpoint selection, authentication, and
 authorization.
+
+Use this skill for operator or automation access to Konnect itself. Do not use
+it for downstream API consumer auth, Dev Portal application credentials, or
+Gateway runtime auth flows.
 
 ## Tool Selection
 
@@ -52,20 +56,27 @@ Load only the reference file that matches the active branch:
   - Load when SSO, SCIM, IdP-managed groups, additive roles, or external
     identity mastering is the real boundary.
 
-## Workflow
+## Inspection Order
 
 ### 1. Identify the failing surface
 
 Pin down:
 
-- which interface is failing: MCP, `kongctl`, Konnect UI, API, or portal
+- which interface is failing: MCP, `kongctl`, Konnect UI, Konnect API, or
+  Portal operator UI
 - which operation fails: authenticate, list, get, edit, create, delete
 - which resource scope is involved: organization, control plane, portal,
   catalog asset, analytics surface, or Event Gateway resource
 - whether the symptom is "cannot see it" or "can see it but cannot change it"
+- whether the caller is a human identity or an automation identity acting
+  directly against Konnect
 
 Keep the failing operation concrete. Access failures look similar across
 surfaces but have different root causes.
+
+If the complaint is really about developer-facing application registration,
+issued credentials, or runtime API access, hand off to `konnect-app-auth`
+instead of stretching this skill.
 
 ### 2. Verify endpoint and identity before permissions
 
@@ -109,6 +120,8 @@ Interpret access using these defaults:
 - A user may be allowed to read a resource but not mutate it.
 - Portal, analytics, gateway, and Event Gateway surfaces can expose different
   subsets of the same organization.
+- Organization-wide roles are only a starting clue; verify the narrower
+  resource slice that actually governs the target object.
 
 Do not assume a missing mutation permission implies missing read permission, or
 the reverse.
@@ -139,7 +152,10 @@ Classify the outcome as one of:
 
 Then give the minimum next action needed to unblock the user.
 
-## Common Konnect Gotchas
+If the root cause is outside Konnect operator access, say which neighboring
+skill should take over instead of keeping the diagnosis open-ended.
+
+## Konnect-Specific Gotchas
 
 - A valid PAT does not prove the caller is pointed at the intended region.
 - Seeing one product surface does not imply access to every Konnect surface.
@@ -167,6 +183,9 @@ Before answering, verify that you can state:
 - Use `kongctl-declarative` or `terraform-konnect` when the user wants to
   create or update managed Konnect resources after the access issue is
   understood. Match the repository's current toolchain.
+- Use `konnect-app-auth` when the real issue is developer registration,
+  application credentials, or Dev Portal auth behavior rather than operator
+  access to Konnect.
 - Use `konnect-gateway-triage`, `konnect-observability-triage`,
   `konnect-api-publish`, or `konnect-event-gateway` when the real problem is
   not access but operator ambiguity inside that surface.

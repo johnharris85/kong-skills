@@ -1,6 +1,6 @@
 ---
 name: konnect-api-catalog
-description: Operate Konnect API Catalog and API packages. Use when creating or versioning APIs, attaching specs or docs, linking APIs to Gateway Services, building API packages, or separating catalog-readiness problems from Dev Portal publication problems.
+description: Diagnose and shape Konnect API Catalog APIs, versions, specs, implementations, and API packages before publication. Use when Catalog readiness is the question, not when the real owner is Dev Portal publication, app auth, or gateway delivery.
 license: MIT
 metadata:
   product: konnect
@@ -20,9 +20,10 @@ metadata:
 Help an operator create, shape, and troubleshoot Catalog APIs and API packages
 before they become a Dev Portal publishing or consumer-access problem.
 
-Use this skill for Catalog object modeling, versioning, specifications,
-documentation, implementations, and packages. Do not collapse it into generic
-Dev Portal help.
+Own Catalog readiness diagnosis and object modeling for APIs, versions, specs,
+documentation, implementations, and packages. Do not absorb Dev Portal
+publication, app auth, or declarative delivery workflows beyond clear
+handoffs.
 
 ## Tool Selection
 
@@ -41,6 +42,8 @@ Dev Portal help.
 - If live Konnect state matters and `kong-konnect` MCP is not connected, say so
   early and continue with user-provided artifacts or adjacent CLI/config
   sources.
+- This skill owns diagnosis of Catalog shape and readiness. It should not turn
+  into a mutation playbook for Portal, app auth, or Gateway configuration.
 
 ## References To Load
 
@@ -58,7 +61,19 @@ Load only the reference file that matches the active branch:
 
 ## Workflow
 
-### 1. Identify the catalog object that is actually missing
+### 1. Classify the operator's real outcome before inspecting objects
+
+First separate whether the user is trying to make the API:
+
+- visible and correct in Catalog
+- publishable in Portal
+- consumable through registration or app auth
+- encoded in the repo's declarative toolchain
+
+If the real outcome is not Catalog readiness, hand off early instead of doing
+partial diagnosis in the wrong layer.
+
+### 2. Identify the first Catalog object that is actually missing
 
 Clarify whether the operator is missing:
 
@@ -76,7 +91,7 @@ incomplete.
 Load `references/managed-api-readiness.md` when "missing from catalog" is
 really a question about what object in the chain is incomplete.
 
-### 2. Confirm API identity and versioning model
+### 3. Confirm API identity and versioning model
 
 Inspect:
 
@@ -86,17 +101,10 @@ Inspect:
 - whether the API should be modeled as one API with multiple spec versions or
   distinct APIs for major versions
 
-Default guidance:
-
-- semantic versioning is the safest default when the user has not chosen a
-  version style
-- create a distinct API per major version when that matches the lifecycle
-  boundary
-
 Load `references/spec-version-and-metadata.md` when the versioning or
 documentation model is the main decision branch.
 
-### 3. Check spec and documentation readiness
+### 4. Check spec and documentation readiness
 
 Verify:
 
@@ -108,7 +116,7 @@ Verify:
 
 Treat invalid-but-accepted specs as degraded inputs, not as healthy state.
 
-### 4. Check implementation and service linkage
+### 5. Check implementation and service linkage only when consumption depends on it
 
 If developers should be able to consume the API through registration, inspect:
 
@@ -120,7 +128,7 @@ If developers should be able to consume the API through registration, inspect:
 
 Do not call the API consumer-ready until the implementation story is clear.
 
-### 5. Separate packages from individual APIs
+### 6. Separate packages from individual APIs
 
 When API packages are involved, verify:
 
@@ -133,7 +141,7 @@ Packages are for grouping and presentation, not for hiding a broken API model.
 Load `references/package-and-implementation-boundaries.md` when grouping,
 implementation linkage, or package boundaries are the main question.
 
-### 6. Hand off only after Catalog readiness is clear
+### 7. Hand off only after Catalog readiness is clear
 
 Once API shape, docs, implementations, and packages are understood, hand off:
 
@@ -146,9 +154,8 @@ Once API shape, docs, implementations, and packages are understood, hand off:
 ## Konnect-Specific Gotchas
 
 - Catalog readiness and Portal publication are related but not identical.
-- APIs should include a spec or documentation when developer-facing docs are
-  expected; missing docs often start upstream of the Portal.
-- API versioning and spec versioning are related but not interchangeable.
+- API versioning, spec versioning, and slug identity can drift separately; do
+  not treat one healthy field as proof that the rest are aligned.
 - Developer self-service depends on implementation linkage, not only on the API
   object existing in Catalog.
 - Packages can clarify consumption boundaries, but they do not fix a confused
@@ -158,6 +165,9 @@ Once API shape, docs, implementations, and packages are understood, hand off:
 
 Before answering, verify that you can state:
 
+- whether the user's real outcome is Catalog readiness, Portal publication,
+  app auth, or declarative delivery
+- which Catalog stage fails first
 - which Catalog object is missing or malformed
 - whether API identity and versioning are correct
 - whether spec and documentation readiness are complete

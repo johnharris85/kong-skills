@@ -34,6 +34,15 @@ problem. Move to the request path and the live resource path.
 - Partial behavior across environments often means wrong labels, wrong
   hostname, or wrong slice, not universal Gateway failure.
 
+## Decision Rules
+
+- If the expected route or plugin is missing live, go back to the drift branch
+  instead of guessing about request shape.
+- If the request is hitting the wrong route, keep the diagnosis on route match
+  assumptions rather than reopening plane-health triage.
+- If routing is correct and the upstream response is bad, hand off to the
+  upstream owner instead of treating it as a Konnect control-plane incident.
+
 ## What To Return
 
 Return one primary traffic-path diagnosis:

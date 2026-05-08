@@ -22,6 +22,8 @@ Ownership boundaries are part of the config, not just presentation.
 - Prefer additive narrow edits over broad regrouping.
 - If tags determine selective sync, treat them as operational boundaries, not
   decorative metadata.
+- Treat include files and wrapper scripts as ownership boundaries too. Match
+  the existing entrypoint instead of bypassing it with a broader command.
 - If the existing split is imperfect but stable, avoid opportunistic
   restructuring during a narrow task.
 

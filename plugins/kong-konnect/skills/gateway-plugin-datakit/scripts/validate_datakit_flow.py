@@ -47,6 +47,25 @@ IMPLICIT_NODES = {
 
 RESERVED_NODE_NAMES = IMPLICIT_NODES
 
+EXPLICIT_NODE_OUTPUTS = {
+    "branch": set(),
+    "cache": {"data", "hit", "miss", "stored"},
+    "call": {"body", "headers", "status"},
+    "exit": set(),
+    "jq": set(),
+    "json_to_xml": set(),
+    "property": set(),
+    "static": {"output"},
+    "xml_to_json": set(),
+}
+
+IMPLICIT_NODE_FIELDS = {
+    "request": {"body", "headers", "query"},
+    "response": {"body", "headers"},
+    "service_request": {"body", "headers", "query"},
+    "service_response": {"body", "headers"},
+}
+
 
 class TaggedSafeLoader(yaml.SafeLoader):
     """Safe loader that treats unknown YAML tags as plain values."""
@@ -139,6 +158,40 @@ def extract_reference_strings(node: dict[str, Any]) -> list[tuple[str, str]]:
     return refs
 
 
+def validate_reference_field(
+    node_type: str | None,
+    node: dict[str, Any],
+    ref: str,
+    node_label: str,
+    source: str,
+) -> list[str]:
+    errors: list[str] = []
+    base, field = split_ref(ref)
+
+    if node_type == "static":
+        allowed_fields = set(EXPLICIT_NODE_OUTPUTS["static"])
+        values = node.get("values")
+        if isinstance(values, dict):
+            allowed_fields.update(str(key) for key in values)
+        if field and field not in allowed_fields:
+            errors.append(
+                f"{node_label}.{source}: static node output {field!r} is not defined"
+            )
+        return errors
+
+    allowed_fields = EXPLICIT_NODE_OUTPUTS.get(node_type or "", set())
+    if field and field not in allowed_fields:
+        if allowed_fields:
+            errors.append(
+                f"{node_label}.{source}: node type {node_type!r} does not expose field {field!r}"
+            )
+        else:
+            errors.append(
+                f"{node_label}.{source}: node type {node_type!r} only supports whole-node references"
+            )
+    return errors
+
+
 def detect_cycles(graph: dict[str, set[str]]) -> list[list[str]]:
     cycles: list[list[str]] = []
     state: dict[str, int] = {}
@@ -218,6 +271,15 @@ def validate_config(config: dict[str, Any], label: str) -> list[str]:
             base, field = split_ref(ref)
             if base in explicit_nodes:
                 graph[name].add(base)
+                errors.extend(
+                    validate_reference_field(
+                        explicit_nodes[base].get("type"),
+                        explicit_nodes[base],
+                        ref,
+                        node_label,
+                        source,
+                    )
+                )
                 continue
             if base in IMPLICIT_NODES:
                 if base == "vault":
@@ -229,6 +291,14 @@ def validate_config(config: dict[str, Any], label: str) -> list[str]:
                         errors.append(
                             f"{node_label}.{source}: vault key {field!r} is not defined in resources.vault"
                         )
+                    elif not field:
+                        errors.append(
+                            f"{node_label}.{source}: vault references must specify a key"
+                        )
+                elif field not in IMPLICIT_NODE_FIELDS[base]:
+                    errors.append(
+                        f"{node_label}.{source}: implicit node {base!r} does not expose field {field!r}"
+                    )
                 continue
             errors.append(f"{node_label}.{source}: unknown reference base {base!r}")
 

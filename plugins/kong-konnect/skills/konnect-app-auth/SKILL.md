@@ -1,6 +1,6 @@
 ---
 name: konnect-app-auth
-description: Operate Konnect Dev Portal application auth and registration flows. Use for auth strategies, developer self-service, approvals, registrations, app credentials, DCR or OIDC choices, or APIs that are published but still unusable by developers.
+description: Use when Konnect Dev Portal APIs are published but blocked by application auth strategy, registration, approval, or app-credential flow issues; not for Portal sign-in/SSO or basic API publication.
 license: MIT
 metadata:
   product: konnect
@@ -21,8 +21,10 @@ Help an operator configure or troubleshoot how developers register applications,
 receive credentials, and use APIs through Konnect Dev Portal and Konnect
 Application Auth.
 
-Use this skill when the problem is not merely “is the API published?” but
-“can developers actually register and authenticate the way we intended?”
+Own the application-auth branch only: strategy choice, application
+registration, approvals, credentials, and the publication-to-enforcement path.
+Do not keep Portal sign-in, SSO, or generic API publication diagnosis in this
+skill after the surface is classified.
 
 ## Tool Selection
 
@@ -37,6 +39,8 @@ Use this skill when the problem is not merely “is the API published?” but
   config rather than Portal app-auth configuration.
 - If live Konnect state matters and `kong-konnect` MCP is not connected, say so
   early and continue with user-provided artifacts or repo context.
+- If the primary issue is developer sign-in, SSO, or broad org/team access,
+  classify that early and stop instead of debugging app credentials here.
 
 ## References To Load
 
@@ -52,9 +56,9 @@ Load only the reference file that matches the active branch:
   - Load when the hard question is whether auth can actually be enforced on the
     linked Gateway Service path.
 
-## Workflow
+## Inspection Order
 
-### 1. Separate user auth from application auth
+### 1. Classify the failing surface before choosing fixes
 
 Clarify whether the problem is:
 
@@ -64,13 +68,14 @@ Clarify whether the problem is:
 - credential issuance
 - runtime authorization at the linked Gateway Service
 
-Do not use one answer path for all of these.
+Do not use one answer path for all of these. If the blocker is mainly Portal
+sign-in or non-app-specific access, stop and hand off before investigating app
+registrations or credentials.
 
-### 2. Confirm the self-service chain is complete
+### 2. Verify the publication-to-enforcement chain
 
 For developer self-service to work as intended, inspect:
 
-- Portal security and user-auth settings
 - application auth strategy existence
 - API linkage to a Gateway Service
 - API publication to the intended Portal
@@ -81,23 +86,16 @@ If any link is missing, stop there before debugging credentials.
 Load `references/linked-service-and-enforcement.md` when the chain appears
 complete on the portal side but runtime enforcement still looks wrong.
 
-### 3. Choose the right auth strategy model
+### 3. Choose strategy by client-ownership model
 
-Interpret the strategy shape explicitly:
-
-- `key-auth` for built-in API key flows
-- self-managed OIDC when developers bring pre-registered clients
-- DCR when the Portal should create and manage IdP clients dynamically
-
-Remember:
-
-- strategies are reusable across APIs and Portals
-- a developer can use only one auth strategy per application
+Choose based on who creates and owns the client credential material, not on
+which option happens to be easiest to name in the UI. Keep the strategy choice
+separate from publication state or downstream Gateway enforcement.
 
 Load `references/auth-strategy-selection.md` when the main question is which
 strategy model fits the intended developer workflow.
 
-### 4. Check approvals, RBAC, and registration status
+### 4. Inspect approvals, registration state, and consumption gates
 
 If the strategy is correct but access still fails, inspect:
 
@@ -112,7 +110,7 @@ otherwise.
 Load `references/registration-and-approval-flows.md` when pending, approved,
 rejected, or RBAC-gated state is the likely blocker.
 
-### 5. Check linked-service enforcement assumptions
+### 5. Prove the linked-service enforcement boundary
 
 Application auth only works the intended way when the API is linked to a
 Gateway Service and the auth strategy can be enforced there.
@@ -120,11 +118,10 @@ Gateway Service and the auth strategy can be enforced there.
 If there is no linked service, or the wrong service is linked, fix that model
 before changing strategy details.
 
-### 6. Return the narrowest failure point
+### 6. Return the narrowest failure point and next owner
 
 Classify the primary issue as:
 
-- missing or wrong Portal user-auth setup
 - missing auth strategy
 - wrong strategy type for the use case
 - missing Gateway Service linkage
@@ -139,7 +136,7 @@ Classify the primary issue as:
   Gateway Service path, not just to Portal presentation.
 - A Gateway Service must be linked for auth strategies to be enforced as
   intended.
-- One application can use only one auth strategy.
+- One application can use only one auth strategy at a time.
 - Published APIs can still be unusable because approvals, registrations, or
   linked-service enforcement are incomplete.
 
@@ -147,11 +144,12 @@ Classify the primary issue as:
 
 Before answering, verify that you can state:
 
-- whether the issue is user auth, app auth, registration, approval, or runtime
-  enforcement
-- whether the self-service chain is complete end to end
+- which surface is actually failing: Portal sign-in, app auth, registration,
+  approval, or runtime enforcement
+- whether the publication-to-enforcement chain is complete end to end
 - whether the selected strategy type matches the intended developer flow
 - whether approvals or RBAC are the real blocker
+- what exact object or state proves the diagnosis
 - whether another skill should own the next step
 
 ## Handoffs
@@ -161,6 +159,9 @@ Before answering, verify that you can state:
 - Use `konnect-api-catalog` when the API or implementation model itself is not
   ready.
 - Use `konnect-access-scope` when the problem is mainly who can view or
-  administer the Portal or auth resources.
+  administer the Portal or auth resources, or when org/team/role scoping is
+  broader than one app-auth workflow.
+- Treat developer Portal sign-in or SSO problems as Portal identity work, not
+  application-auth work.
 - Use `terraform-konnect` or `kongctl-declarative` when the operator wants to
   encode or apply the resulting auth changes as config.

@@ -1,6 +1,6 @@
 ---
 name: konnect-gateway-triage
-description: Troubleshoot Konnect Gateway Manager control planes and data planes. Use when a data plane is disconnected, config is not applying, labels or drift look wrong, or the problem must be separated into control-plane, data-plane, network, or rollout failures.
+description: Use when triaging Konnect Gateway control-plane and data-plane failures such as disconnected planes, missing rollout, or wrong environment slices; separate attachment, network, live-state drift, and traffic-path failures before handing off fixes.
 license: MIT
 metadata:
   product: konnect
@@ -30,15 +30,18 @@ as proof of deployed behavior.
   data plane state.
 - Use `kongctl-query` for concise, read-only checks when CLI output is easier
   to summarize or filter.
-- Preserve the repository's chosen declarative toolchain for fixes: use
-  `deck-gateway` for Gateway-entity `decK` repos, `terraform-konnect` for
-  HCL-managed Konnect Gateway resources, `terraform-kong-gateway` for
-  self-managed Gateway HCL, and `kongctl-declarative` for `kongctl` YAML.
+- Preserve the repository's chosen declarative toolchain for fixes and hand
+  off once the failing layer is proven: `deck-gateway` for Gateway-entity
+  `decK` repos, `terraform-konnect` for HCL-managed Konnect Gateway
+  resources, `terraform-kong-gateway` for self-managed Gateway HCL, and
+  `kongctl-declarative` for `kongctl` YAML.
 - If live Konnect state matters and `kong-konnect` MCP is not connected, say
   so early and continue with CLI or user-provided artifacts.
 
 Prefer to inspect before suggesting restarts, reprovisioning, or config
 rewrites.
+Do not let this skill absorb generic upstream application debugging or the
+declarative mutation workflow itself.
 
 ## References To Load
 
@@ -131,6 +134,7 @@ that should be deployed:
 - upstreams or targets
 - labels used to partition ownership or environment
 
+Prefer the smallest live slice that proves or disproves the suspected drift.
 If repo config disagrees with live state, call that drift explicitly.
 If live state is correct but traffic still fails, move to request-path
 troubleshooting instead of deployment troubleshooting.
@@ -161,6 +165,8 @@ This keeps the answer operational instead of producing a mixed list of guesses.
   a declarative source of truth exists elsewhere.
 - Empty or partial resource listings often mean wrong control plane selection,
   not global platform failure.
+- Healthy Gateway attachment plus upstream `4xx` or `5xx` often means the
+  control plane is no longer the primary failure domain.
 
 ## Validation Checklist
 
@@ -183,3 +189,6 @@ Before answering, verify that you can state:
   plane rather than gateway health.
 - Use `konnect-observability-triage` if the control plane is healthy and the
   main question is missing analytics or debugging data.
+- If routing is correct and the remaining failure is upstream availability,
+  origin TLS, or application behavior, state that Gateway attachment is healthy
+  and hand off to the upstream owner instead of continuing Konnect triage.

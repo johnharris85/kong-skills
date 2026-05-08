@@ -67,6 +67,25 @@ It should not:
 - duplicate large amounts of reference material inline
 - prescribe steps that are too vague to change model behavior
 
+Review for signal, not just correctness.
+
+- a strong skill activates on the right requests and avoids nearby ones
+- it steers the agent toward the right Kong-specific workflow
+- it teaches inspection order, decision rules, defaults, validation, and
+  handoffs
+- it preserves enough freedom for the agent to adapt to repo state and live
+  facts
+- it keeps detail in the cheapest place that still changes behavior
+
+Common weak-skill failure modes:
+
+- it becomes a mini manual
+- it encodes one narrow task recipe as a default truth
+- it hardcodes volatile CLI or product details in always-loaded content
+- it duplicates the same rule across root and references
+- it tells the agent exactly what to type more often than it teaches how to
+  reason
+
 ## Layered Skill Design
 
 Prefer orthogonal Kong skills over repeating the same tool instructions across
@@ -232,6 +251,26 @@ When you use `references/`, make them progressively discoverable.
 - add a `References To Load` section in `SKILL.md` that says when each file
   should be loaded
 - avoid placing critical common guidance only in references
+
+Treat each package layer as having one job.
+
+- `SKILL.md` is the decision layer and should hold the trigger boundary,
+  ownership boundary, workflow or inspection order, key defaults and
+  constraints, validation loop, and handoffs to neighboring skills
+- `SKILL.md` should not hold large command catalogs, schema inventories unless
+  they are essential to avoid repeated errors, branch-specific recipes unless
+  the task is fragile and repeatedly wrong, or volatile CLI or product detail
+  that can drift without changing the workflow
+- each file under `references/` should have one clear load condition and
+  support one branch, failure domain, or execution mode
+- references should help the agent choose, validate, or recover within that
+  branch, not restate the root workflow in longer form or collect adjacent
+  facts "just in case"
+- scripts are for deterministic leverage when repeated logic is fragile,
+  validation can be checked mechanically, or a transformation is cheaper and
+  safer in code than in prompt text
+- do not keep a script only to preserve a one-off recipe that should instead
+  be removed or simplified
 
 ### Section Heading Conventions
 
@@ -485,6 +524,30 @@ Use the skill root for the always-needed instructions and companion files for co
 
 Only include a companion file if the main skill tells the agent when and why to load it.
 
+Use these fast self-review tests before calling the skill done:
+
+- overfitting test: remove content that assumes one repo layout, one starter
+  bundle of resources, one exact command path, one exact auth check, one
+  current UI or provider behavior, or one canonical naming scheme unless that
+  specificity is safety-critical
+- minutiae test: trim content when the model is more likely to copy it than
+  reason from it, especially long field lists, many exact flags, examples that
+  outnumber rules, or low-value syntax caveats
+- progressive disclosure test: move detail down a layer when metadata, root,
+  references, or scripts can carry it more cheaply without harming behavior
+
+For final self-review, ask:
+
+- trigger quality: does the description activate on the right class of
+  requests and explicitly exclude nearby ones
+- boundary discipline: does the skill stay in its domain, tool, or router lane
+- reasoning quality: does the root teach the agent how to think through the
+  task rather than list syntax
+- root bloat: does `SKILL.md` stay focused on ownership, flow, and validation
+- reference discipline: does each reference file have a narrow, useful job
+- reference bloat: do references stay operationally dense instead of turning
+  into partial manuals
+
 ## Instruction Patterns
 
 Useful patterns for this repo include:
@@ -531,6 +594,9 @@ Before considering the skill done, check:
 - does it tell the agent what to validate before answering
 - were all scaffold placeholders replaced with real content
 - would an agent using this skill likely perform better than without it
+- does `SKILL.md` read like a decision layer rather than a condensed manual
+- does each reference file have one clear load condition and one clear job
+- did you run the overfitting, minutiae, and progressive-disclosure tests
 
 If the answer to the last question is not clearly yes, the skill probably needs to be narrowed or rewritten.
 

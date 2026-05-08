@@ -1,6 +1,6 @@
 ---
 name: kongctl-query
-description: Inspect Konnect with read-only kongctl commands. Use to list or get resources, verify authentication, discover command syntax, or shape output as text, JSON, or YAML. Do not use for declarative YAML authoring or plan/apply workflows.
+description: "Use when the user wants read-only `kongctl` queries against Konnect: prove auth or scope, discover the right `get` path, list or fetch resources, or shape JSON/YAML output. Do not use for `kongctl` plan/apply/sync or declarative authoring."
 license: MIT
 metadata:
   product: kongctl
@@ -11,263 +11,121 @@ metadata:
     - read-only
 ---
 
-# kongctl query commands
+# kongctl-query
 
 ## Goal
 
-Use read-only `kongctl` commands to inspect Konnect resource state and return
-concise, structured results.
+Use read-only `kongctl` commands to inspect live Konnect state and return the
+smallest command and result slice that actually proves the answer.
 
 ## Tool Positioning
 
+- Use this skill when the user explicitly wants `kongctl`, CLI-shaped proof, or
+  read-only verification after another workflow changed Konnect state.
 - If the session already has the shared `kong-konnect` MCP server and the user
-  needs live Konnect inspection rather than exact CLI syntax, suggest MCP
-  first.
-- Use this skill when the user wants read-only `kongctl` commands, CLI-shaped
-  verification, or filtered output.
-- If live state matters and `kong-konnect` MCP is not connected, say so early
-  and continue with `kongctl` as the fallback inspection path.
-- For mutation requests, preserve the repository's existing toolchain and hand
-  off to `kongctl-declarative`, `deck-gateway`, `terraform-konnect`, or
-  `terraform-kong-gateway` as appropriate.
-- Do not use this skill for manifest authoring, `kongctl` `plan`/`apply`/`sync`
-  workflows, or CI/CD scaffolding.
+  needs live inspection more than exact CLI syntax, suggest MCP first and keep
+  `kongctl` as the fallback proof path.
+- Do not use this skill for declarative YAML authoring, `kongctl`
+  `plan`/`apply`/`sync`, CI/CD scaffolding, or repository refactors.
+- Preserve the repository's existing delivery toolchain. This skill only owns
+  read paths and post-change verification commands.
 
 ## References To Load
 
-Load only the reference file that matches the active branch:
+Load only the branch-specific reference that matches the active problem:
 
 - `references/resource-discovery.md`
-  - Load when the main question is which `kongctl get` resource or child
-    resource path should be queried.
+  - Load when the main question is which `kongctl get` resource, parent, or
+    child path should be queried.
 - `references/output-shaping.md`
-  - Load when the user cares more about JSON/YAML/text shaping and concise
-    summarization than raw command discovery.
+  - Load when the main question is output mode, `--jq`, summarization shape, or
+    formatting surprises from profile or environment defaults.
 - `references/auth-and-scope-checks.md`
-  - Load when the real problem may be auth, profile, region, or scope rather
-    than the resource query itself.
+  - Load when auth, profile, region, org scope, or empty results may be the
+    real issue.
 
 ## Validation Contract
 
 ### Preflight
 
-- Confirm CLI is installed and runnable: `kongctl version`
-- Authenticate with one of:
-  - `kongctl login` — preferred for interactive use (browser-based OAuth)
-  - `export KONGCTL_DEFAULT_KONNECT_PAT=<token>` — for non-interactive or CI
-- PAT tokens are sensitive credentials. Never echo, log, or commit them.
-  Prefer `kongctl login` for interactive sessions.
-- Select configuration profile when needed: `--profile <name>`
-- Verify authentication works: `kongctl get organization -o json`
-  This works with all token types (PAT, SPAT, browser login). If it
-  returns organization info, auth is confirmed. Do not guess or try other
-  commands to check auth.
-- Confirm the organization, region, profile, or parent resource scope before
-  interpreting a read result as proof.
+- Confirm the CLI is installed and runnable: `kongctl version`.
+- Prefer `kongctl login` for interactive sessions. Use PAT or SPAT environment
+  variables only when the session is non-interactive.
+- Never echo, log, or commit token values.
+- If the user's org, region, or profile context matters, prove that context
+  with one org-scoped read such as `kongctl get organization -o json` before
+  reasoning about a missing resource.
 
 ### Preview
 
-- Choose the smallest read-only command that proves the point:
+- Choose the smallest read-only command that proves the answer:
   - `kongctl help` or `kongctl get <resource> --help` for command shape
   - `kongctl get <resource> -o json` for list proof
-  - `kongctl get <resource> "<name-or-id>" -o json` for exact object proof
-  - child-resource reads when the proof depends on a parent boundary
-- State the expected output shape before relying on it, especially when `--jq`
-  filtering or parent-child paths narrow the slice.
+  - `kongctl get <resource> "<name-or-id>" -o json` for one-object proof
+  - parent-child reads only after the parent boundary is confirmed
+- Use explicit `-o json` unless the user specifically wants YAML.
+- State the expected slice before relying on filtered or nested output.
 
 ### Execute
 
-- Do not mutate. This skill never runs `apply`, `sync`, `adopt`, `patch`, or
-  `delete`.
-- When another workflow changes state, use this skill only to provide the
-  read-only verification commands that should be run afterward.
+- Do not mutate. This skill never runs `apply`, `sync`, `adopt`, `patch`,
+  `create`, or `delete`.
+- When another workflow changes state, use this skill only to supply the exact
+  read-only verification command that should be rerun afterward.
 
 ### Prove
 
-- After another tool mutates state, rerun the exact `get` command that shows
-  the affected live object now exists or now has the intended fields.
+- Rerun the exact `get` command that shows the affected live object now exists
+  or now exposes the intended fields.
 - Confirm the exact resource slice touched instead of treating org-level auth
   success as proof of the resulting object.
-- If the result is empty, distinguish "no resources found" from auth or scope
-  failure.
-
-## Config and Environment Overrides
-
-- `kongctl` flags can be defaulted by profile config and environment variables.
-- Environment variable pattern: `KONGCTL_<PROFILE>_<PATH>` 
-- Example: `KONGCTL_DEFAULT_OUTPUT=yaml` sets `--output` default for the
-  `default` profile.
-- For this skill, pass explicit `-o json` or `-o yaml` on query commands to
-  avoid unexpected profile/env defaults.
-- When troubleshooting output behavior, inspect relevant env vars:
-  - `env | grep '^KONGCTL_.*OUTPUT'`
-  - `env | grep '^KONGCTL_PROFILE'`
+- Distinguish "empty result" from auth, profile, or scope failure.
 
 ## Operating Rules
 
-- Use only read-only operations in this skill.
-- Prefer `get`, `list`, and `help` commands.
-- Do not run mutating commands such as `create`, `apply`, `patch`, `delete`,
-  or `adopt`.
-- Treat this skill as the CLI-shaped verification companion for other Konnect
-  workflows when the user wants exact read-only proof.
-- Hand off mutation requests to the tool skill that matches the repository:
-  `kongctl-declarative`, `deck-gateway`, `terraform-konnect`, or
-  `terraform-kong-gateway`.
+- Prefer live CLI help over guessing resource names or child-resource forms.
+- Use explicit output flags on reads so profile or environment defaults do not
+  silently change the proof.
+- Keep summaries tight: return only the fields needed to answer the question or
+  prove the post-change state.
+- If the request turns into product diagnosis rather than query-path discovery
+  or proof, hand off after proving the relevant live slice.
 
 ## Workflow
 
-1. Identify the resource type and the exact proof the user needs.
-2. Run preflight checks for CLI availability, auth, and scope.
-3. Discover command shape when unsure:
-   - `kongctl help`
-   - `kongctl get --help`
-   - `kongctl get <resource> --help`
-   - Extract current `kongctl get` subcommands from help output:
-     ```bash
-     kongctl get --help | awk '
-     /^Available Commands:/ {capture=1; next}
-     capture && NF==0 {exit}
-     capture && $1 ~ /^[a-z0-9-]+$/ {print $1}
-     '
-     ```
-4. Preview the smallest read-only command that proves the intended slice:
-   - Default to JSON output unless YAML is explicitly requested.
-   - List resources: `kongctl get <resource> -o json`
-   - Get one resource by name or ID:
-     `kongctl get <resource> "<name-or-id>" -o json`
-   - Query child resources:
-     `kongctl get <parent> <child> --<parent>-name "<name>" -o json`
-5. Summarize the proof with IDs, names, and timestamps when available.
-6. For post-change verification, state the exact `kongctl get` command that
-   proves the mutated resource slice now matches intent.
-
-If command shape, output shaping, or auth-scope diagnosis remains unclear after
-the first pass, load the matching reference file.
-
-## Common Commands
-
-```bash
-# list portals in json format
-kongctl get portals -o json
-
-# get organization details as yaml
-kongctl get organization -o yaml
-
-# inspect current identity as json
-kongctl get me -o json
-
-# get a specific resource by name or ID
-kongctl get portals <portal-name> -o json
-kongctl get portals <portal-id-uuid> -o json
-
-# query child resources (portal pages)
-kongctl get portals pages --portal-name <portal-name> -o json
-
-# query api resources
-kongctl get apis -o json
-
-# query api child documents
-kongctl get apis documents --api-name <api-name> -o json
-```
-
-## Example: List Portals
-
-Use this command to list Developer Portal instances:
-
-```bash
-kongctl get portals -o json
-```
-
-Expect fields like:
-- `id`
-- `name`
-- `display_name`
-- `canonical_domain`
-- `created_at`
-- `updated_at`
-- `labels`
-
-To fetch one portal instead of a list, provide a name or ID:
-
-```bash
-kongctl get portals "portal-auth" -o json
-kongctl get portals "35fefe98-f098-4a65-9807-d76f40b620cf" -o json
-```
-
-## Child Resources
-
-Use parent-child `get` patterns for nested resources.
-
-```bash
-# list pages for a specific portal
-kongctl get portals pages --portal-name "portal-auth" -o json
-```
-
-Discover child commands under a parent by checking parent help:
-
-```bash
-kongctl get portals --help
-```
-
-If the response is an empty array (`[]`), treat it as a valid "no resources
-found" result, not an execution error.
-
-## Output Guidance
-
-- Prefer `-o json` for filtering and automation.
-- Use `-o yaml` for human-readable structured output.
-- Use `-o text` only when jq filtering is not active.
-- If you see `--jq is only supported with --output json or --output yaml`,
-  rerun the same command with `-o json`. This error usually means jq is active
-  via command flag or profile configuration.
-
-## Built-in jq Filtering
-
-- Use `--jq <expression>` on `get` and `list` commands to filter response data.
-- `kongctl` uses built-in `gojq` support, so external `jq` is not required.
-- Use `--jq` with `-o json` or `-o yaml` output.
-- Quote expressions with single quotes to avoid shell parsing issues.
-- Because jq can be enabled from config, prefer explicit `-o json` for `get`
-  and `list` commands to avoid output-format errors.
-
-```bash
-# select key fields from a list response
-kongctl get portals -o json --jq 'map({id, name, display_name})'
-
-# return only portal names
-kongctl get portals -o json --jq '.[].name'
-
-# pick selected fields from the current user record
-kongctl get me -o json --jq '{id, email}'
-```
-
-## Failure Handling
-
-- If `kongctl` is missing, request installation (https://developer.konghq.com/kongctl/) and rerun preflight checks.
-- If authentication fails, have user run `kongctl login` or set
-  `KONGCTL_DEFAULT_KONNECT_PAT`.
-- If a command fails with `--jq is only supported with --output json or --output yaml`,
-  rerun the command with `-o json`.
-- If output format is unexpected, check for env overrides like
-  `KONGCTL_DEFAULT_OUTPUT`.
-- If access is denied, report the exact command and resource.
-- If no resources are found, report an empty result without treating it as an
-  execution error.
+1. Classify the request as resource discovery, auth/scope diagnosis, output
+   shaping, or post-change verification.
+2. Run preflight checks and prove org/profile scope before debugging resource
+   paths when the context could be wrong.
+3. Discover the smallest valid help or `get` path instead of assuming the
+   resource family.
+4. Run the narrowest read that proves the answer, defaulting to JSON unless
+   the user explicitly wants YAML.
+5. Summarize the proof with the minimum useful fields and include the exact
+   verification command when another workflow owns the mutation.
+6. Load the matching reference only when the branch-specific detail is needed.
 
 ## Validation Checklist
 
 Before answering, verify that you can state:
 
-- which auth and scope checks prove the read is happening in the right Konnect
-  context
-- which exact `kongctl get` or `help` command is the smallest safe proof
-- whether the request is pure read-only inspection or a post-change
-  verification handoff from another tool
-- how an empty result would be distinguished from a scope or auth failure
+- which command proved auth or scope in the intended Konnect context
+- which exact `help` or `get` command is the smallest safe proof
+- which output mode and result slice were used
+- how an empty result was distinguished from a context or access problem
+- whether this request stays in `kongctl-query` or should hand off
+
+## Handoffs
+
+- Hand off to `kongctl-declarative` when the user wants `kongctl`
+  `plan`/`apply`/`sync`, declarative YAML authoring, or reconciliation.
+- Hand off to `deck-gateway`, `terraform-konnect`, or
+  `terraform-kong-gateway` when the repository already uses those tools for
+  mutation.
+- Hand off to the relevant Konnect domain skill when the question shifts from
+  "how do I prove this with a read query?" to product-specific diagnosis or
+  design.
 
 ## Online Documentation
-
-If this skill's guidance is not sufficient, consult or direct users to:
 
 - kongctl docs: https://developer.konghq.com/kongctl/

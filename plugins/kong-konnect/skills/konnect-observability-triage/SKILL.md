@@ -1,6 +1,6 @@
 ---
 name: konnect-observability-triage
-description: Troubleshoot Konnect analytics, Explorer, Debugger, and dataset visibility. Use when analytics are empty or partial, the wrong dataset or scope may be in use, or missing observability may come from permissions, traffic, or control-plane configuration.
+description: Diagnose missing, partial, delayed, or mis-scoped Konnect observability data across analytics, Explorer, and Debugger. Use when the question is dataset, scope, or telemetry visibility, not pure gateway health or operator-access troubleshooting.
 license: MIT
 metadata:
   product: konnect
@@ -22,6 +22,8 @@ unexpectedly, and direct the operator to the right dataset and next action.
 
 Default to proving traffic and scope before concluding that observability is
 broken.
+This skill owns observability diagnosis, not generic gateway connectivity,
+portal publication, or operator-access troubleshooting.
 
 ## Tool Selection
 
@@ -52,21 +54,21 @@ Load only the reference file that matches the active branch:
   - Load when data may exist but is delayed, permission-limited, partially
     visible, or confused with total loss.
 
-## Workflow
+## Inspection Order
 
-### 1. Identify the observability surface
+### 1. Classify the expected signal first
 
 Clarify what the user expects to see:
 
-- analytics dashboard data
-- Explorer or queryable usage data
+- aggregate analytics or trend data
+- Explorer or other queryable usage data
 - Debugger traces or request-level details
 - API-oriented dataset visibility
 - LLM-oriented dataset visibility
 - platform or administrative activity data
 
 Do not assume these are interchangeable. Missing data often starts with the
-wrong surface selection.
+wrong surface selection or the wrong granularity of evidence.
 
 Load `references/dataset-map.md` when the operator is mixing API, LLM, and
 platform observability surfaces.
@@ -91,6 +93,9 @@ Before diagnosing telemetry ingestion, verify that the thing being observed is
 actually receiving traffic or events.
 
 - If traffic is absent, hand off to `konnect-gateway-triage`.
+- If the real question is whether an API or portal object exists or is
+  published, hand off to `konnect-api-catalog` or `konnect-api-publish`
+  instead of staying in observability.
 - If activity exists but no data appears, keep following the observability
   path.
 - If only some entities show data, keep scope and dataset mismatches in play.
@@ -118,6 +123,8 @@ Investigate whether missing data is caused by:
 - partial rollout or resource association issues
 
 Keep "configuration missing" separate from "viewer cannot see it."
+Prefer the narrowest explanation that matches the evidence. Do not jump from
+one empty view to a global ingestion claim.
 
 Load `references/visibility-vs-ingestion.md` when the hard question is whether
 the data is absent, delayed, hidden, or only partially scoped.
@@ -161,5 +168,7 @@ Before answering, verify that you can state:
   runtime traffic.
 - Use `konnect-access-scope` when the data likely exists but the caller cannot
   see it.
+- Use `konnect-api-catalog` or `konnect-api-publish` when the real issue is
+  object readiness or publication state rather than telemetry.
 - Use `kongctl-query` for exact resource inspection commands that support the
   diagnosis.

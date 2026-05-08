@@ -1,6 +1,6 @@
 ---
 name: konnect-ai-gateway
-description: Operate and troubleshoot Konnect AI Gateway for LLM traffic. Use for provider routing, AI Proxy setup, guardrails, prompt controls, LLM analytics, token or latency issues, or AI Gateway requests that work technically but fail governance or policy intent.
+description: Operate Konnect AI Gateway request flow, provider/model routing, AI Proxy behavior, prompt/response controls, and LLM analytics. Use when the issue is inside AI Gateway, not generic prompt engineering, provider SDK debugging, or non-AI Gateway rollout.
 license: MIT
 metadata:
   product: konnect
@@ -13,24 +13,23 @@ metadata:
     - ai
 ---
 
-# Konnect AI Gateway workflow
+# Konnect AI Gateway triage
 
 ## Goal
 
-Help an operator reason about Konnect AI Gateway as a governed LLM traffic
-surface: provider routing, AI plugins, prompt controls, access, and LLM-aware
-observability.
+Diagnose the narrowest Konnect AI Gateway failure layer across request path,
+provider targeting, AI policy, and AI-runtime visibility.
 
-Use this skill for AI Gateway operator workflows, not for generic OpenAI or
-prompt-engineering advice.
+Use this skill for AI Gateway operator workflows, not for generic
+prompt-engineering, provider SDK debugging, or model-quality evaluation.
 
 ## Tool Selection
 
 - Use the shared `kong-konnect` MCP server first for live inspection of control
   planes, Gateway entities, and LLM analytics surfaces.
 - Prefer LLM-specific analytics when the user is asking about token usage,
-  latency, or AI request health. `query_llm_analytics` is the right aggregated
-  MCP surface when AI/LLM usage data is the real question.
+  latency, or AI request health. Use the LLM analytics MCP/query surface when
+  AI-runtime data is the real question rather than generic API analytics.
 - Preserve the repository's chosen declarative toolchain for implementation:
   `deck-gateway` for Gateway-entity GitOps, `terraform-konnect` for HCL-managed
   Konnect AI Gateway resources, `terraform-kong-gateway` for self-managed HCL,
@@ -38,10 +37,13 @@ prompt-engineering advice.
   that path.
 - If live Konnect state matters and `kong-konnect` MCP is not connected, say so
   early and continue with repo config or user-provided artifacts.
+- Hand off early to `konnect-gateway-triage` when the blocker is generic
+  gateway reachability, rollout, or route/service health rather than an
+  AI-specific layer.
 
 ## References To Load
 
-Load only the reference file that matches the active branch:
+Load the first matching reference. Do not load all three by default:
 
 - `references/provider-routing.md`
   - Load when the main question is model/provider selection, route targeting,
@@ -53,11 +55,11 @@ Load only the reference file that matches the active branch:
   - Load when the question is about tokens, latency, AI-specific analytics, or
     operational visibility rather than request construction.
 
-## Workflow
+## Inspection Order
 
-### 1. Identify the failing AI Gateway layer
+### 1. Classify the report before choosing a layer
 
-Clarify whether the issue is:
+Place the first symptom in one branch:
 
 - provider routing or model targeting
 - service / route setup for AI traffic
@@ -66,24 +68,30 @@ Clarify whether the issue is:
 - prompt decoration or template behavior
 - semantic cache behavior
 - LLM usage, latency, or token visibility
+- generic gateway reachability or config rollout that only happens to affect AI
+  traffic
 
 Do not flatten all AI Gateway issues into “the plugin is broken.”
 
-Load `references/provider-routing.md` when the problem is fundamentally about
-where AI traffic is being sent.
+If the complaint is fundamentally about ordinary route or service health, hand
+off to `konnect-gateway-triage` before diagnosing AI controls.
 
-### 2. Separate baseline proxying from AI governance
+### 2. Prove the baseline AI traffic path
 
 First prove:
 
 - the AI request reaches the expected service and route
 - the AI proxy layer is attached where the operator expects
 - provider authentication expectations are clear
+- the intended provider and model target are known, not assumed
 
 Only then reason about higher-level AI policies such as prompt guards or
 templates.
 
-### 3. Interpret the plugin stack in order
+If the request never reaches the provider path cleanly, stay below the
+guardrail layer and keep provider-routing or gateway-health branches in play.
+
+### 3. Resolve provider or model targeting before policy
 
 For governed LLM traffic, inspect the stack in this order:
 
@@ -97,10 +105,22 @@ For governed LLM traffic, inspect the stack in this order:
 This prevents chasing a guardrail symptom when the route or provider layer is
 wrong.
 
+Load `references/provider-routing.md` when the operator is asking where traffic
+went, whether fallback occurred, or whether the wrong model/provider answered.
+
+### 4. Evaluate policy layers only after proxying is proven
+
+Once baseline proxying and targeting are credible, separate:
+
+- prompt decoration or template injection errors
+- prompt or response guardrail mismatches
+- semantic cache behavior
+- provider/model behavior outside Kong-side control
+
 Load `references/guardrails-and-policy-intent.md` when the operator needs to
 separate technically valid traffic from policy-valid traffic.
 
-### 4. Use LLM analytics for AI-specific runtime questions
+### 5. Use LLM analytics for AI-specific runtime questions
 
 If the question is about usage, tokens, latency, or cost-like behavior, prefer
 the LLM analytics surface over generic API analytics.
@@ -114,7 +134,7 @@ Use AI-specific observability to answer:
 Load `references/observability-and-cost-signals.md` when the real problem is
 runtime visibility, token behavior, or latency concentration.
 
-### 5. Distinguish product governance from provider behavior
+### 6. Distinguish Kong-side governance from provider behavior
 
 When a request reaches the provider but still behaves incorrectly, separate:
 
@@ -125,7 +145,7 @@ When a request reaches the provider but still behaves incorrectly, separate:
 
 Do not promise that every bad model response is a Gateway bug.
 
-### 6. Return the narrowest AI failure domain
+### 7. Return the narrowest AI failure domain
 
 Classify the issue as:
 
@@ -136,6 +156,7 @@ Classify the issue as:
 - guardrail policy problem
 - semantic cache or acceleration problem
 - analytics / visibility problem rather than traffic failure
+- generic gateway health problem that should leave this skill
 
 ## Konnect-Specific Gotchas
 
@@ -146,6 +167,9 @@ Classify the issue as:
 - LLM analytics should be treated as a distinct runtime surface from generic API
   analytics.
 - A technically successful provider response can still violate policy intent.
+- Provider-side refusals, quotas, or model behavior can pass through a healthy
+  AI Gateway path; prove the Kong-side intent before calling them Gateway
+  defects.
 - Quickstarts are useful for proving baseline capability, but they are not a
   substitute for a durable AI Gateway operating model.
 
@@ -155,8 +179,10 @@ Before answering, verify that you can state:
 
 - which AI Gateway layer is failing
 - whether baseline proxying works before higher-level AI controls
-- whether the issue is routing, auth, guardrails, prompt shaping, caching, or
-  analytics
+- which service/route and provider/model target the request is supposed to hit
+- whether fallback or alternate provider selection is intended or accidental
+- whether the issue is Kong-side routing, auth, guardrails, prompt shaping,
+  caching, provider behavior, or analytics
 - whether LLM analytics or another observability surface is the right next
   step
 - which declarative tool skill should own the resulting change

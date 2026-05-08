@@ -1,46 +1,22 @@
 # Declarative Resource Patterns
 
-Use this file as the portable schema reference when the skill is installed
-outside the `kongctl` repository.
+Load this file when the task is primarily about manifest structure, ownership,
+resource linking, or field discovery.
 
-## Recommended Layout
+## Directory and File Ownership
 
-```text
-konnect/resources/
-  control-planes.yaml
-  portals.yaml
-  apis.yaml
-```
+- Preserve the repository's existing layout when one already exists.
+- `konnect/resources/` is a common starting point, not a required canonical
+  path.
+- Keep only `kongctl` declarative resource YAML in any directory you plan to
+  load with `--recursive`.
+- Keep OpenAPI specs, docs, and other non-resource YAML outside that recursive
+  tree when possible. If layout cannot change, target individual resource files
+  with repeated `-f` flags.
 
-Match existing repository conventions when a layout already exists.
-Do not require OpenAPI specs to be placed under the declarative resources
-directory.
+## Ownership Model
 
-## Top-Level Resource Keys
-
-- `apis`
-- `application_auth_strategies`
-- `catalog_services`
-- `control_planes`
-- `event_gateways`
-- `organization` (contains `teams`)
-- `portals`
-
-## Parent and Child Rules
-
-- Parent resources support `kongctl` metadata:
-  - `apis`
-  - `catalog_services`
-  - `portals`
-  - `application_auth_strategies`
-  - `control_planes`
-  - `event_gateways`
-- Child resources do not support `kongctl` metadata.
-- Put ownership defaults in `_defaults.kongctl`.
-
-## `_defaults` and Ownership
-
-Use `_defaults` to apply namespace and protected values in one file:
+Use `_defaults.kongctl` for file-level ownership and shared protection flags:
 
 ```yaml
 _defaults:
@@ -49,178 +25,52 @@ _defaults:
     protected: false
 ```
 
-Resource-level `kongctl` values override `_defaults`.
+- Parent resources can carry `kongctl` metadata.
+- Child resources should inherit ownership and should not carry their own
+  `kongctl` blocks unless the schema explicitly requires otherwise.
+- When integrating adopted resources, keep `_defaults.kongctl.namespace`
+  aligned with the namespace used during `adopt`.
 
-## YAML Tags
+## Reference Patterns
 
-- `!file`: Load file content, optionally with extraction.
-- `!ref`: Resolve another resource by `ref`, optionally with `#field`.
+- Use `!ref` for cross-resource IDs rather than copying UUIDs.
+- Use `!file` when content already lives in a source file such as an OpenAPI
+  document.
 
-Examples:
-
-```yaml
-name: !file <existing-openapi-path>#info.title
-description: !file <existing-openapi-path>#info.description
-portal_id: !ref dev-portal#id
-```
-
-`!file` paths resolve relative to the config file and must remain within the
-`--base-dir` boundary.
-
-## Resource Cheat Sheets
-
-### `control_planes`
-
-Common fields:
-
-- `ref`
-- `name`
-- `description`
-- `cluster_type`
-- `auth_type`
-- `cloud_gateway`
-- `proxy_urls`
-- `labels`
-- `kongctl`
-
-Example:
-
-```yaml
-control_planes:
-  - ref: cp-main
-    name: "my-control-plane"
-    cluster_type: "CLUSTER_TYPE_CONTROL_PLANE"
-```
-
-### `portals`
-
-Common fields:
-
-- `ref`
-- `name`
-- `display_name`
-- `description`
-- `authentication_enabled`
-- `rbac_enabled`
-- `default_api_visibility`
-- `default_page_visibility`
-- `labels`
-- `kongctl`
-
-Common child blocks:
-
-- `pages`
-- `snippets`
-- `customization`
-- `auth_settings`
-- `custom_domain`
-- `teams`
-- `email_config`
-- `email_templates`
-- `assets`
-
-Example:
-
-```yaml
-portals:
-  - ref: dev-portal
-    name: "my-dev-portal"
-    display_name: "My Dev Portal"
-    default_api_visibility: "private"
-    default_page_visibility: "private"
-```
-
-### `apis`
-
-Common fields:
-
-- `ref`
-- `name`
-- `description`
-- `version`
-- `slug`
-- `labels`
-- `attributes`
-- `spec_content`
-- `kongctl`
-
-Common child blocks:
-
-- `versions`
-- `publications`
-- `implementations`
-- `documents`
-
-Example using OpenAPI:
+Minimal example:
 
 ```yaml
 apis:
   - ref: payments-api
-    name: !file <existing-openapi-path>#info.title
-    description: !file <existing-openapi-path>#info.description
-    versions:
-      - ref: payments-v1
-        version: !file <existing-openapi-path>#info.version
-        spec: !file <existing-openapi-path>
+    name: !file ../../openapi/payments.yaml#info.title
+    description: !file ../../openapi/payments.yaml#info.description
     publications:
-      - ref: payments-pub
+      - ref: payments-publication
         portal_id: !ref dev-portal#id
-        visibility: public
 ```
 
-### `application_auth_strategies`
+`!file` rules:
 
-Common fields:
+- Paths resolve relative to the YAML file that contains the tag.
+- `--base-dir` widens the allowed boundary for `!file`; it does not change the
+  relative resolution base.
+- Prefer adding `--base-dir` over moving specs just to satisfy path checks.
 
-- `ref`
-- `name`
-- `display_name`
-- `strategy_type` (`key_auth` or `openid_connect`)
-- `configs`
-- `labels`
+## Resource-Specific Guidance
 
-Minimal key-auth example:
+- `control_planes`: start with the smallest parent shape that matches the
+  request, then discover less common fields from live examples instead of
+  inventing them.
+- `portals`: model the portal parent first, then add child blocks such as
+  pages, snippets, or auth settings only when the request needs them.
+- `apis`: treat OpenAPI as the source of truth for API metadata and version
+  content. Load `references/apiops-openapi.md` for this branch.
+- `application_auth_strategies` and `organization.teams`: prefer live schema
+  discovery when the request uses fields beyond the obvious identifiers.
 
-```yaml
-application_auth_strategies:
-  - ref: key-auth-main
-    name: "my-key-auth"
-    display_name: "My Key Auth"
-    strategy_type: key_auth
-    configs:
-      key_auth:
-        key_names:
-          - X-API-Key
-```
+## Schema Discovery
 
-### `organization.teams`
-
-Structure:
-
-- `organization`
-- `teams` (array of objects with `ref`, `name`, optional metadata fields)
-
-Example:
-
-```yaml
-organization:
-  teams:
-    - ref: platform-team
-      name: "Platform Team"
-```
-
-## Reference Linking Patterns
-
-- API publication to portal:
-  - `portal_id: !ref <portal-ref>#id`
-- Publication auth strategy reference:
-  - `auth_strategy_ids: [!ref <auth-strategy-ref>#id]`
-- Child-to-parent references:
-  - prefer `!ref` instead of hard-coded UUIDs
-
-## Schema Discovery Without Local Docs
-
-When field-level uncertainty remains, sample live schema with dump commands:
+When field-level shape is uncertain, dump the narrowest live example you can:
 
 ```bash
 kongctl dump declarative --resources=portal --include-child-resources -o yaml
@@ -228,18 +78,16 @@ kongctl dump declarative --resources=api --include-child-resources -o yaml
 kongctl dump declarative --resources=control_planes -o yaml
 ```
 
-Then adapt generated shape to the target repository layout and naming.
+Then adapt the output to the repository's naming, file layout, and reference
+patterns.
 
 ## Validation Loop
 
-```bash
-kongctl diff -f <path> --recursive --mode apply -o text
-```
-
-When `!file` tags reference files outside the `-f` directory, add
-`--base-dir` with the absolute project root path. Relative `--base-dir`
-values resolve from the config file directory, not cwd:
+Validate the exact files you changed:
 
 ```bash
-kongctl diff -f <path> --recursive --base-dir "$(pwd)" --mode apply -o text
+kongctl diff -f <path-or-file> --mode apply -o text
 ```
+
+If the config uses `!file` outside the loaded directory, add an absolute
+`--base-dir` that encloses those files.

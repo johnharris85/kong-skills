@@ -1,6 +1,6 @@
 ---
 name: terraform-konnect
-description: Manage Konnect with Terraform and the official `kong/konnect` provider. Use for HCL-managed control planes, Gateway entities in Konnect, APIs, portals, teams, roles, publications, or Terraform plan/apply/import workflows.
+description: Use when a repo already manages Konnect in Terraform or the user explicitly wants HCL, Terraform import, or plan/apply for Konnect resources; not for `decK`/`kongctl` repos, generic Terraform-only troubleshooting, or domain-first Konnect diagnosis.
 license: MIT
 metadata:
   product: terraform
@@ -22,7 +22,9 @@ provider while preserving the repository's existing module, state, and CI
 conventions.
 
 Use this skill for Terraform-managed Konnect work. Do not turn a `kongctl` or
-`decK` repository into Terraform unless the user asks for that migration.
+`decK` repository into Terraform unless the user asks for that migration. Do
+not treat this skill as the owner for generic backend, state-locking, or
+provider-install issues unless they directly block Konnect resource work.
 
 ## Tool Positioning
 
@@ -33,13 +35,15 @@ Use this skill for Terraform-managed Konnect work. Do not turn a `kongctl` or
   management.
 - Preserve existing Terraform layout, backend configuration, module structure,
   and variable conventions.
-- Prefer the official `kong/konnect` provider by default.
-- Use `kong/konnect-beta` only when the user explicitly needs beta-only
-  coverage that is not available in the supported provider.
+- Prefer the official `kong/konnect` provider by default and treat
+  `kong/konnect-beta` as an explicit exception for missing coverage.
 - Hand off to `deck-gateway` when the user wants file-based Gateway GitOps or
   `decK` export/diff workflows.
 - Hand off to `kongctl-declarative` when the repository already uses `kongctl`
   YAML instead of HCL.
+- Hand off to the relevant Konnect domain skill when the main problem is access,
+  publication, runtime health, or another product diagnosis rather than HCL
+  ownership.
 
 ## References To Load
 
@@ -110,24 +114,13 @@ After a requested apply:
   `terraform plan` that shows no remaining intended changes
 - prove the exact resources touched rather than treating apply success as proof
 
-## Provider Basics
-
-Default provider choice:
-
-- `kong/konnect` for supported Konnect resources
-- `kong/konnect-beta` only for explicitly requested beta coverage
-
-Common auth inputs:
-
-- `KONNECT_TOKEN` or `KONNECT_SPAT`
-- `KONNECT_SERVER_URL` when the environment does not use the default endpoint
-
-Never hardcode tokens into committed `.tf` files.
-
 ## Operating Rules
 
 - Preserve the repo's existing Terraform style: root-module layout, child
   modules, variable files, naming, and output shape.
+- Keep Konnect credentials in the repo's existing secret path such as
+  `KONNECT_TOKEN`, `KONNECT_SPAT`, or workspace-managed variables; never add
+  committed literals to `.tf` files.
 - Use `terraform providers schema -json` as the default source of truth for
   unknown nested resource shape before guessing HCL from docs or examples.
 - Prefer `terraform plan` before `terraform apply` unless the user explicitly
@@ -172,6 +165,8 @@ Pin down:
 - whether the task concerns platform resources, Gateway entities inside a
   Konnect control plane, or both
 - whether the request is create, update, import, or drift correction
+- whether the repo already manages this Konnect slice in Terraform or the user
+  is explicitly choosing Terraform as the implementation path
 
 Do not assume every requested resource belongs in the same module.
 
@@ -246,49 +241,6 @@ State:
 - which Konnect resources are managed or updated
 - whether import is required
 - whether the next step is `plan`, `apply`, or a separate verification step
-
-## Common Patterns
-
-### Manage Konnect resources in an existing Terraform repo
-
-Use for:
-
-- add or update control planes
-- manage APIs, portals, teams, or publication-related resources
-- keep Konnect managed alongside surrounding infrastructure
-
-Preferred sequence:
-
-1. inspect current module boundaries
-2. add or update HCL in the right module
-3. run `terraform fmt` and validation steps used by the repo
-4. run `terraform plan`
-5. apply only when requested
-6. prove the touched addresses through state or follow-up plan output
-
-### Adopt existing resources
-
-Use for:
-
-- resources created manually in Konnect
-- partial migration from `decK` or UI-managed state into Terraform
-
-Preferred defaults:
-
-- use Terraform import for existing managed identities in scope
-- use `deck file kong2tf` when the starting point is Gateway-entity config and
-  the user wants a Terraform representation
-- clean up generated HCL to match repo conventions before treating it as final
-
-### Compose Konnect with other infrastructure
-
-Use for:
-
-- repositories that already manage cloud networking, secrets, or deployment
-  dependencies in Terraform
-- workflows that require a single plan across Kong and non-Kong resources
-
-Keep module boundaries clear so Kong-specific drift is still understandable.
 
 ## Kong-Specific Gotchas
 
