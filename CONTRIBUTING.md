@@ -3,6 +3,9 @@
 This repo is the contributor-facing source of truth for the packaged Kong
 skills and install metadata.
 
+During the tech preview period, public issues are welcome, but pull requests
+are currently limited to Kong employees.
+
 ## Prerequisites
 
 For repo maintenance, install:

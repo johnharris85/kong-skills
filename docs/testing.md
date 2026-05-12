@@ -74,7 +74,6 @@ back to user-profile locations.
 - Note: `gh skill` is in public preview
 - Command: `gh skill install kong/skills`
 - Single-skill command: `gh skill install kong/skills gateway-plugin-datakit`
-- Host-specific command: `gh skill install kong/skills gateway-plugin-datakit --agent codex`
 - Expected result: install completes without errors and the `gateway-plugin-datakit` skill is available in the target host
 - Quick prompt: `When should you use the gateway-plugin-datakit skill?`
 - Cleanup: remove the installed skill from the target host or discard the scratch profile
@@ -107,23 +106,6 @@ back to user-profile locations.
 - MCP check when using the plugin path: confirm `kong-konnect` is configured
 - Quick prompt: `What Kong-specific skills are available in this environment?`
 - Cleanup: uninstall the plugin or discard the scratch profile
-
-### Codex
-
-- Install path: [docs/install/codex.md](./install/codex.md)
-- Recommended lightweight check: use the skill-only path first
-- Verify after install: `gateway-plugin-datakit` is available in a fresh session
-- MCP check when using the marketplace/plugin path: confirm `kong-konnect` is configured
-- Quick prompt: `Explain what the gateway-plugin-datakit skill is for in one paragraph.`
-- Cleanup: remove the skill install or discard the scratch profile
-
-### Cursor
-
-- Install path: [docs/install/cursor.md](./install/cursor.md)
-- Verify after install: the plugin is present and `gateway-plugin-datakit` is available in a fresh session
-- MCP check: confirm the session can see `kong-konnect`
-- Quick prompt: `Summarize the gateway-plugin-datakit skill in two sentences.`
-- Cleanup: remove the local plugin or discard the scratch profile
 
 ## When To Stop
 

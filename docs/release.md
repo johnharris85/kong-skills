@@ -29,8 +29,6 @@ mise run release:prepare -- --help
 That updates every plugin-local host manifest, including:
 
 - [`plugins/kong-konnect/.claude-plugin/plugin.json`](../plugins/kong-konnect/.claude-plugin/plugin.json)
-- [`plugins/kong-konnect/.codex-plugin/plugin.json`](../plugins/kong-konnect/.codex-plugin/plugin.json)
-- [`plugins/kong-konnect/.cursor-plugin/plugin.json`](../plugins/kong-konnect/.cursor-plugin/plugin.json)
 
 Then validate the release candidate:
 

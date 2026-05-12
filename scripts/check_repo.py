@@ -151,16 +151,8 @@ class Plugin:
         return self.root / "skills"
 
     @property
-    def codex_manifest(self) -> Path:
-        return self.root / ".codex-plugin" / "plugin.json"
-
-    @property
     def claude_manifest(self) -> Path:
         return self.root / ".claude-plugin" / "plugin.json"
-
-    @property
-    def cursor_manifest(self) -> Path:
-        return self.root / ".cursor-plugin" / "plugin.json"
 
     @property
     def mcp_config(self) -> Path | None:
@@ -227,14 +219,6 @@ def derived_keywords(skills: list[Skill]) -> list[str]:
     return ordered_unique([term for term in (normalize_term(value) for value in values) if term])
 
 
-def derived_capabilities(skills: list[Skill]) -> list[str]:
-    values = ["kong"]
-    for skill in skills:
-        values.extend([skill.product, skill.category])
-        values.extend(skill.tags)
-    return ordered_unique([term for term in (normalize_term(value) for value in values) if term])
-
-
 def parse_frontmatter(path: Path) -> dict[str, object]:
     text = read_text(path)
     if not text.startswith("---\n"):
@@ -268,9 +252,7 @@ def discover_plugins() -> list[Plugin]:
         plugin = Plugin(name=entry.name, root=entry)
         required = [
             plugin.skills_dir,
-            plugin.codex_manifest,
             plugin.claude_manifest,
-            plugin.cursor_manifest,
         ]
         missing = [path.relative_to(REPO_ROOT) for path in required if not path.exists()]
         if missing:
@@ -388,42 +370,6 @@ def sync_claude_marketplace(plugin_catalog: list[tuple[Plugin, list[Skill]]]) ->
     return data
 
 
-def sync_codex_marketplace(plugin_catalog: list[tuple[Plugin, list[Skill]]]) -> object:
-    path = REPO_ROOT / ".agents" / "plugins" / "marketplace.json"
-    data = load_json(path)
-    data["name"] = MARKETPLACE_NAME
-    data["plugins"] = [
-        {
-            "name": plugin.name,
-            "source": {
-                "source": "local",
-                "path": plugin.rel_path,
-            },
-            "policy": {
-                "installation": "AVAILABLE",
-                "authentication": "ON_INSTALL",
-            },
-            "category": "Productivity",
-            "keywords": derived_keywords(skills),
-        }
-        for plugin, skills in plugin_catalog
-    ]
-    return data
-
-
-def sync_codex_plugin(plugin: Plugin, skills: list[Skill]) -> object:
-    data = load_json(plugin.codex_manifest)
-    data["name"] = plugin.name
-    data["keywords"] = derived_keywords(skills)
-    data["skills"] = [skill.rel_path for skill in skills]
-    data["mcpServers"] = [MCP_NAME] if plugin.mcp_config is not None else []
-    interface = data.get("interface")
-    if not isinstance(interface, dict):
-        raise ValueError(f"{plugin.codex_manifest.relative_to(REPO_ROOT)}: interface must be a mapping")
-    interface["capabilities"] = derived_capabilities(skills)
-    return data
-
-
 def sync_plugin_mcp() -> object:
     return {
         "mcpServers": {
@@ -436,51 +382,16 @@ def sync_plugin_mcp() -> object:
     }
 
 
-def sync_cursor_plugin(plugin: Plugin, skills: list[Skill]) -> object:
-    data = load_json(plugin.cursor_manifest)
-    data["name"] = plugin.name
-    data["skills"] = "skills"
-    if plugin.mcp_config is not None:
-        data["mcpServers"] = "mcp.json"
-    else:
-        data.pop("mcpServers", None)
-    data["keywords"] = derived_keywords(skills)
-    return data
-
-
 def manifest_version(path: Path) -> str | None:
     data = load_json(path)
     value = data.get("version")
     return value if isinstance(value, str) else None
 
 
-def sync_cursor_marketplace(plugin_catalog: list[tuple[Plugin, list[Skill]]]) -> object:
-    path = REPO_ROOT / ".cursor-plugin" / "marketplace.json"
-    data = load_json(path)
-    data["name"] = MARKETPLACE_NAME
-    metadata = data.get("metadata")
-    if not isinstance(metadata, dict):
-        raise ValueError(".cursor-plugin/marketplace.json: metadata is missing")
-    versions = [manifest_version(plugin.cursor_manifest) for plugin, _ in plugin_catalog]
-    if versions and versions[0] is not None:
-        metadata["version"] = versions[0]
-    data["plugins"] = [
-        {
-            "name": plugin.name,
-            "source": plugin.rel_path,
-            "description": str(load_json(plugin.cursor_manifest).get("description", "")),
-        }
-        for plugin, _skills in plugin_catalog
-    ]
-    return data
-
-
 def validate_plugin_versions(plugin: Plugin) -> tuple[list[str], str | None]:
     errors: list[str] = []
     manifests = [
-        plugin.codex_manifest,
         plugin.claude_manifest,
-        plugin.cursor_manifest,
     ]
     versions = {path.relative_to(REPO_ROOT): manifest_version(path) for path in manifests}
     unique_versions = {value for value in versions.values()}
@@ -494,35 +405,19 @@ def validate_plugin_versions(plugin: Plugin) -> tuple[list[str], str | None]:
 def validate_static_metadata(plugin_catalog: list[tuple[Plugin, list[Skill]]]) -> list[str]:
     errors: list[str] = []
 
-    codex_marketplace = load_json(REPO_ROOT / ".agents" / "plugins" / "marketplace.json")
     claude_marketplace = load_json(REPO_ROOT / ".claude-plugin" / "marketplace.json")
-    cursor_marketplace = load_json(REPO_ROOT / ".cursor-plugin" / "marketplace.json")
 
-    if codex_marketplace.get("name") != MARKETPLACE_NAME:
-        errors.append(".agents/plugins/marketplace.json: unexpected marketplace name")
     if claude_marketplace.get("name") != MARKETPLACE_NAME:
         errors.append(".claude-plugin/marketplace.json: unexpected marketplace name")
-    if cursor_marketplace.get("name") != MARKETPLACE_NAME:
-        errors.append(".cursor-plugin/marketplace.json: unexpected marketplace name")
 
     expected_names = [plugin.name for plugin, _ in plugin_catalog]
     repo_versions: set[str | None] = set()
 
     for plugin, _skills in plugin_catalog:
-        codex_plugin = load_json(plugin.codex_manifest)
         claude_plugin = load_json(plugin.claude_manifest)
-        cursor_plugin = load_json(plugin.cursor_manifest)
 
-        if codex_plugin.get("name") != plugin.name:
-            errors.append(f"{plugin.codex_manifest.relative_to(REPO_ROOT)}: unexpected plugin name")
         if claude_plugin.get("name") != plugin.name:
             errors.append(f"{plugin.claude_manifest.relative_to(REPO_ROOT)}: unexpected plugin name")
-        if cursor_plugin.get("name") != plugin.name:
-            errors.append(f"{plugin.cursor_manifest.relative_to(REPO_ROOT)}: unexpected plugin name")
-        if codex_plugin.get("homepage") != REPO_URL or codex_plugin.get("repository") != REPO_URL:
-            errors.append(f"{plugin.codex_manifest.relative_to(REPO_ROOT)}: homepage/repository drift")
-        if cursor_plugin.get("homepage") != REPO_URL or cursor_plugin.get("repository") != REPO_URL:
-            errors.append(f"{plugin.cursor_manifest.relative_to(REPO_ROOT)}: homepage/repository drift")
 
         version_errors, plugin_version = validate_plugin_versions(plugin)
         errors.extend(version_errors)
@@ -532,9 +427,7 @@ def validate_static_metadata(plugin_catalog: list[tuple[Plugin, list[Skill]]]) -
         errors.append(f"release versions must match across plugin packages: {sorted(repo_versions)}")
 
     marketplace_specs = [
-        (".agents/plugins/marketplace.json", codex_marketplace, "path"),
         (".claude-plugin/marketplace.json", claude_marketplace, "source"),
-        (".cursor-plugin/marketplace.json", cursor_marketplace, "source"),
     ]
     for label, marketplace, source_key in marketplace_specs:
         plugins = marketplace.get("plugins")
@@ -555,12 +448,6 @@ def validate_static_metadata(plugin_catalog: list[tuple[Plugin, list[Skill]]]) -
                     errors.append(f"{label}: plugin {plugin.name} source path drift")
             elif entry.get(source_key) != plugin.rel_path:
                 errors.append(f"{label}: plugin {plugin.name} source drift")
-
-    cursor_metadata = cursor_marketplace.get("metadata")
-    if isinstance(cursor_metadata, dict) and len(repo_versions) == 1:
-        repo_version = next(iter(repo_versions))
-        if cursor_metadata.get("version") != repo_version:
-            errors.append(".cursor-plugin/marketplace.json: metadata.version drift")
 
     return errors
 
@@ -738,14 +625,12 @@ def validate_text_files() -> list[str]:
             "plugins/kong-konnect/mcp.json",
         ],
         REPO_ROOT / "docs" / "install" / "README.md": [MCP_NAME, MCP_URL, TOKEN_ENV, "gh skill", "plugins/kong-konnect/mcp.json"],
-        REPO_ROOT / "docs" / "install" / "cursor.md": [MCP_NAME, MCP_URL, TOKEN_ENV, "plugins/kong-konnect/.cursor-plugin/plugin.json", "npx skills add kong/skills"],
         REPO_ROOT / "docs" / "install" / "claude-code.md": ["Claude Code", "kong-konnect", MCP_NAME, "plugins/kong-konnect/.claude-plugin/plugin.json"],
-        REPO_ROOT / "docs" / "install" / "codex.md": ["Codex", "npx skills add kong/skills", MCP_NAME, "plugins/kong-konnect/.codex-plugin/plugin.json"],
         REPO_ROOT / "docs" / "install" / "other-tools.md": ["gh skill install kong/skills", "gh skill preview", "npx skills add kong/skills", MCP_NAME, "plugins/kong-konnect/mcp.json"],
         REPO_ROOT / "docs" / "release.md": ["workflow_dispatch", "mise run ci", "mise run artifact:check", "Release OCI Skills Artifact", "plugins/kong-konnect/skills/"],
-        REPO_ROOT / "docs" / "structure.md": ["plugins/kong-konnect/.cursor-plugin/plugin.json", "plugins/kong-konnect/mcp.json", "contributor file map", "AGENTS.md"],
-        REPO_ROOT / "docs" / "developer.md": ["assets/", "references/", "scripts/", "mise install", "mise run preflight", "mise run gen", "mise run deps", "skill:new", "artifact:check", "gh skill publish --dry-run", "Consumers generally see", "GitHub Actions workflow is the only publishing path", "kong-skill-authoring", "description budget", "overlap", "plugins/kong-konnect/.cursor-plugin/plugin.json", "plugin:new"],
-        REPO_ROOT / "docs" / "testing.md": ["mise run preflight", "mise run deps", "mise run lint", "mise run artifact:check", "gh skill publish --dry-run", "scratch project", "KONNECT_TOKEN", "docs/install/other-tools.md", "description budget", "overlap", "docs/install/cursor.md", "plugins/kong-konnect/skills/"],
+        REPO_ROOT / "docs" / "structure.md": ["plugins/kong-konnect/.claude-plugin/plugin.json", "plugins/kong-konnect/mcp.json", "contributor file map", "AGENTS.md"],
+        REPO_ROOT / "docs" / "developer.md": ["assets/", "references/", "scripts/", "mise install", "mise run preflight", "mise run gen", "mise run deps", "skill:new", "artifact:check", "gh skill publish --dry-run", "Consumers generally see", "GitHub Actions workflow is the only publishing path", "kong-skill-authoring", "description budget", "overlap", "plugins/kong-konnect/.claude-plugin/plugin.json", "plugin:new"],
+        REPO_ROOT / "docs" / "testing.md": ["mise run preflight", "mise run deps", "mise run lint", "mise run artifact:check", "gh skill publish --dry-run", "scratch project", "KONNECT_TOKEN", "docs/install/other-tools.md", "description budget", "overlap", "docs/install/claude-code.md", "plugins/kong-konnect/skills/"],
         REPO_ROOT / "SECURITY.md": ["vulnerability@konghq.com", "Do not open a public GitHub issue"],
         REPO_ROOT / "AGENTS.md": ["plugins/<plugin>/skills/", "docs/skills.md", "plugin-aware"],
     }
@@ -785,28 +670,13 @@ def main() -> int:
 
     compare_or_write(SKILLS_DOC, sync_skills_doc(plugin_catalog), args.fix, errors)
     compare_or_write(
-        REPO_ROOT / ".agents" / "plugins" / "marketplace.json",
-        dump_json(sync_codex_marketplace(plugin_catalog)),
-        args.fix,
-        errors,
-    )
-    compare_or_write(
         REPO_ROOT / ".claude-plugin" / "marketplace.json",
         dump_json(sync_claude_marketplace(plugin_catalog)),
         args.fix,
         errors,
     )
-    compare_or_write(
-        REPO_ROOT / ".cursor-plugin" / "marketplace.json",
-        dump_json(sync_cursor_marketplace(plugin_catalog)),
-        args.fix,
-        errors,
-    )
-
     for plugin, skills in plugin_catalog:
         compare_or_write(plugin.claude_manifest, dump_json(sync_claude_plugin(plugin, skills)), args.fix, errors)
-        compare_or_write(plugin.codex_manifest, dump_json(sync_codex_plugin(plugin, skills)), args.fix, errors)
-        compare_or_write(plugin.cursor_manifest, dump_json(sync_cursor_plugin(plugin, skills)), args.fix, errors)
         if plugin.mcp_config is not None:
             compare_or_write(plugin.mcp_config, dump_json(sync_plugin_mcp()), args.fix, errors)
 

@@ -85,9 +85,7 @@ mise run plugin:new -- kong-mesh --with-mcp
 That creates:
 
 - `plugins/<plugin-name>/skills/`
-- `plugins/<plugin-name>/.codex-plugin/plugin.json`
 - `plugins/<plugin-name>/.claude-plugin/plugin.json`
-- `plugins/<plugin-name>/.cursor-plugin/plugin.json`
 - optional `plugins/<plugin-name>/mcp.json`
 
 Root marketplace manifests are generated from plugin discovery, so you do not
@@ -210,11 +208,6 @@ checks:
 
 - the skill arrays in [`plugins/kong-konnect/.claude-plugin/plugin.json`](../plugins/kong-konnect/.claude-plugin/plugin.json)
 - the Claude marketplace keywords in [`.claude-plugin/marketplace.json`](../.claude-plugin/marketplace.json)
-- the skill arrays in [`plugins/kong-konnect/.codex-plugin/plugin.json`](../plugins/kong-konnect/.codex-plugin/plugin.json)
-- the Codex marketplace listing in [`.agents/plugins/marketplace.json`](../.agents/plugins/marketplace.json)
-- the Cursor plugin manifest in [`plugins/kong-konnect/.cursor-plugin/plugin.json`](../plugins/kong-konnect/.cursor-plugin/plugin.json)
-- the Cursor marketplace listing in [`.cursor-plugin/marketplace.json`](../.cursor-plugin/marketplace.json)
-- the generated Codex plugin keywords and capabilities
 - the generated skill inventory in [docs/skills.md](skills.md)
 - the plugin-local MCP config in [`plugins/kong-konnect/mcp.json`](../plugins/kong-konnect/mcp.json)
 
@@ -244,8 +237,6 @@ For authoring guidance on what makes a good skill, see [AGENTS.md](../AGENTS.md)
 ## Supported Tools
 
 - Claude Code: https://code.claude.com/docs
-- Codex: https://developers.openai.com/codex/
-- Cursor: https://docs.cursor.com/
 - GitHub CLI `gh skill`: https://cli.github.com/
 - `npx skills`: https://github.com/vercel-labs/skills
 

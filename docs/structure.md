@@ -10,12 +10,8 @@ MCP config.
 
 ## Root Marketplace Manifests
 
-- `.agents/plugins/marketplace.json`
-  - Codex marketplace registry for all plugin packages in this repo.
 - `.claude-plugin/marketplace.json`
   - Claude Code marketplace registry for all plugin packages in this repo.
-- `.cursor-plugin/marketplace.json`
-  - Cursor marketplace registry for all plugin packages in this repo.
 
 ## Plugin Packages
 
@@ -25,12 +21,8 @@ MCP config.
 - `plugins/kong-konnect/skills/`
   - Canonical shared skills shipped by the `kong-konnect` plugin and by
     shared-skill installers.
-- `plugins/kong-konnect/.codex-plugin/plugin.json`
-  - Codex plugin manifest local to the `kong-konnect` package.
 - `plugins/kong-konnect/.claude-plugin/plugin.json`
   - Claude Code plugin manifest local to the `kong-konnect` package.
-- `plugins/kong-konnect/.cursor-plugin/plugin.json`
-  - Cursor plugin manifest local to the `kong-konnect` package.
 - `plugins/kong-konnect/mcp.json`
   - Shared checked-in MCP reference shape for the `kong-konnect` plugin.
 

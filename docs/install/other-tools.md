@@ -107,8 +107,8 @@ Or with GitHub CLI:
 gh skill update gateway-plugin-datakit
 ```
 
-Claude Code and Cursor both have native plugin update flows. See their install
-pages for the current recommended approach.
+Claude Code has a native plugin update flow. See its install page for the
+current recommended approach.
 
 ## MCP Config Reference
 

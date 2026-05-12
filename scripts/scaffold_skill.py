@@ -87,33 +87,6 @@ def skill_template(skill_name: str) -> str:
     )
 
 
-def plugin_display_name(plugin_name: str) -> str:
-    return " ".join(part.capitalize() for part in plugin_name.split("-"))
-
-
-def codex_manifest_template(plugin_name: str, with_mcp: bool) -> dict[str, object]:
-    data: dict[str, object] = {
-        "name": plugin_name,
-        "version": "0.1.0",
-        "description": f"Portable Kong skills packaged as the {plugin_name} Codex plugin.",
-        "author": "kong",
-        "homepage": REPO_URL,
-        "repository": REPO_URL,
-        "license": "MIT",
-        "keywords": ["kong", plugin_name],
-        "skills": [],
-        "interface": {
-            "displayName": plugin_display_name(plugin_name),
-            "shortDescription": f"Kong skills for {plugin_display_name(plugin_name)}.",
-            "category": "development",
-            "capabilities": ["kong"],
-        },
-    }
-    if with_mcp:
-        data["mcpServers"] = [MCP_NAME]
-    return data
-
-
 def claude_manifest_template(plugin_name: str, with_mcp: bool) -> dict[str, object]:
     data: dict[str, object] = {
         "name": plugin_name,
@@ -124,23 +97,6 @@ def claude_manifest_template(plugin_name: str, with_mcp: bool) -> dict[str, obje
     }
     if with_mcp:
         data["mcpServers"] = "./mcp.json"
-    return data
-
-
-def cursor_manifest_template(plugin_name: str, with_mcp: bool) -> dict[str, object]:
-    data: dict[str, object] = {
-        "name": plugin_name,
-        "skills": "skills",
-        "description": f"Portable Kong skills packaged as the {plugin_name} Cursor plugin.",
-        "version": "0.1.0",
-        "author": {"name": "kong"},
-        "homepage": REPO_URL,
-        "repository": REPO_URL,
-        "license": "MIT",
-        "keywords": ["kong", plugin_name],
-    }
-    if with_mcp:
-        data["mcpServers"] = "mcp.json"
     return data
 
 
@@ -173,9 +129,7 @@ def scaffold_plugin(args: argparse.Namespace) -> int:
     plugin_dir = PLUGINS_DIR / plugin_name
     ensure_missing(plugin_dir)
 
-    write_json(plugin_dir / ".codex-plugin" / "plugin.json", codex_manifest_template(plugin_name, args.with_mcp))
     write_json(plugin_dir / ".claude-plugin" / "plugin.json", claude_manifest_template(plugin_name, args.with_mcp))
-    write_json(plugin_dir / ".cursor-plugin" / "plugin.json", cursor_manifest_template(plugin_name, args.with_mcp))
     (plugin_dir / "skills").mkdir(parents=True, exist_ok=False)
     if args.with_mcp:
         write_json(plugin_dir / "mcp.json", mcp_template())
