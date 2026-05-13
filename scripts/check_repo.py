@@ -604,7 +604,6 @@ def validate_skills_list_budget(plugin_catalog: list[tuple[Plugin, list[Skill]]]
 def validate_repo_files() -> list[str]:
     errors: list[str] = []
     required = [
-        REPO_ROOT / ".dockerignore",
         REPO_ROOT / "SECURITY.md",
     ]
     for path in required:
@@ -627,10 +626,10 @@ def validate_text_files() -> list[str]:
         REPO_ROOT / "docs" / "install" / "README.md": [MCP_NAME, MCP_URL, TOKEN_ENV, "gh skill", "plugins/kong-konnect/mcp.json"],
         REPO_ROOT / "docs" / "install" / "claude-code.md": ["Claude Code", "kong-konnect", MCP_NAME, "plugins/kong-konnect/.claude-plugin/plugin.json"],
         REPO_ROOT / "docs" / "install" / "other-tools.md": ["gh skill install kong/skills", "gh skill preview", "npx skills add kong/skills", MCP_NAME, "plugins/kong-konnect/mcp.json"],
-        REPO_ROOT / "docs" / "release.md": ["workflow_dispatch", "mise run ci", "mise run artifact:check", "Release OCI Skills Artifact", "plugins/kong-konnect/skills/"],
+        REPO_ROOT / "docs" / "release.md": ["workflow_dispatch", "mise run ci", "Tag And Release", "release versions", "main"],
         REPO_ROOT / "docs" / "structure.md": ["plugins/kong-konnect/.claude-plugin/plugin.json", "plugins/kong-konnect/mcp.json", "contributor file map", "AGENTS.md"],
-        REPO_ROOT / "docs" / "developer.md": ["assets/", "references/", "scripts/", "mise install", "mise run preflight", "mise run gen", "mise run deps", "skill:new", "artifact:check", "gh skill publish --dry-run", "Consumers generally see", "GitHub Actions workflow is the only publishing path", "kong-skill-authoring", "description budget", "overlap", "plugins/kong-konnect/.claude-plugin/plugin.json", "plugin:new"],
-        REPO_ROOT / "docs" / "testing.md": ["mise run preflight", "mise run deps", "mise run lint", "mise run artifact:check", "gh skill publish --dry-run", "scratch project", "KONNECT_TOKEN", "docs/install/other-tools.md", "description budget", "overlap", "docs/install/claude-code.md", "plugins/kong-konnect/skills/"],
+        REPO_ROOT / "docs" / "developer.md": ["assets/", "references/", "scripts/", "mise install", "mise run preflight", "mise run gen", "mise run deps", "skill:new", "gh skill publish --dry-run", "Consumers generally see", "GitHub Actions workflow is the only publishing path", "kong-skill-authoring", "description budget", "overlap", "plugins/kong-konnect/.claude-plugin/plugin.json", "plugin:new"],
+        REPO_ROOT / "docs" / "testing.md": ["mise run preflight", "mise run deps", "mise run lint", "gh skill publish --dry-run", "scratch project", "KONNECT_TOKEN", "docs/install/other-tools.md", "description budget", "overlap", "docs/install/claude-code.md", "plugins/kong-konnect/skills/"],
         REPO_ROOT / "SECURITY.md": ["vulnerability@konghq.com", "Do not open a public GitHub issue"],
         REPO_ROOT / "AGENTS.md": ["plugins/<plugin>/skills/", "docs/skills.md", "plugin-aware"],
     }

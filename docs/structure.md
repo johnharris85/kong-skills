@@ -39,13 +39,8 @@ MCP config.
 ## Release And Validation
 
 - `.github/workflows/validate.yml`
-  - Validates generated metadata and the OCI artifact packaging path on pull
-    requests and `main`.
-- `.github/workflows/release-oci.yml`
-  - Canonical publishing workflow for tags, GitHub releases, and the OCI
-    artifact.
+  - Validates generated metadata on pull requests and `main`.
+- `.github/workflows/release.yml`
+  - Canonical publishing workflow for tags and GitHub releases.
 - `docs/release.md`
   - Contributor-facing release preparation and trigger process.
-- `.dockerignore`
-  - Narrows the OCI build context to the shipped `plugins/kong-konnect/skills/`
-    payload.

@@ -40,7 +40,6 @@ mise run deps
 [mise.toml](../mise.toml). `uv` is still required separately. Additional tools
 are only needed for the flows that use them:
 
-- `docker` for `mise run artifact:check`
 - `gh` for `gh skill publish --dry-run`
 - `node` and `npx` for shared-installer verification
 
@@ -53,8 +52,8 @@ Use the smallest workflow that matches the change:
 
 - Skill text only: `mise run preflight`, `mise run lint`
 - New skill or frontmatter change: `mise run preflight`, `mise run lint`, and `gh skill publish --dry-run`
-- Packaging or shared MCP/install surface change: `mise run preflight`, `mise run lint`, and `mise run artifact:check`
-- Release prep: `mise run preflight`, `mise run ci`, and `mise run artifact:check`
+- Packaging or shared MCP/install surface change: `mise run preflight`, `mise run lint`, and the affected manual spot checks
+- Release prep: `mise run preflight`, `mise run ci`
 
 For local guardrails, install the repo hooks once:
 
@@ -179,7 +178,6 @@ mise run deps
 mise run skill:new -- kong-konnect your-skill-name
 mise run gen
 mise run lint
-mise run artifact:check
 gh skill publish --dry-run
 ```
 
@@ -244,7 +242,7 @@ For authoring guidance on what makes a good skill, see [AGENTS.md](../AGENTS.md)
 
 This repo intentionally keeps automated testing narrow.
 
-- Keep CI on `mise run ci` plus the OCI packaging check.
+- Keep CI on `mise run ci`.
 - Use manual verification when you change install docs, plugin manifests, or
   MCP config surfaces.
 - Prefer scratch projects and disposable user profiles over repo-managed
@@ -260,11 +258,6 @@ This repo intentionally keeps automated testing narrow.
   variables, not in checked-in files.
 - Treat startup or auto-update features as opt-in convenience, not the default
   recommendation.
-- The OCI artifact is a `scratch` image that only copies the checked-in
-  `plugins/kong-konnect/skills/` payload. The release workflow currently
-  disables SBOM and CIS actions for that artifact because there is no package
-  manager or base OS layer to inventory, and the repo relies on checked-in
-  skill review plus explicit packaging validation instead.
 
 See [docs/testing.md](testing.md) for the lightweight verification checklist
 per supported tool.
@@ -277,7 +270,6 @@ Use:
 mise run release:prepare -- 1.0.1
 mise run preflight
 mise run ci
-mise run artifact:check
 ```
 
 To inspect the accepted release arguments:

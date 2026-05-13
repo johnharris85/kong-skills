@@ -228,7 +228,6 @@ mise run preflight
 mise run deps
 mise run gen
 mise run lint
-mise run artifact:check
 ```
 
 If the change is release-oriented, also run:

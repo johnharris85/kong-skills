@@ -22,7 +22,6 @@ Baseline local tools:
 `mise run preflight` checks the repo's baseline tools and can also check
 optional flows:
 
-- `mise run preflight -- artifact` for Docker-backed packaging checks
 - `mise run preflight -- publish` for `gh skill publish --dry-run`
 - `mise run preflight -- shared-installers` for `npx skills` and `gh skill`
 - `mise run preflight -- all` for a full local tool sweep
@@ -32,10 +31,9 @@ optional flows:
 1. Run `mise run preflight`.
 2. Run `mise run deps`.
 3. Run `mise run lint`.
-4. Run `mise run artifact:check` when you change OCI packaging, release metadata, or shared install surfaces.
-5. Run `gh skill publish --dry-run` when you change skill metadata or prepare a release, or use `mise run ci` to include it in the standard CI path.
-6. If you changed install docs, plugin manifests, or MCP config surfaces, manually verify only the affected tools.
-7. Use a scratch project or disposable user profile when a tool writes local state.
+4. Run `gh skill publish --dry-run` when you change skill metadata or prepare a release, or use `mise run ci` to include it in the standard CI path.
+5. If you changed install docs, plugin manifests, or MCP config surfaces, manually verify only the affected tools.
+6. Use a scratch project or disposable user profile when a tool writes local state.
 
 Use the smallest path that covers the change. Most edits do not require every
 check.
@@ -50,6 +48,9 @@ default authoring guardrail for:
 
 If a spot check exercises the shared MCP configuration, export `KONNECT_TOKEN`
 or use the host tool's secure settings flow before you test it.
+
+The shipped shared-skill payload lives under `plugins/kong-konnect/skills/`,
+so install and publish checks should continue to reflect that source tree.
 
 Run the repo tasks through `mise run ...`, not bare `uv ...`, when you want the
 checked-in repo defaults. The `mise` config pins `uv` to Python `3.12` and
@@ -77,12 +78,6 @@ back to user-profile locations.
 - Expected result: install completes without errors and the `gateway-plugin-datakit` skill is available in the target host
 - Quick prompt: `When should you use the gateway-plugin-datakit skill?`
 - Cleanup: remove the installed skill from the target host or discard the scratch profile
-
-## OCI Artifact
-
-- Command: `mise run artifact:check`
-- Use when: `Dockerfile.skills`, `.dockerignore`, release metadata, or the shipped file layout changes
-- Expected result: the scratch image builds, label values match, and the extracted payload matches `plugins/kong-konnect/skills/`
 
 ## GitHub Skill Publish Dry Run
 
@@ -114,5 +109,5 @@ You do not need to manually verify every tool for every change.
 - Skill text only: `mise run lint` is usually enough.
 - Tool-specific manifest or install doc: verify only that tool.
 - Shared MCP config changes: verify one plugin-style path and one skill-plus-MCP path.
-- Release prep: run `mise run lint`, `mise run artifact:check`, and spot-check the tools affected by the release.
+- Release prep: run `mise run lint` and spot-check the tools affected by the release.
 - Release prep: also run `mise run ci` or `gh skill publish --dry-run`.

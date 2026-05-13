@@ -3,7 +3,7 @@
 This repo publishes releases through GitHub Actions only.
 
 Local commands prepare and validate the checked-in content. They do not publish
-tags, releases, or OCI artifacts.
+tags or releases.
 
 ## Release Flow
 
@@ -30,12 +30,14 @@ That updates every plugin-local host manifest, including:
 
 - [`plugins/kong-konnect/.claude-plugin/plugin.json`](../plugins/kong-konnect/.claude-plugin/plugin.json)
 
+The release workflow later checks that those checked-in release versions match
+the requested GitHub Actions input exactly.
+
 Then validate the release candidate:
 
 ```bash
 mise run preflight
 mise run ci
-mise run artifact:check
 ```
 
 If the release changes install docs or shared tool surfaces, also do the
@@ -45,16 +47,16 @@ Commit the version bump and merge it to `main`.
 
 ## Trigger The Release
 
-Releases are created by the `Release OCI Skills Artifact` workflow:
+Releases are created by the `Release` workflow:
 
-- Workflow file: [`.github/workflows/release-oci.yml`](../.github/workflows/release-oci.yml)
+- Workflow file: [`.github/workflows/release.yml`](../.github/workflows/release.yml)
 - Trigger type: manual `workflow_dispatch`
 - Required input: `version`
 
 In GitHub:
 
 1. Open `Actions`.
-2. Select `Release OCI Skills Artifact`.
+2. Select `Release`.
 3. Click `Run workflow`.
 4. Enter the semver version without a leading `v`, such as `1.0.1`.
 5. Run it from `main`.
@@ -94,7 +96,7 @@ those patterns too.
 
 ## What The Workflow Does
 
-The release workflow runs in three stages:
+The release workflow runs in two stages:
 
 ### Validate
 
@@ -102,32 +104,18 @@ The release workflow runs in three stages:
 - verifies the requested version format
 - verifies the Git tag does not already exist
 - verifies checked-in manifest versions match the requested release version
-- validates the OCI artifact packaging path
-
-### Publish OCI Artifact
-
-- builds the `scratch` OCI artifact from [Dockerfile.skills](../Dockerfile.skills)
-- packages the checked-in `plugins/kong-konnect/skills/` tree
-- pushes the image to the configured ECR registry
-
-The workflow currently skips CIS and SBOM actions for this artifact because it
-is a content-only `scratch` image whose payload is just the checked-in
-`plugins/kong-konnect/skills/` tree. The release gate relies on checked-in
-review, `mise run ci`, and `mise run artifact:check`.
 
 ### Tag And Release
 
 - creates the Git tag `v<version>`
 - creates the GitHub release
-- includes the published OCI image reference in the release notes
 
 ## Day-To-Day CI vs Release Validation
 
 Use these commands for different levels of confidence:
 
 - everyday repo validation: `mise run ci`
-- packaging changes or release prep: `mise run artifact:check`
-- full release candidate: `mise run preflight`, `mise run ci`, `mise run artifact:check`
+- full release candidate: `mise run preflight`, `mise run ci`
 
 ## Pinning Notes
 
@@ -145,9 +133,6 @@ Remaining caveat:
 
 - If `mise run ci` fails on `gh skill publish --dry-run`, fix the reported
   skill metadata or repository publishability issue before merging.
-- If `mise run artifact:check` fails, inspect
-  [Dockerfile.skills](../Dockerfile.skills), [.dockerignore](../.dockerignore),
-  and `plugins/kong-konnect/skills/`.
 - If the release workflow fails at the version check, rerun
   [scripts/release_prepare.py](../scripts/release_prepare.py) with the exact
   target version and recommit the manifest changes.

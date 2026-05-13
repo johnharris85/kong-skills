@@ -41,10 +41,6 @@ run = [
 description = "Update manifest versions for a release commit"
 run = "uv run --python 3.12 --cache-dir .tmp/uv-cache python scripts/release_prepare.py"
 
-[tasks."artifact:check"]
-description = "Build and validate the local OCI skills artifact image"
-run = "python scripts/check_oci_artifact.py"
-
 [tasks."hooks:install"]
 description = "Install repo-local git hooks"
 run = "git config core.hooksPath .githooks"

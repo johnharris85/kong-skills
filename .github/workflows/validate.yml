@@ -42,5 +42,3 @@ jobs:
           gh version
       - name: Run repo validation
         run: mise run ci
-      - name: Validate OCI artifact packaging
-        run: mise run artifact:check

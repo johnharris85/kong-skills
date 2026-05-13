@@ -12,9 +12,6 @@ PROFILE_TOOLS: dict[str, list[tuple[str, str]]] = {
         ("git", "required for working in the repository"),
         ("uv", "required for `mise run deps` and repo validation tasks"),
     ],
-    "artifact": [
-        ("docker", "required for `mise run artifact:check`"),
-    ],
     "publish": [
         ("gh", "required for `gh skill publish --dry-run`"),
     ],
@@ -32,7 +29,7 @@ def parse_args() -> argparse.Namespace:
         "profiles",
         nargs="*",
         default=None,
-        choices=["core", "artifact", "publish", "shared-installers", "all"],
+        choices=["core", "publish", "shared-installers", "all"],
         help="Profiles to check. Default: core",
     )
     return parser.parse_args()
@@ -40,7 +37,7 @@ def parse_args() -> argparse.Namespace:
 
 def selected_profiles(values: list[str]) -> list[str]:
     if "all" in values:
-        return ["core", "artifact", "publish", "shared-installers"]
+        return ["core", "publish", "shared-installers"]
     seen: set[str] = set()
     result: list[str] = []
     for value in values:
