@@ -40,6 +40,20 @@ installable plugin packages, and the first shipped package is
 Contributor bootstrap and maintenance guidance lives in
 [CONTRIBUTING.md](CONTRIBUTING.md).
 
+Recommended local validation path for contributors:
+
+```bash
+mise trust
+mise install
+mise run preflight
+mise run deps
+mise run hooks:install
+mise run lint
+```
+
+The repo hooks are an opt-in local guardrail. GitHub Actions remains the
+enforcement path on pull requests and pushes to `main`.
+
 ## Install Targets
 
 [![Claude Code](https://img.shields.io/badge/Claude_Code-plugin-111111?style=for-the-badge&logo=anthropic&logoColor=white)](docs/install/claude-code.md)

@@ -21,12 +21,26 @@ mise trust
 mise install
 mise run preflight
 mise run deps
+mise run hooks:install
 ```
 
 `mise install` provisions the repo-managed Python toolchain from
 [mise.toml](mise.toml). `uv` remains an explicit prerequisite, and additional
 tools such as Docker, GitHub CLI, Node.js, or host-specific agent CLIs are
 only needed for the corresponding optional verification flows.
+
+Install the repo hooks early. They wire the checked-in `pre-commit` and
+`pre-push` hooks to `mise run lint`, which is the main local authoring
+validator in this repo.
+
+Before committing, run:
+
+```bash
+mise run lint
+```
+
+CI in GitHub Actions still remains the enforcement layer for pull requests and
+pushes to `main`.
 
 ## Contributor Docs
 

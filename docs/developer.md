@@ -34,6 +34,7 @@ mise trust
 mise install
 mise run preflight
 mise run deps
+mise run hooks:install
 ```
 
 `mise install` provisions the repo-managed Python toolchain from
@@ -46,7 +47,17 @@ are only needed for the flows that use them:
 When a script-backed task takes arguments, prefer `mise run <task> -- --help` to see the
 expected positional arguments and flags.
 
+Install hooks during bootstrap unless you have a reason not to. This repo uses
+repo-local `pre-commit` and `pre-push` hooks as a convenience layer that runs
+`mise run lint` before changes leave your machine.
+
 ## Typical Loops
+
+Run this once per checkout before you start editing:
+
+```bash
+mise run hooks:install
+```
 
 Use the smallest workflow that matches the change:
 
@@ -62,7 +73,8 @@ mise run hooks:install
 ```
 
 That enables the checked-in `pre-commit` and `pre-push` hooks, both of which
-run `mise run lint`.
+run `mise run lint`. Treat hooks as convenience, not enforcement. CI is still
+the required repo gate.
 
 ## Add A Plugin
 
@@ -110,7 +122,13 @@ All of those paths are fine. For repo-specific authoring guidance:
 Scaffold the boilerplate with one command:
 
 ```bash
-mise run skill:new -- kong-konnect your-skill-name
+mise run skill:new -- your-skill-name
+```
+
+That defaults to the `kong-konnect` plugin. To target a different plugin:
+
+```bash
+mise run skill:new -- kong-mesh your-skill-name
 ```
 
 For task-level help:
@@ -175,7 +193,7 @@ Keep it short, front-loaded, and specific.
 mise install
 mise run preflight
 mise run deps
-mise run skill:new -- kong-konnect your-skill-name
+mise run skill:new -- your-skill-name
 mise run gen
 mise run lint
 gh skill publish --dry-run
@@ -243,6 +261,8 @@ For authoring guidance on what makes a good skill, see [AGENTS.md](../AGENTS.md)
 This repo intentionally keeps automated testing narrow.
 
 - Keep CI on `mise run ci`.
+- Install hooks so `mise run lint` also runs automatically on local commit and
+  push.
 - Use manual verification when you change install docs, plugin manifests, or
   MCP config surfaces.
 - Prefer scratch projects and disposable user profiles over repo-managed

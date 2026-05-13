@@ -15,6 +15,7 @@ MCP_NAME = "kong-konnect"
 MCP_URL = "https://us.mcp.konghq.com"
 TOKEN_ENV = "KONNECT_TOKEN"
 REPO_URL = "https://github.com/kong/skills"
+DEFAULT_PLUGIN = "kong-konnect"
 
 
 def normalize_name(value: str, label: str) -> str:
@@ -42,9 +43,28 @@ def ensure_plugin_exists(plugin_name: str) -> Path:
     plugin_dir = PLUGINS_DIR / plugin_name
     if not plugin_dir.exists():
         raise ValueError(
-            f"plugin {plugin_name!r} does not exist; create plugins/{plugin_name} first with `plugin {plugin_name}`"
+            f"plugin {plugin_name!r} does not exist; create plugins/{plugin_name} first with `mise run plugin:new -- {plugin_name}`"
         )
     return plugin_dir
+
+
+def skill_usage_error() -> ValueError:
+    return ValueError(
+        "missing skill name.\n"
+        "Use `mise run skill:new -- <skill-name>` to scaffold into the default "
+        f"plugin `{DEFAULT_PLUGIN}`.\n"
+        "Use `mise run skill:new -- <plugin-name> <skill-name>` to target a "
+        "different plugin.\n"
+        f"Example: `mise run skill:new -- {DEFAULT_PLUGIN} gateway-plugin-datakit`"
+    )
+
+
+def parse_skill_args(values: list[str]) -> tuple[str, str]:
+    if len(values) == 1:
+        return DEFAULT_PLUGIN, values[0]
+    if len(values) == 2:
+        return values[0], values[1]
+    raise skill_usage_error()
 
 
 def skill_template(skill_name: str) -> str:
@@ -113,8 +133,9 @@ def mcp_template() -> dict[str, object]:
 
 
 def scaffold_skill(args: argparse.Namespace) -> int:
-    plugin_name = normalize_name(args.plugin, "plugin name")
-    skill_name = normalize_name(args.name, "skill name")
+    plugin_value, skill_value = parse_skill_args(args.args)
+    plugin_name = normalize_name(plugin_value, "plugin name")
+    skill_name = normalize_name(skill_value, "skill name")
     plugin_dir = ensure_plugin_exists(plugin_name)
     skill_dir = plugin_dir / "skills" / skill_name
     skill_md = skill_dir / "SKILL.md"
@@ -158,8 +179,15 @@ def build_parser() -> argparse.ArgumentParser:
         "skill",
         help="Create a new skill directory with SKILL.md boilerplate inside an existing plugin.",
     )
-    skill_parser.add_argument("plugin", help="Existing plugin name under plugins/.")
-    skill_parser.add_argument("name", help="Skill name. This becomes the directory name and frontmatter name.")
+    skill_parser.add_argument(
+        "args",
+        nargs="*",
+        metavar="plugin-or-skill",
+        help=(
+            "Pass `<skill-name>` to use the default plugin `kong-konnect`, or "
+            "`<plugin-name> <skill-name>` to target a different plugin."
+        ),
+    )
     skill_parser.set_defaults(handler=scaffold_skill)
     return parser
 

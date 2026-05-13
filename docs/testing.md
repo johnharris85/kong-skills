@@ -11,6 +11,7 @@ mise trust
 mise install
 mise run preflight
 mise run deps
+mise run hooks:install
 ```
 
 Baseline local tools:
@@ -30,10 +31,11 @@ optional flows:
 
 1. Run `mise run preflight`.
 2. Run `mise run deps`.
-3. Run `mise run lint`.
-4. Run `gh skill publish --dry-run` when you change skill metadata or prepare a release, or use `mise run ci` to include it in the standard CI path.
-5. If you changed install docs, plugin manifests, or MCP config surfaces, manually verify only the affected tools.
-6. Use a scratch project or disposable user profile when a tool writes local state.
+3. Run `mise run hooks:install` once per checkout.
+4. Run `mise run lint`.
+5. Run `gh skill publish --dry-run` when you change skill metadata or prepare a release, or use `mise run ci` to include it in the standard CI path.
+6. If you changed install docs, plugin manifests, or MCP config surfaces, manually verify only the affected tools.
+7. Use a scratch project or disposable user profile when a tool writes local state.
 
 Use the smallest path that covers the change. Most edits do not require every
 check.
@@ -45,6 +47,10 @@ default authoring guardrail for:
 - `SKILL.md` length
 - description budget
 - high-similarity trigger overlap between skills
+
+The checked-in `pre-commit` and `pre-push` hooks both run `mise run lint`, but
+they only apply after `mise run hooks:install`. CI remains the enforcement path
+for pull requests and pushes to `main`.
 
 If a spot check exercises the shared MCP configuration, export `KONNECT_TOKEN`
 or use the host tool's secure settings flow before you test it.
